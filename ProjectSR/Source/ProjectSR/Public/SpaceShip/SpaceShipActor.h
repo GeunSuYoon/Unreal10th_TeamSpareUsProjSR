@@ -8,7 +8,7 @@
 #include "Interface/InventoryComponentInterface.h"
 #include "SpaceShipActor.generated.h"
 
-class UMainPanelComponent;
+class AMainPanelActor;
 class ULazerComponent;
 class UMachineArmComponent;
 class UInventoryComponent;
@@ -31,11 +31,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Getter 함수
-	inline float				GetMaxDurability() const { return (this->MaxDurability_); }
-	inline float				GetCurrentDurability() const { return (this->CurrentDurability_); }
-	inline float				GetMaxEnergy() const { return (this->MaxEnergy_); }
-	inline float				GetCurrentEnergy() const { return (this->CurrentEnergy_); }
+	inline int32	GetLevel() const { return (this->Level_); }
+	inline float	GetMaxDurability() const { return (this->MaxDurability_); }
+	inline float	GetCurrentDurability() const { return (this->CurrentDurability_); }
+	inline float	GetMaxEnergy() const { return (this->MaxEnergy_); }
+	inline float	GetCurrentEnergy() const { return (this->CurrentEnergy_); }
 	//inline UInventoryComponent*	GetWarehouse() const { return (this->Warehouse_); }
+
 	virtual UInventoryComponent*	GetInventoryComponent_Implementation() override;
 
 	// 하루 끝날 때 불러올 함수
@@ -51,10 +53,13 @@ public:
 	TObjectPtr<UStaticMeshComponent>	SpaceShipMesh = nullptr;
 
 protected:
+	// 지금 우주선의 강화 단계
+	UPROPERTY(BlueprintReadOnly, Category = "Level")
+	int32	Level_ = 0;
 
 	// 우주선이 가지고 있는 컴포넌트
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
-	TObjectPtr<UMainPanelComponent>		MainPanel_;
+	TObjectPtr<AMainPanelActor>			MainPanel_;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
 	TObjectPtr<ULazerComponent>			Lazor_;
@@ -77,6 +82,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Energy")
 	float	CurrentEnergy_ = 0.0f;
 	UPROPERTY(BlueprintReadOnly, Category = "Energy")
-	float	ReactiveEnergy_ = 0.0f;
+	float	OperationalEnergy_ = 0.0f;
 
 };
