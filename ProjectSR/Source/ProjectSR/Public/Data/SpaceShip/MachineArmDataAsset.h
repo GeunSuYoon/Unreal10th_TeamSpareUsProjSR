@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class PROJECTSR_API UMachineArmDataAsset : public UDataAsset
+class PROJECTSR_API UMachineArmDataAsset : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 	
@@ -25,6 +25,6 @@ public:
 
 	// 하루마다 우주선 에너지 소모량. 따로 사용하지 않더라도 하루에 우주선이 소모하는 에너지에 이 값을 추가한다.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MachineArm|Energy")
-	float	ReactiveEnergy;
+	float	OperationalEnergy;
 
 };
