@@ -1,23 +1,26 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SpaceShip/MainPanelComponent.h"
+#include "MainPanel/MainPanelActor.h"
 #include "SpaceShip/SpaceShipActor.h"
+#include "Data/SpaceShip/SpaceShipUpgradeDataTable.h"
+#include "Data/Item/ItemDataAsset.h"
 
 // Sets default values for this component's properties
-UMainPanelComponent::UMainPanelComponent()
+AMainPanelActor::AMainPanelActor()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = false;
 
 	// ...
-
+	this->MainPanelMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainPanelMesh"));
+	this->SetRootComponent(this->MainPanelMesh);
 }
 
 
 // Called when the game starts
-void UMainPanelComponent::BeginPlay()
+void AMainPanelActor::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -30,16 +33,14 @@ void UMainPanelComponent::BeginPlay()
 	}
 }
 
-
 // Called every frame
-void UMainPanelComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void AMainPanelActor::Tick(float DeltaTime)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Super::Tick(DeltaTime);
 
-	// ...
 }
 
-void UMainPanelComponent::Interact_Implementation(AActor* InTarget)
+void AMainPanelActor::Interact_Implementation(AActor* InTarget)
 {
 	OnMainPanelInteract.ExecuteIfBound();
 }

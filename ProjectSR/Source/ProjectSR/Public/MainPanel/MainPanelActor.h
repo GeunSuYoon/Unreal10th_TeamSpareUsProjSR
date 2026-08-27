@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
+#include "GameFramework/Actor.h"
 #include "Interface/InteractInterface.h"
 #include "Enum/MainPanelEnumDef.h"
-#include "MainPanelComponent.generated.h"
+#include "MainPanelActor.generated.h"
 
 DECLARE_DYNAMIC_DELEGATE(FOnMainPanelInteract);
 
@@ -14,14 +14,14 @@ class ASpaceShipActor;
 class UInventoryComponent;
 class UCraftComponent;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class PROJECTSR_API UMainPanelComponent : public UActorComponent, public IInteractInterface
+UCLASS()
+class PROJECTSR_API AMainPanelActor : public AActor, public IInteractInterface
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	UMainPanelComponent();
+	AMainPanelActor();
 
 protected:
 	// Called when the game starts
@@ -29,11 +29,15 @@ protected:
 
 public:	
 	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void Tick(float DeltaTime) override;
 
 	virtual void	Interact_Implementation(AActor* InTarget) override;
 
 	FOnMainPanelInteract	OnMainPanelInteract;
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UStaticMeshComponent>	MainPanelMesh = nullptr;
 
 private:
 	TWeakObjectPtr<ASpaceShipActor>		SpaceShip__ = nullptr;
