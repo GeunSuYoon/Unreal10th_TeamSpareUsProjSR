@@ -87,4 +87,6 @@ Build/*/**
 **/ehwayng/*
 **/fractalnumber/*
 **/GeunSuYoon/*
-**/tunde02/*
+# **/tunde02/*
+
+**/*.slnx
