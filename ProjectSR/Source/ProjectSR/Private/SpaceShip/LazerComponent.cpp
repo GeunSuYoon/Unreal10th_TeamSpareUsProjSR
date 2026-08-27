@@ -2,7 +2,7 @@
 
 
 #include "SpaceShip/LazerComponent.h"
-#include "DataAsset/LazorDataAsset.h"
+#include "Data/SpaceShip/LazorDataAsset.h"
 
 // Sets default values for this component's properties
 ULazerComponent::ULazerComponent()
@@ -39,19 +39,19 @@ void ULazerComponent::SetLazorData(ULazorDataAsset* InLazorData)
 	if (InLazorData)
 	{
 		this->LazorPower__ = InLazorData->Power;
-		this->UseEnergy__ = InLazorData->UseEnergy;
 		this->ReactiveEnergy__ = InLazorData->ReactiveEnergy;
+		this->OperationalEnergy__ = InLazorData->OperationalEnergy;
 	}
 	else
 	{
 		this->LazorPower__ = 0.0f;
-		this->UseEnergy__ = 0.0f;
 		this->ReactiveEnergy__ = 0.0f;
+		this->OperationalEnergy__ = 0.0f;
 	}
 }
 
 // 우주선에 에너지 요청해서 에너지 비율만큼 메테오에 데미지 주기.
-// this->LazorPower__ * (우주선에서 가져온 에너지) / this->UseEnergy__;
+// this->LazorPower__ * (우주선에서 가져온 에너지) / this->ReactiveEnergy__;
 void ULazerComponent::AttackMeteo(UMeteo* InMeteo)
 {
 }

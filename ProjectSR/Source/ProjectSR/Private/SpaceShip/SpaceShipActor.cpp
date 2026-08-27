@@ -2,6 +2,7 @@
 
 
 #include "SpaceShip/SpaceShipActor.h"
+#include "MainPanel/MainPanelActor.h"
 
 // Sets default values
 ASpaceShipActor::ASpaceShipActor()
@@ -16,6 +17,18 @@ void ASpaceShipActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+
+	this->MainPanel_ = GetWorld()->SpawnActor<AMainPanelActor>(
+		AMainPanelActor::StaticClass(),
+		GetActorTransform(),
+		Params);
+
+	if (this->MainPanel_)
+	{
+		this->MainPanel_->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+	}
 }
 
 // Called every frame

@@ -29,17 +29,22 @@ public:
 	void	SetMachineArmData(UMachineArmDataAsset* InMachineArmData);
 
 	// Getter 함수
+	inline int32	GetLevel() const { return (this->Level_); }
 	inline float	GetItemCollectTime() const { return (this->ItemCollectTime__); }
 	inline float	GetItemCollectWeight() const { return (this->ItemCollectWeight__); }
-	inline float	GetReactiveEnergy() const { return (this->ReactiveEnergy__); }
+	inline float	GetOperationalEnergy() const { return (this->OperationalEnergy__); }
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int32	Level_ = 0;
 
 private:
 
 	TObjectPtr<UMachineArmDataAsset>	MachineArmData__ = nullptr;
 
+	// 초당 아이템 획득량 [sec], 실제 보일 때는 min으로 변환 필요함
 	float	ItemCollectTime__ = 0.0f;
+	// 획득 가능한 아이템 무게 [kg]
 	float	ItemCollectWeight__ = 0.0f;
-	float	ReactiveEnergy__ = 0.0f;
+	float	OperationalEnergy__ = 0.0f;
 };
