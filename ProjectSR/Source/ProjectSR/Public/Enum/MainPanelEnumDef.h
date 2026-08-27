@@ -10,11 +10,12 @@
 UENUM(BlueprintType)
 enum class EMainPanelType : uint8
 {
-	None			= 0 UMETA(DisplayName = "None"),
-	Home			= 1 UMETA(DisplayName = "Home"),
-	Warehouse		= 2 UMETA(DisplayName = "Warehouse"),
-	SpaceShipStatus	= 3 UMETA(DisplayName = "SpaceShipStatus"),
-	SpaceShipControl= 4 UMETA(DisplayName = "SpaceShipControl"),
-	SpaceShipUpgrade= 5 UMETA(DisplayName = "SpaceShipUpgrade"),
-	ItemCrafting	= 6 UMETA(DisplayName = "ItemCrafting"),
+	None				UMETA(DisplayName = "None"),
+	Home				UMETA(DisplayName = "Home"),
+	SpaceShipStatus		UMETA(DisplayName = "SpaceShipStatus"),
+	Warehouse			UMETA(DisplayName = "Warehouse"),
+	SetCourse			UMETA(DisplayName = "SetCourse"),
+	SpaceShipControl	UMETA(DisplayName = "SpaceShipControl"),
+	SpaceShipUpgrade	UMETA(DisplayName = "SpaceShipUpgrade"),
+	ItemCrafting		UMETA(DisplayName = "ItemCrafting"),
 };
