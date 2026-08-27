@@ -2,6 +2,10 @@
 
 
 #include "Item/ItemActor.h"
+#include "Interface/InventoryComponentInterface.h"
+#include "Component/InventoryComponent.h"
+#include "CommonHeader/InventoryCommandTypes.h"
+
 #include "Components/SphereComponent.h"
 
 AItemActor::AItemActor()
@@ -18,6 +22,34 @@ AItemActor::AItemActor()
 void AItemActor::InitializeItemActor(const UItemDataAsset* InItemData)
 {
     ItemData_ = InItemData;
+}
+
+void AItemActor::Interact_Implementation(AActor* InTarget)
+{
+    if (InTarget->GetClass()->ImplementsInterface(UInventoryComponentInterface::StaticClass()))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[AItemActor::Interact_Implementation()] : 캐릭터가 IInventoryComponentInterface를 구현하지 않음."));
+        return;
+    }
+
+    UInventoryComponent* Inventory = IInventoryComponentInterface::Execute_GetInventoryComponent(InTarget);
+
+    if (!Inventory)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[AItemActor::Interact_Implementation()] : 캐릭터에 UInventoryComponent가 없음."));
+        return;
+    }
+
+    FInventoryCommandResult Result;
+    Inventory->ExecuteCommand(
+        FInventoryCommand::MakeAddCommand(ItemData_, 1),
+        Result
+    );
+
+    if (Result.bSuccess)
+    {
+        Destroy();
+    }
 }
 
 void AItemActor::OnConstruction(const FTransform& Transform)
