@@ -15,12 +15,12 @@ class PROJECTSR_API UItemDataAsset : public UPrimaryDataAsset
 {
     GENERATED_BODY()
 
-public:
-    TSharedPtr<FStreamableHandle> RequestDataLoad(FStreamableDelegate InDelegate) const;
-    virtual bool IsLoaded() const;
-
-protected:
-    virtual void OnAsyncRequest_(TArray<FSoftObjectPath>& InOutArray) const;
+//public:
+//    TSharedPtr<FStreamableHandle> RequestDataLoad(FStreamableDelegate InDelegate) const;
+//    virtual bool IsLoaded() const;
+//
+//protected:
+//    virtual void OnAsyncRequest_(TArray<FSoftObjectPath>& InOutArray) const;
 
 public:
     // 아이템 ID
@@ -44,8 +44,8 @@ public:
     int32 MaxStackCount = 1;
 
     // 스폰할 아이템 블루프린트 클래스
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
-    TSoftClassPtr<AItemActor> ItemActorClass = nullptr;
+    //UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
+    //TSoftClassPtr<AItemActor> ItemActorClass = nullptr;
 
     // UI에서 보여줄 아이템 아이콘 이미지
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
@@ -56,7 +56,7 @@ public:
     TSoftObjectPtr<UStaticMesh> Mesh = nullptr;
 
     // 아이템 사용 시 실행될 액션
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
-    TObjectPtr<UItemAction> ItemAction = nullptr;
+    //UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
+    //TObjectPtr<UItemAction> ItemAction = nullptr;
 
 };
