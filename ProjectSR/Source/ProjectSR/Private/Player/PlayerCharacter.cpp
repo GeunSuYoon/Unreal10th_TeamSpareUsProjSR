@@ -28,10 +28,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	// 웅크리기 기능 활성화
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
-	// 이동속도 초기화
-	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
-	GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
-
 	// 카메라 세팅 - 캐릭터는 컨트롤러 회전을 그대로 따라가지 않고, 이동 방향으로만 자연스럽게 회전하도록 설정(변경 가능)
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -71,6 +67,10 @@ void APlayerCharacter::BeginPlay()
 			}
 		}
 	}
+
+	// 게임 시작시 이동속도 초기화 (캐릭터는 우주선 내부=중력 상태로 스폰된다는 전제)
+	GetCharacterMovement()->MaxWalkSpeedCrouched = StatComponent->GetCrouchSpeed();
+	RefreshMovementSpeed();
 }
 
 // Called every frame
@@ -112,6 +112,15 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 UInSpaceMovementComponent* APlayerCharacter::GetInSpaceMovementComponent() const
 {
 	return Cast<UInSpaceMovementComponent>(GetCharacterMovement());
+}
+
+void APlayerCharacter::HandleGravityStateChanged(bool bIsZeroGravity)
+{
+	if (!StatComponent) return;
+
+	StatComponent->SetOxygenConsuming(bIsZeroGravity);
+
+	RefreshMovementSpeed();
 }
 
 // 테스트용 함수
@@ -215,25 +224,32 @@ void APlayerCharacter::Player_CrouchHold(const FInputActionValue& Value)
 void APlayerCharacter::Player_BoostStart(const FInputActionValue& Value)
 {
 	bIsBoosting = true;
-
-	if (UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent())
-	{
-		MoveComp->MaxWalkSpeed = BoostSpeed;
-	}
+	RefreshMovementSpeed();
 }
 
 void APlayerCharacter::Player_BoostStop(const FInputActionValue& Value)
 {
 	bIsBoosting = false;
-
-	if (UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent())
-	{
-		MoveComp->MaxWalkSpeed = BaseWalkSpeed;
-	}
+	RefreshMovementSpeed();
 }
 
 void APlayerCharacter::Player_Interact(const FInputActionValue& Value)
 {
 	InteractionComponent->PlayerInteract();
+}
+
+void APlayerCharacter::RefreshMovementSpeed()
+{
+	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
+	if (!MoveComp || !StatComponent) return;
+
+	if (bIsBoosting)
+	{
+		MoveComp->MaxWalkSpeed = StatComponent->GetBoostSpeed();
+		return;
+	}
+
+	const bool bIsZeroGravity = MoveComp->GetGravityState() == EGravityState::ZeroGravityMode;
+	MoveComp->MaxWalkSpeed = bIsZeroGravity ? StatComponent->GetZeroGravityMoveSpeed() : StatComponent->GetGravityMoveSpeed();
 }
 

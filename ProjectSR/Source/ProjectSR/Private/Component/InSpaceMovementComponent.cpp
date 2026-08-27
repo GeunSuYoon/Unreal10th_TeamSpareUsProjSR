@@ -4,6 +4,7 @@
 #include "Component/InSpaceMovementComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Character.h"
+#include "Player/PlayerCharacter.h"
 
 UInSpaceMovementComponent::UInSpaceMovementComponent()
 {
@@ -68,19 +69,27 @@ void UInSpaceMovementComponent::OnMovementModeChanged(EMovementMode PreviousMove
 	ACharacter* Owner = GetCharacterOwner();
 	if (!Owner) return;
 
-	if (MovementMode == MOVE_Custom && CustomMovementMode == CMOVE_ZeroGravity)
+	const bool bEnteringZeroGravity = (MovementMode == MOVE_Custom && CustomMovementMode == CMOVE_ZeroGravity);
+	const bool bExitingZeroGravity = (PreviousMovementMode == MOVE_Custom && PreviousCustomMode == CMOVE_ZeroGravity);
+
+	if (bEnteringZeroGravity)
 	{
 		GravityScale = 0.f;
 		bOrientRotationToMovement = false;			// 무중력에선 이동 방향으로 자동 회전 끄고
 		Owner->bUseControllerRotationYaw = true;	// 좌우상하 카메라를 따라 향하도록
 		Owner->bUseControllerRotationPitch = true;	// 바꾸려면 true-false 스위치하면 됨
 	}
-	else if (PreviousMovementMode == MOVE_Custom && PreviousCustomMode == CMOVE_ZeroGravity)
+	else if (bExitingZeroGravity)
 	{
 		GravityScale = DefaultGravityScale;
 		bOrientRotationToMovement = true;
 		Owner->bUseControllerRotationYaw = false;
 		Owner->bUseControllerRotationPitch = false;
+	}
+
+	if (APlayerCharacter* Player = Cast<APlayerCharacter>(Owner))
+	{
+		Player->HandleGravityStateChanged(bEnteringZeroGravity);
 	}
 }
 

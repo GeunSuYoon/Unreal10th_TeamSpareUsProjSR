@@ -41,6 +41,11 @@ public:
 	// 커스텀 무브먼트컴포넌트 편의 캐스팅
 	UInSpaceMovementComponent* GetInSpaceMovementComponent() const;
 
+	// StatComponent에서 부스트 상태 확인하는 함수
+	bool IsBoosting() const { return bIsBoosting; }
+
+	void HandleGravityStateChanged(bool bIsZeroGravity);
+
 	// 중력 전환 테스트용 함수
 	UFUNCTION(CallInEditor)
 	void ToggleGravityMode();
@@ -104,16 +109,7 @@ private:
 	bool bIsBoosting = false;
 
 protected:
-	// 기본 이동속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Speed")
-	float BaseWalkSpeed = 600.0f;
-
-	// 부스트 이동속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Speed")
-	float BoostSpeed = 1000.0f;
-
-	// 앉았을 때 이동속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Speed")
-	float CrouchSpeed = 300.0f;
+	// 종합 이동속도 갱신 함수
+	void RefreshMovementSpeed();
 };
  
