@@ -2,6 +2,8 @@
 
 
 #include "Player/PlayerCharacter.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 #include "Component/InSpaceMovementComponent.h"
 #include "Component/StatComponent.h"
 #include "Component/EquipComponent.h"
@@ -22,6 +24,35 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	EquipComponent = CreateDefaultSubobject<UEquipComponent>(TEXT("EquipComponent"));
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
+
+	// 웅크리기 기능 활성화
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
+
+	// 이동속도 초기화
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+
+	// 카메라 세팅 - 캐릭터는 컨트롤러 회전을 그대로 따라가지 않고, 이동 방향으로만 자연스럽게 회전하도록 설정(변경 가능)
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 500.f, 0.f);
+
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->TargetArmLength = 400.f;
+	CameraBoom->bUsePawnControlRotation = true; // 붐이 마우스 입력을 따라 회전
+
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	FollowCamera->bUsePawnControlRotation = false; // 카메라는 붐 회전만 따라감, 별도 회전 안 함
+	
+	// 카메라 이동 보정
+	CameraBoom->bDoCollisionTest = true;
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 10.0f;
 }
 
 // Called when the game starts or when spawned
@@ -64,10 +95,12 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &APlayerCharacter::Player_Move);
 		// 시점 이동 (Mouse)
 		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &APlayerCharacter::Player_Look);
-		// 점프 (Space)
+		// 점프, 상승 (Space)
 		EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Triggered, this, &APlayerCharacter::Player_Jump);
-		// 웅크리기, 숨기 (좌Ctrl)
-		EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Triggered, this, &APlayerCharacter::Player_Crouch);
+		// 웅크리기, 하강 (좌Ctrl)
+		EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Started, this, &APlayerCharacter::Player_CrouchStart);
+		EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &APlayerCharacter::Player_CrouchStop);
+		EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Triggered, this, &APlayerCharacter::Player_CrouchHold);
 		// 부스트 (좌Shift)
 		EnhancedInputComponent->BindAction(IA_Boost, ETriggerEvent::Started, this, &APlayerCharacter::Player_BoostStart);
 		EnhancedInputComponent->BindAction(IA_Boost, ETriggerEvent::Completed, this, &APlayerCharacter::Player_BoostStop);
@@ -79,6 +112,25 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 UInSpaceMovementComponent* APlayerCharacter::GetInSpaceMovementComponent() const
 {
 	return Cast<UInSpaceMovementComponent>(GetCharacterMovement());
+}
+
+// 테스트용 함수
+void APlayerCharacter::ToggleGravityMode()
+{
+	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
+	if (!MoveComp) return;
+
+	// 현재 중력 상태 확인 후 토글
+	if (MoveComp->GetGravityState() == EGravityState::GravityMode)
+	{
+		MoveComp->EnterZeroGravity();
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("Switched to ZERO GRAVITY Mode"));
+	}
+	else
+	{
+		MoveComp->ExitZeroGravity();
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, TEXT("Switched to GRAVITY Mode"));
+	}
 }
 
 void APlayerCharacter::Player_Move(const FInputActionValue& Value)
@@ -126,33 +178,58 @@ void APlayerCharacter::Player_Jump(const FInputActionValue& Value)
 	}
 }
 
-void APlayerCharacter::Player_Crouch(const FInputActionValue& Value)
+void APlayerCharacter::Player_CrouchStart(const FInputActionValue& Value)
 {
 	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
 	if (!MoveComp) return;
 
-	// 중력 상태
 	if (MoveComp->GetGravityState() == EGravityState::GravityMode)
 	{
 		Crouch();
 	}
-	// 무중력 상태 : 아래로 하강
-	else
+}
+
+void APlayerCharacter::Player_CrouchStop(const FInputActionValue& Value)
+{
+	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
+	if (!MoveComp) return;
+
+	if (MoveComp->GetGravityState() == EGravityState::GravityMode)
 	{
-		AddMovementInput(FVector::UpVector, -1.0f);
+		UnCrouch();
+	}
+}
+
+// 무중력 상태시 하강하는 함수
+void APlayerCharacter::Player_CrouchHold(const FInputActionValue& Value)
+{
+	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
+	if (!MoveComp) return;
+
+	if (MoveComp->GetGravityState() == EGravityState::ZeroGravityMode)
+	{
+		AddMovementInput(FVector::DownVector, 1.0f);
 	}
 }
 
 void APlayerCharacter::Player_BoostStart(const FInputActionValue& Value)
 {
 	bIsBoosting = true;
-	// 무브먼트 속도 증가
+
+	if (UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent())
+	{
+		MoveComp->MaxWalkSpeed = BoostSpeed;
+	}
 }
 
 void APlayerCharacter::Player_BoostStop(const FInputActionValue& Value)
 {
 	bIsBoosting = false;
-	// 무브먼트 속도 복구
+
+	if (UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent())
+	{
+		MoveComp->MaxWalkSpeed = BaseWalkSpeed;
+	}
 }
 
 void APlayerCharacter::Player_Interact(const FInputActionValue& Value)

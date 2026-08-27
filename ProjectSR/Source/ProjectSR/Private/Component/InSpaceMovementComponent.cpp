@@ -3,6 +3,7 @@
 
 #include "Component/InSpaceMovementComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Character.h"
 
 UInSpaceMovementComponent::UInSpaceMovementComponent()
 {
@@ -64,13 +65,22 @@ void UInSpaceMovementComponent::OnMovementModeChanged(EMovementMode PreviousMove
 {
 	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
 
+	ACharacter* Owner = GetCharacterOwner();
+	if (!Owner) return;
+
 	if (MovementMode == MOVE_Custom && CustomMovementMode == CMOVE_ZeroGravity)
 	{
 		GravityScale = 0.f;
+		bOrientRotationToMovement = false;			// 무중력에선 이동 방향으로 자동 회전 끄고
+		Owner->bUseControllerRotationYaw = true;	// 좌우상하 카메라를 따라 향하도록
+		Owner->bUseControllerRotationPitch = true;	// 바꾸려면 true-false 스위치하면 됨
 	}
 	else if (PreviousMovementMode == MOVE_Custom && PreviousCustomMode == CMOVE_ZeroGravity)
 	{
-		GravityScale = DefaultGravityScale;		// 헤더에 저장해둔 기본값 복원
+		GravityScale = DefaultGravityScale;
+		bOrientRotationToMovement = true;
+		Owner->bUseControllerRotationYaw = false;
+		Owner->bUseControllerRotationPitch = false;
 	}
 }
 
@@ -82,8 +92,8 @@ void UInSpaceMovementComponent::PhysZeroGravity(float deltaTime, int32 Iteration
 		return;
 	}
 
-	// 마찰만 적용해서 속도 계산 (중력 없음, Acceleration은 입력에서 누적된 값)
-	CalcVelocity(deltaTime, ZeroGravityFriction, true, ZeroGravityBrakingDeceleration);
+	// 마찰 적용, 가속도 계산
+	CalcVelocity(deltaTime, ZeroGravityFriction, false, ZeroGravityBrakingDeceleration);
 
 	bJustTeleported = false;
 	const FVector OldLocation = UpdatedComponent->GetComponentLocation();
@@ -92,10 +102,15 @@ void UInSpaceMovementComponent::PhysZeroGravity(float deltaTime, int32 Iteration
 	FHitResult Hit(1.f);
 	SafeMoveUpdatedComponent(Adjusted, UpdatedComponent->GetComponentQuat(), true, Hit);
 
+	// 물체 충돌시 약간 튕겨나도록
 	if (Hit.Time < 1.f)
 	{
-		// 벽/장애물에 부딪히면 표면을 따라 미끄러지도록 처리
 		HandleImpact(Hit, deltaTime, Adjusted);
+		
+		// 반발계수
+		const float Restitution = 0.3f;
+		Velocity = FVector::VectorPlaneProject(Velocity, Hit.Normal) - (Hit.Normal * FVector::DotProduct(Velocity, Hit.Normal) * Restitution);
+		// 남은 이동량만큼 미끄러지기
 		SlideAlongSurface(Adjusted, 1.f - Hit.Time, Hit.Normal, Hit, true);
 	}
 

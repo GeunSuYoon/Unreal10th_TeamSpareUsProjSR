@@ -7,6 +7,8 @@
 #include "InputActionValue.h"
 #include "PlayerCharacter.generated.h"
 
+class USpringArmComponent;
+class UCameraComponent;
 class UInSpaceMovementComponent;
 class UStatComponent;
 class UEquipComponent;
@@ -39,18 +41,30 @@ public:
 	// 커스텀 무브먼트컴포넌트 편의 캐스팅
 	UInSpaceMovementComponent* GetInSpaceMovementComponent() const;
 
+	// 중력 전환 테스트용 함수
+	UFUNCTION(CallInEditor)
+	void ToggleGravityMode();
+
 protected:
 	// Enhanced Input 액션 핸들러
 	void Player_Move(const FInputActionValue& Value);
 	void Player_Look(const FInputActionValue& Value);
 	void Player_Jump(const FInputActionValue& Value);
-	void Player_Crouch(const FInputActionValue& Value);
+	void Player_CrouchStart(const FInputActionValue& Value);
+	void Player_CrouchStop(const FInputActionValue& Value);
+	void Player_CrouchHold(const FInputActionValue& Value);
 	void Player_BoostStart(const FInputActionValue& Value);
 	void Player_BoostStop(const FInputActionValue& Value);
 	void Player_Interact(const FInputActionValue& Value);
 
 protected:
 	// 컴포넌트 목록
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<USpringArmComponent> CameraBoom;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<UCameraComponent> FollowCamera;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UStatComponent> StatComponent;
 
@@ -88,5 +102,18 @@ protected:
 
 private:
 	bool bIsBoosting = false;
+
+protected:
+	// 기본 이동속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Speed")
+	float BaseWalkSpeed = 600.0f;
+
+	// 부스트 이동속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Speed")
+	float BoostSpeed = 1000.0f;
+
+	// 앉았을 때 이동속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Speed")
+	float CrouchSpeed = 300.0f;
 };
  
