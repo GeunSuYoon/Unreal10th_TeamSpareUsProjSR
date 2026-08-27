@@ -14,8 +14,8 @@ AMainPanelActor::AMainPanelActor()
 	PrimaryActorTick.bCanEverTick = false;
 
 	// ...
-	this->MainPanelMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainPanelMesh"));
-	this->SetRootComponent(this->MainPanelMesh);
+	this->MainPanelMesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainPanelMesh"));
+	SetRootComponent(this->MainPanelMesh_);
 }
 
 
@@ -42,6 +42,47 @@ void AMainPanelActor::Tick(float DeltaTime)
 
 void AMainPanelActor::Interact_Implementation(AActor* InTarget)
 {
-	OnMainPanelInteract.ExecuteIfBound();
+	this->OpenHomePanelWidget();
+}
+
+void AMainPanelActor::ClosePanelWidget()
+{
+	this->OpenHomePanelWidget();
+	this->OnMainPanelClose.ExecuteIfBound();
+}
+
+void AMainPanelActor::OpenHomePanelWidget()
+{
+	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::Home);
+}
+
+void AMainPanelActor::OpenSpaceShipStatusPanelWidget()
+{
+	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::SpaceShipStatus);
+}
+
+void AMainPanelActor::OpenWarehousePanelWidget()
+{
+	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::Warehouse);
+}
+
+void AMainPanelActor::OpenSpaceShipControlPanelWidget()
+{
+	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::SpaceShipControl);
+}
+
+void AMainPanelActor::OpenSpaceShipUpgradePanelWidget()
+{
+	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::SpaceShipUpgrade);
+}
+
+void AMainPanelActor::OpenItemCraftingPanelWidget()
+{
+	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::ItemCrafting);
+}
+
+void AMainPanelActor::CloseSubPanelWidget()
+{
+	this->OpenHomePanelWidget();
 }
 

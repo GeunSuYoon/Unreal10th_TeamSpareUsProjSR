@@ -8,7 +8,9 @@
 #include "Enum/MainPanelEnumDef.h"
 #include "MainPanelActor.generated.h"
 
-DECLARE_DYNAMIC_DELEGATE(FOnMainPanelInteract);
+
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMainPanelInteract, EMainPanelType, InMainPanelType);
+DECLARE_DYNAMIC_DELEGATE(FOnMainPanelClose);
 
 class ASpaceShipActor;
 class UInventoryComponent;
@@ -33,11 +35,21 @@ public:
 
 	virtual void	Interact_Implementation(AActor* InTarget) override;
 
+	void	ClosePanelWidget();
+	void	OpenHomePanelWidget();
+	void	OpenSpaceShipStatusPanelWidget();
+	void	OpenWarehousePanelWidget();
+	void	OpenSpaceShipControlPanelWidget();
+	void	OpenSpaceShipUpgradePanelWidget();
+	void	OpenItemCraftingPanelWidget();
+	void	CloseSubPanelWidget();
+
 	FOnMainPanelInteract	OnMainPanelInteract;
+	FOnMainPanelClose		OnMainPanelClose;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UStaticMeshComponent>	MainPanelMesh = nullptr;
+	TObjectPtr<UStaticMeshComponent>	MainPanelMesh_ = nullptr;
 
 private:
 	TWeakObjectPtr<ASpaceShipActor>		SpaceShip__ = nullptr;
