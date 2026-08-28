@@ -83,11 +83,10 @@ Build/*/**
 **/*.slnx
 */*.slnx
 
-*/.gitignore
-
 # 각 깃허브 이름으로 만들어둔 블루프린트용 폴더입니다.
 # 브런치 파시고 여기서 자기 이름만 지우시면 됩니다.
 **/dnwlssh/*
+**/ehwayng/*
 **/fractalnumber/*
 **/GeunSuYoon/*
 **/tunde02/*
