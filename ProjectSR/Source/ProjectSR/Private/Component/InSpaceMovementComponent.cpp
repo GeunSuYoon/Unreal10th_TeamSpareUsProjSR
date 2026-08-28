@@ -117,7 +117,7 @@ void UInSpaceMovementComponent::PhysZeroGravity(float deltaTime, int32 Iteration
 		HandleImpact(Hit, deltaTime, Adjusted);
 		
 		// 반발계수
-		const float Restitution = 0.3f;
+		const float Restitution = 0.5f;
 		Velocity = FVector::VectorPlaneProject(Velocity, Hit.Normal) - (Hit.Normal * FVector::DotProduct(Velocity, Hit.Normal) * Restitution);
 		// 남은 이동량만큼 미끄러지기
 		SlideAlongSurface(Adjusted, 1.f - Hit.Time, Hit.Normal, Hit, true);
