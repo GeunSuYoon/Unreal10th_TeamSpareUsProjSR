@@ -123,25 +123,6 @@ void APlayerCharacter::HandleGravityStateChanged(bool bIsZeroGravity)
 	RefreshMovementSpeed();
 }
 
-// 테스트용 함수
-void APlayerCharacter::ToggleGravityMode()
-{
-	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
-	if (!MoveComp) return;
-
-	// 현재 중력 상태 확인 후 토글
-	if (MoveComp->GetGravityState() == EGravityState::GravityMode)
-	{
-		MoveComp->EnterZeroGravity();
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("Switched to ZERO GRAVITY Mode"));
-	}
-	else
-	{
-		MoveComp->ExitZeroGravity();
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, TEXT("Switched to GRAVITY Mode"));
-	}
-}
-
 void APlayerCharacter::Player_Move(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();

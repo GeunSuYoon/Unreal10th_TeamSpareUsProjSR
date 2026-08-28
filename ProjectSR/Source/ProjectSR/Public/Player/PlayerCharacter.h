@@ -46,10 +46,6 @@ public:
 
 	void HandleGravityStateChanged(bool bIsZeroGravity);
 
-	// 중력 전환 테스트용 함수
-	UFUNCTION(CallInEditor)
-	void ToggleGravityMode();
-
 protected:
 	// Enhanced Input 액션 핸들러
 	void Player_Move(const FInputActionValue& Value);
