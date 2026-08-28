@@ -100,7 +100,7 @@ void UStatComponent::RecalculateMaxStats(float OxygenBonus, float HealthBonus)
 	MaxHealth = BaseMaxHealth + HealthBonus;
 
 	// 장비 보너스 로직 확정 전까지 Base값 채워두기
-	GravityMoveSpeed = BaseGravityMoveSpeed;
+	MoveSpeed = BaseGravityMoveSpeed;
 	ZeroGravityMoveSpeed = BaseZeroGravityMoveSpeed;
 	BoostSpeed = BaseBoostSpeed;
 	ZeroGravityBoostSpeed = BaseZeroGravityBoostSpeed;

@@ -250,6 +250,6 @@ void APlayerCharacter::RefreshMovementSpeed()
 	}
 
 	const bool bIsZeroGravity = MoveComp->GetGravityState() == EGravityState::ZeroGravityMode;
-	MoveComp->MaxWalkSpeed = bIsZeroGravity ? StatComponent->GetZeroGravityMoveSpeed() : StatComponent->GetGravityMoveSpeed();
+	MoveComp->MaxWalkSpeed = bIsZeroGravity ? StatComponent->GetZeroGravityMoveSpeed() : StatComponent->GetMoveSpeed();
 }
 

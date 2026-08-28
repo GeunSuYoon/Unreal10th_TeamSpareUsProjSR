@@ -64,7 +64,7 @@ public:
 	float GetMaxOxygen() const { return MaxOxygen; }
 
 	// --- Getter --- 이동속도
-	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetGravityMoveSpeed() const { return GravityMoveSpeed; }
+	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetMoveSpeed() const { return MoveSpeed; }
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetZeroGravityMoveSpeed() const { return ZeroGravityMoveSpeed; }
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetBoostSpeed() const { return BoostSpeed; }
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetCrouchSpeed() const { return CrouchSpeed; }
@@ -98,7 +98,7 @@ protected:
 	// --- Effective 최대 스탯값 --- 장비 보정 반영된 실 최대값, 런타임 계산
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float MaxHealth;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float MaxOxygen;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float GravityMoveSpeed;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float MoveSpeed;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float ZeroGravityMoveSpeed;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float BoostSpeed;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float ZeroGravityBoostSpeed;

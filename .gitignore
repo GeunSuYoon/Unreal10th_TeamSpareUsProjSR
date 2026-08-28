@@ -79,6 +79,10 @@ Build/*/**
 **/*.bat
 */*.bat
 
+# slnx file
+**/*.slnx
+*/*.slnx
+
 */.gitignore
 
 # 각 깃허브 이름으로 만들어둔 블루프린트용 폴더입니다.
