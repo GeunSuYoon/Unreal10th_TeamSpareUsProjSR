@@ -36,6 +36,7 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TObjectPtr<const UItemDataAsset> ItemData_ = nullptr;
 
-
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
 
 };

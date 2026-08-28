@@ -11,6 +11,7 @@ enum class EInventoryCommandType : uint8
 {
     None,
     Add,
+    Search,
     Move,
     Drop,
     Use,
@@ -47,6 +48,16 @@ public:
     {
         FInventoryCommand Command;
         Command.Type = EInventoryCommandType::Add;
+        Command.ItemData = InItemData;
+        Command.Count = InCount;
+
+        return Command;
+    }
+
+    static FInventoryCommand MakeSearchCommand(const UItemDataAsset* InItemData, int32 InCount = 1)
+    {
+        FInventoryCommand Command;
+        Command.Type = EInventoryCommandType::Search;
         Command.ItemData = InItemData;
         Command.Count = InCount;
 
