@@ -10,6 +10,15 @@
 class AItemActor;
 class UItemAction;
 
+UENUM()
+enum class EItemType
+{
+    None,
+    Resource,
+    Usable,
+    Equipment
+};
+
 UCLASS(BlueprintType)
 class PROJECTSR_API UItemDataAsset : public UPrimaryDataAsset
 {
@@ -26,6 +35,10 @@ public:
     // 아이템 ID
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
     FName ItemId = NAME_None;
+
+    // 아이템 타입
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
+    EItemType ItemType = EItemType::None;
 
     // 아이템 이름
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
