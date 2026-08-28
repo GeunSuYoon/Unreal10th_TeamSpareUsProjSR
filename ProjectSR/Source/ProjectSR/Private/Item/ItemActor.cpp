@@ -65,6 +65,11 @@ void AItemActor::Interact_Implementation(AActor* InTarget)
     }
 }
 
+void AItemActor::SetRelativeVelocity(const FVector& InVelocity)
+{
+	this->RelativeVelocity__ = InVelocity;
+}
+
 void AItemActor::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
@@ -83,6 +88,7 @@ void AItemActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+	this->GetRootComponent()->AddRelativeLocation(this->RelativeVelocity__ * DeltaTime);
 }
 
 void AItemActor::OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
