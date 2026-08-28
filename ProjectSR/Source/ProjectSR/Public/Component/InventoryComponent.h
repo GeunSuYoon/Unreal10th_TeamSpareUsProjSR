@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CommonHeader/InventoryCommandTypes.h"
+#include "CommonHeader/RecipeTable.h"
 #include "Data/Item/ItemDataAsset.h"
 
 #include "Components/ActorComponent.h"
@@ -104,6 +105,7 @@ protected:
 
     // 커맨드 핸들링 함수들 ----------------------------------------------------------------------------------------
     bool HandleAddCommand_(const UItemDataAsset* InItemData, int32 InCount, FInventoryCommandResult& OutResult);
+    bool HandleSubtractCommand_(const UItemDataAsset* InItemData, int32 InCount, FInventoryCommandResult& OutResult);
     bool HandleSearchCommand_(const UItemDataAsset* InItemData, int32 InCount, FInventoryCommandResult& OutResult);
     bool HandleMoveCommand_(int32 InSourceIndex, int32 InTargetIndex, FInventoryCommandResult& OutResult);
     bool HandleDropCommand_(int32 InSlotIndex, const FVector& InDropLocation, FInventoryCommandResult& OutResult);
@@ -121,6 +123,14 @@ protected:
     // 인벤토리에 아이템을 추가하는 함수
     UFUNCTION(BlueprintCallable)
     int32 AddItem_(const UItemDataAsset* InItemData, int32 InCount);
+
+    // 인벤토리에서 아이템을 제거하는 함수
+    UFUNCTION(BlueprintCallable)
+    void SubtractItem_(const UItemDataAsset* InItemData, int32 InCount);
+
+    // 매개변수로 전달받은 아이템이 인벤토리에 총 몇개 있는지 반환하는 함수
+    UFUNCTION(BlueprintCallable)
+    int32 GetTotalItemCount_(const UItemDataAsset* InItemData);
 
     // 인벤토리의 특정 슬롯에 들어있는 아이템 사용하는 함수
     void UseItem_(int32 InIndex);
@@ -147,7 +157,7 @@ protected:
 
 private:
     // 같은 종류의 아이템이 있는 슬롯을 찾는 함수(남은 스택이 있어야함)
-    int32 FindSlotWithItem__(const UItemDataAsset* InItemData, int32 InStartIndex = 0);
+    int32 FindSlotWithItem__(const UItemDataAsset* InItemData, bool bCheckFull, int32 InStartIndex = 0);
 
     // 비어있는 슬롯을 찾는 함수
     int32 FindEmptySlot__();

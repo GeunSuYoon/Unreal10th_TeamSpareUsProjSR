@@ -11,6 +11,7 @@ enum class EInventoryCommandType : uint8
 {
     None,
     Add,
+    Subtract,
     Search,
     Move,
     Drop,
@@ -48,6 +49,16 @@ public:
     {
         FInventoryCommand Command;
         Command.Type = EInventoryCommandType::Add;
+        Command.ItemData = InItemData;
+        Command.Count = InCount;
+
+        return Command;
+    }
+
+    static FInventoryCommand MakeSubtractCommand(const UItemDataAsset* InItemData, int32 InCount = 1)
+    {
+        FInventoryCommand Command;
+        Command.Type = EInventoryCommandType::Subtract;
         Command.ItemData = InItemData;
         Command.Count = InCount;
 

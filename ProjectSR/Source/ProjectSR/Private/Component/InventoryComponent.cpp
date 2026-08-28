@@ -22,6 +22,9 @@ bool UInventoryComponent::ExecuteCommand(const FInventoryCommand& Command, FInve
         case EInventoryCommandType::Add:
             HandleAddCommand_(Command.ItemData, Command.Count, OutResult);
             break;
+        case EInventoryCommandType::Subtract:
+            HandleSubtractCommand_(Command.ItemData, Command.Count, OutResult);
+            break;
         case EInventoryCommandType::Search:
             HandleSearchCommand_(Command.ItemData, Command.Count, OutResult);
             break;
@@ -109,9 +112,56 @@ bool UInventoryComponent::HandleAddCommand_(const UItemDataAsset* InItemData, in
     return OutResult.bSuccess;
 }
 
+bool UInventoryComponent::HandleSubtractCommand_(const UItemDataAsset* InItemData, int32 InCount, FInventoryCommandResult& OutResult)
+{
+    OutResult.bSuccess = false;
+
+    if (!InItemData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::HandleSubtractCommand_()] : InItemData가 nullptr 입니다."));
+        return OutResult.bSuccess;
+    }
+
+    if (InCount <= 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::HandleSubtractCommand_()] : InCount가 0 이하입니다."));
+        return OutResult.bSuccess;
+    }
+
+    int32 TotalCount = GetTotalItemCount_(InItemData);
+
+    if (TotalCount < InCount)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::HandleSubtractCommand_()] : 인벤토리 내에 %s 의 개수가 %d보다 적습니다 (%d)."),
+               *InItemData->DisplayName.ToString(), InCount, TotalCount);
+        return OutResult.bSuccess;
+    }
+
+    SubtractItem_(InItemData, InCount);
+    OutResult.bSuccess = true;
+
+    return OutResult.bSuccess;
+}
+
 bool UInventoryComponent::HandleSearchCommand_(const UItemDataAsset* InItemData, int32 InCount, FInventoryCommandResult& OutResult)
 {
-    return false;
+    OutResult.bSuccess = false;
+
+    if (!InItemData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::HandleSearchCommand_()] : InItemData가 nullptr 입니다."));
+        return OutResult.bSuccess;
+    }
+
+    if (InCount <= 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::HandleSearchCommand_()] : InCount가 0 이하입니다."));
+        return OutResult.bSuccess;
+    }
+
+    OutResult.bSuccess = GetTotalItemCount_(InItemData) >= InCount;
+
+    return OutResult.bSuccess;
 }
 
 bool UInventoryComponent::HandleMoveCommand_(int32 InSourceIndex, int32 InTargetIndex, FInventoryCommandResult& OutResult)
@@ -300,28 +350,34 @@ int32 UInventoryComponent::AddItem_(const UItemDataAsset* InItemData, int32 InCo
 {
     if (!InItemData)
     {
-        UE_LOG(LogTemp, Warning, TEXT("InItemData가 null입니다."));
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::AddItem_()] : InItemData가 nullptr 입니다."));
         return InCount;
     }
+
     if (InCount <= 0)
     {
-        UE_LOG(LogTemp, Warning, TEXT("InCount가 0이하 입니다."));
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::AddItem_()] : InCount가 0이하 입니다."));
         return InCount;
     }
 
     int32 RemainingCount = InCount;
-
     int32 StartIndex = 0;
+
     // 같은 종류의 아이템이 있는 슬롯을 찾아 최대한 채우기
     while (RemainingCount > 0)	// 남는게 있으면 계속 반복
     {
         // 같은 종류의 아이템이 들어있는 슬롯을 찾아 추가하기
-        int32 FoundIndex = FindSlotWithItem__(InItemData, StartIndex);
-        if (FoundIndex == InventoryFail) break;	// 같은 종류의 아이템이 들어있는 슬롯이 없으면 종료
+        int32 FoundIndex = FindSlotWithItem__(InItemData, true, StartIndex);
+
+        // 같은 종류의 아이템이 들어있는 슬롯이 없으면 종료
+        if (FoundIndex == InventoryFail)
+        {
+            break;
+        }
 
         // 같은 종류의 아이템이 들어있는 슬롯을 찾았다.
-        FInventorySlot& Slot = Slots_[FoundIndex];
-        int32 AmountToAdd = FMath::Min(Slot.GetRemainingCount(), RemainingCount);
+        FInventorySlot* Slot = GetSlot(FoundIndex);
+        int32 AmountToAdd = FMath::Min(Slot->GetRemainingCount(), RemainingCount);
         UpdateSlotCount_(FoundIndex, AmountToAdd);	// FoundIndex 슬롯에 채울 수 있는 만큼 채우기
 
         RemainingCount -= AmountToAdd;	// 남은 개수 갱신
@@ -332,9 +388,13 @@ int32 UInventoryComponent::AddItem_(const UItemDataAsset* InItemData, int32 InCo
     while (RemainingCount > 0)
     {
         int32 EmptyIndex = FindEmptySlot__();
-        if (EmptyIndex == InventoryFail) break;	// 빈슬롯이 없으면 종료
 
-        FInventorySlot& Slot = Slots_[EmptyIndex];
+        // 빈슬롯이 없으면 종료
+        if (EmptyIndex == InventoryFail)
+        {
+            break;
+        }
+
         int32 AmountToAdd = FMath::Min(InItemData->MaxStackCount, RemainingCount);
         SetSlot_(EmptyIndex, InItemData, AmountToAdd);	// EmptyIndex 슬롯에 아이템 설정
 
@@ -343,6 +403,66 @@ int32 UInventoryComponent::AddItem_(const UItemDataAsset* InItemData, int32 InCo
 
     // RemainingCount가 0이면 인벤토리에 잘 들어감. 0을 초과하면 그만큼은 인벤토리에 못들어갔다는 의미
     return RemainingCount;
+}
+
+void UInventoryComponent::SubtractItem_(const UItemDataAsset* InItemData, int32 InCount)
+{
+    if (!InItemData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::SubtractItem_] : InItemData가 nullptr 입니다."));
+        return;
+    }
+
+    if (InCount <= 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::SubtractItem_] : InCount가 0이하 입니다."));
+        return;
+    }
+
+    int32 RemainingCount = InCount;
+    int32 StartIndex = 0;
+
+    // 같은 종류의 아이템이 있는 슬롯을 찾아 모두 비우기
+    while (RemainingCount > 0)	// 남는게 있으면 계속 반복
+    {
+        // 같은 종류의 아이템이 들어있는 슬롯을 찾아 비우기
+        int32 FoundIndex = FindSlotWithItem__(InItemData, false, StartIndex);
+
+        // 같은 종류의 아이템이 들어있는 슬롯이 없으면 종료
+        if (FoundIndex == InventoryFail)
+        {
+            break;
+        }
+
+        // 같은 종류의 아이템이 들어있는 슬롯을 찾았다
+        FInventorySlot* Slot = GetSlot(FoundIndex);
+        int32 AmountToSubtract = FMath::Min(Slot->GetCount(), RemainingCount);
+        UpdateSlotCount_(FoundIndex, -AmountToSubtract); // FoundIndex 슬롯을 비울 수 있는 만큼 비우기
+
+        RemainingCount -= AmountToSubtract;	// 남은 개수 갱신
+        StartIndex = FoundIndex + 1;	// 새 시작 위치 갱신
+    }
+}
+
+int32 UInventoryComponent::GetTotalItemCount_(const UItemDataAsset* InItemData)
+{
+    if (!InItemData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::GetTotalItemCount_()] : InItemData가 nullptr 이므로 -1을 반환합니다."));
+        return InventoryFail;
+    }
+
+    int32 TotalCount = 0;
+
+    for (int32 i = 0; i < InventorySize; i++)
+    {
+        if (Slots_[i].ItemData == InItemData)
+        {
+            TotalCount += Slots_[i].GetCount();
+        }
+    }
+
+    return TotalCount;
 }
 
 void UInventoryComponent::UseItem_(int32 InIndex)
@@ -419,13 +539,17 @@ void UInventoryComponent::SetSlot_(int32 InSlotIndex, const UItemDataAsset* InIt
 
 void UInventoryComponent::UpdateSlotCount_(int32 InSlotIndex, int32 InDeltaCount)
 {
-    if (!IsValidIndex_(InSlotIndex)) return;
+    FInventorySlot* Slot = GetSlot(InSlotIndex);
 
-    FInventorySlot& Slot = Slots_[InSlotIndex];
-    if (Slot.IsEmpty()) return;
+    if (Slot->IsEmpty())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::UpdateSlotCount_()] : Slot이 비어 있습니다."));
+        return;
+    }
 
-    int32 NewCount = Slot.GetCount() + InDeltaCount;
-    SetSlot_(InSlotIndex, Slot.ItemData, NewCount);
+    int32 NewCount = Slot->GetCount() + InDeltaCount;
+
+    SetSlot_(InSlotIndex, Slot->ItemData, NewCount);
 }
 
 void UInventoryComponent::ClearSlot_(int32 InSlotIndex)
@@ -443,13 +567,14 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-int32 UInventoryComponent::FindSlotWithItem__(const UItemDataAsset* InItemData, int32 InStartIndex)
+int32 UInventoryComponent::FindSlotWithItem__(const UItemDataAsset* InItemData, bool bCheckFull, int32 InStartIndex)
 {
     int32 Result = InventoryFail;
 
     for (int32 i = InStartIndex; i < InventorySize; i++)
     {
-        if (Slots_[i].ItemData == InItemData && !Slots_[i].IsFull())	// 같은 종류의 아이템인데 스택이 남아있는 경우
+        if (Slots_[i].ItemData == InItemData
+            && (!bCheckFull || !Slots_[i].IsFull()))
         {
             Result = i;
             break;
