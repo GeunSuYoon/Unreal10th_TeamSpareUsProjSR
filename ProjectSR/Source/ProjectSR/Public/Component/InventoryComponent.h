@@ -15,18 +15,18 @@ DECLARE_DELEGATE_OneParam(FOnInventorySlotChanged, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnInventoryMoneyChanged, int32);
 
 USTRUCT(BlueprintType)
-struct FInvenSlot
+struct FInventorySlot
 {
     GENERATED_BODY()
 
 public:
     // 이 슬롯에 들어있는 아이템의 종류
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Slot")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "InventorySlot")
     TObjectPtr<const UItemDataAsset> ItemData;
 
 protected:
     // 이 슬롯에 들어있는 아이템의 개수
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Slot")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "InventorySlot")
     int32 Count = 0;
 
 public:
@@ -77,15 +77,19 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory|Command")
     bool ExecuteCommand(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);
 
+    // 테스트용 인벤토리 출력 함수
+    UFUNCTION(CallInEditor, Category = "Inventory|Test")
+    void ShowInventory();
+
     // Getter ------------------------------------------------------------
     // 현재 돈을 리턴하는 함수
     inline int32 GetMoney() const { return Money; }
 
     // 특정 슬롯을 리턴하는 함수
-    FInvenSlot* GetSlot(int InSlotIndex);
+    FInventorySlot* GetSlot(int InSlotIndex);
 
     // 임시 슬롯을 리턴하는 함수
-    FInvenSlot* GetTempSlot();
+    FInventorySlot* GetTempSlot();
 
     inline int32 GetTempSlotIndex() const { return TempSlotIndex; }
 
@@ -97,57 +101,56 @@ public:
     // --------------------------------------------------------------------
 
 protected:
+
+    // 커맨드 핸들링 함수들 ----------------------------------------------------------------------------------------
+    bool HandleAddCommand_(const UItemDataAsset* InItemData, int32 InCount, FInventoryCommandResult& OutResult);
+    bool HandleSearchCommand_(const UItemDataAsset* InItemData, int32 InCount, FInventoryCommandResult& OutResult);
+    bool HandleMoveCommand_(int32 InSourceIndex, int32 InTargetIndex, FInventoryCommandResult& OutResult);
+    bool HandleDropCommand_(int32 InSlotIndex, const FVector& InDropLocation, FInventoryCommandResult& OutResult);
+    bool HandleUseCommand_(int32 InSlotIndex, FInventoryCommandResult& OutResult);
+    bool HandleClearCommand_(int32 InSlotIndex, FInventoryCommandResult& OutResult);
+    //bool HandleMoneyCommand(int32 InMoneyDiff, FInventoryCommandResult& OutResult);
+    //bool HandleSellCommand(int32 InSlotIndex, FInventoryCommandResult& OutResult);
+    bool HandleEquipCommand_(int32 InSlotIndex, FInventoryCommandResult& OutResult);
+    // ------------------------------------------------------------------------------------------------------------
+
     // 인벤토리에 돈을 추가하거나 감소시키는 함수
-    UFUNCTION(BlueprintCallable)
-    void AddMoney(int32 InIncome);
+    //UFUNCTION(BlueprintCallable)
+    //void AddMoney(int32 InIncome);
 
     // 인벤토리에 아이템을 추가하는 함수
     UFUNCTION(BlueprintCallable)
-    int32 AddItem(const UItemDataAsset* InItemData, int32 InCount);
+    int32 AddItem_(const UItemDataAsset* InItemData, int32 InCount);
 
     // 인벤토리의 특정 슬롯에 들어있는 아이템 사용하는 함수
-    void UseItem(int32 InIndex);
+    void UseItem_(int32 InIndex);
 
     // 인벤토리의 특정 슬롯에 들어있는 아이템을 장비하는 함수
-    void EquipItem(int32 InIndex);
+    void EquipItem_(int32 InIndex);
 
     // 특정 슬롯에 아이템과 개수를 설정하는 함수
-    void SetSlot(int32 InSlotIndex, const UItemDataAsset* InItemData, int32 InCount);
+    void SetSlot_(int32 InSlotIndex, const UItemDataAsset* InItemData, int32 InCount);
 
     // 특정 슬롯의 아이템 개수를 업데이트 하는 함수
-    void UpdateSlotCount(int32 InSlotIndex, int32 InDeltaCount);
+    void UpdateSlotCount_(int32 InSlotIndex, int32 InDeltaCount);
 
     // 특정 슬롯을 비우는 함수
-    void ClearSlot(int32 InSlotIndex);
+    void ClearSlot_(int32 InSlotIndex);
 
     // 인덱스가 적절한 범위인지 확인하는 함수
-    inline bool IsValidIndex(int32 InSlotIndex) const {
+    inline bool IsValidIndex_(int32 InSlotIndex) const {
         return (InSlotIndex <= InventorySize) && (InSlotIndex >= 0);
     }; // 임시슬롯 때문에 접근 범위는 InventorySize까지
 
-    // 커맨드 핸들링 함수들 ----------------------------------------------------------------------------------------
-    bool HandleAddCommand(const UItemDataAsset* InItemData, int32 InCount, FInventoryCommandResult& OutResult);
-    bool HandleMoveCommand(int32 InSourceIndex, int32 InTargetIndex, FInventoryCommandResult& OutResult);
-    bool HandleDropCommand(int32 InSlotIndex, const FVector& InDropLocation, FInventoryCommandResult& OutResult);
-    bool HandleUseCommand(int32 InSlotIndex, FInventoryCommandResult& OutResult);
-    bool HandleClearCommand(int32 InSlotIndex, FInventoryCommandResult& OutResult);
-    //bool HandleMoneyCommand(int32 InMoneyDiff, FInventoryCommandResult& OutResult);
-    //bool HandleSellCommand(int32 InSlotIndex, FInventoryCommandResult& OutResult);
-    bool HandleEquipCommand(int32 InSlotIndex, FInventoryCommandResult& OutResult);
-    // ------------------------------------------------------------------------------------------------------------
-
-    // 사용안함. Called when the game starts
     virtual void BeginPlay() override;
-
-    // 사용안함. Called every frame
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
     // 같은 종류의 아이템이 있는 슬롯을 찾는 함수(남은 스택이 있어야함)
-    int32 FindSlotWithItem(const UItemDataAsset* InItemData, int32 InStartIndex = 0);
+    int32 FindSlotWithItem__(const UItemDataAsset* InItemData, int32 InStartIndex = 0);
 
     // 비어있는 슬롯을 찾는 함수
-    int32 FindEmptySlot();
+    int32 FindEmptySlot__();
 
 public:
     // 슬롯에 변화가 생겼을 때 발동할 델리게이트(싱글캐스트)
@@ -161,7 +164,7 @@ protected:
     int32 Money = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Slot")
-    TArray<FInvenSlot> Slots;	// 크기는 InventorySize + 1(임시 슬롯)
+    TArray<FInventorySlot> Slots_;	// 크기는 InventorySize + 1(임시 슬롯)
 
     //protected:
     //    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Slot")
