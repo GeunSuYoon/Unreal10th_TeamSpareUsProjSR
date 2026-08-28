@@ -17,6 +17,7 @@ void ASpaceShipActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	this->SpaceShipRotateState_ = FRotator::ZeroRotator;
 	FActorSpawnParameters Params;
 	Params.Owner = this;
 
@@ -28,6 +29,7 @@ void ASpaceShipActor::BeginPlay()
 	if (this->MainPanel_)
 	{
 		this->MainPanel_->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+		this->MainPanel_->OnSpaceShipRotateInput.BindUFunction(this, TEXT("SpaceShipRotateInput_"));
 	}
 }
 
@@ -59,5 +61,20 @@ void ASpaceShipActor::RepairDurability_Implementation(float InDurability)
 void ASpaceShipActor::ConsumDurability_Implementation(float InDurability)
 {
 	this->CurrentDurability_ = FMath::Min(this->CurrentDurability_ - InDurability, 0.0f);
+}
+
+void ASpaceShipActor::SpaceShipRotateInput_(const FVector2D& InInput)
+{
+	float	DeltaTime = GetWorld()->GetDeltaSeconds();
+
+	FVector2D	InputToRotate = InInput.GetClampedToMaxSize(1.0f) * this->RotateSpeed_ * DeltaTime;
+
+	this->SpaceShipRotateState_ += FRotator(
+		-InputToRotate.Y,	// Pitch
+		-InputToRotate.X,	// Yaw
+		0.0f				// Roll
+	);
+	this->OnSpaceShipRotate.ExecuteIfBound(this->SpaceShipRotateState_);
+	//AddActorLocalRotation(DeltaRotation);
 }
 
