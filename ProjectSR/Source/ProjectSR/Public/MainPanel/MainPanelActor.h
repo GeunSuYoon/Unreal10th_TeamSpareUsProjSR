@@ -11,6 +11,7 @@
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMainPanelInteract, EMainPanelType, InMainPanelType);
 DECLARE_DYNAMIC_DELEGATE(FOnMainPanelClose);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipRotateInput, const FVector2D&, InInput);
 
 class ASpaceShipActor;
 class UInventoryComponent;
@@ -43,9 +44,11 @@ public:
 	void	OpenSpaceShipUpgradePanelWidget();
 	void	OpenItemCraftingPanelWidget();
 	void	CloseSubPanelWidget();
+	void	SpaceShipRotateInput(const FVector2D& InInput);
 
 	FOnMainPanelInteract	OnMainPanelInteract;
 	FOnMainPanelClose		OnMainPanelClose;
+	FOnSpaceShipRotateInput	OnSpaceShipRotateInput;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

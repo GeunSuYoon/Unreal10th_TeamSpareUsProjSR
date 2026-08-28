@@ -13,6 +13,8 @@ class ULazerComponent;
 class UMachineArmComponent;
 class UInventoryComponent;
 
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipRotate, const FRotator&, InSpaceShipRotate);
+
 UCLASS()
 class PROJECTSR_API ASpaceShipActor : public AActor, public IDurabilityInterface, public IInventoryComponentInterface
 {
@@ -52,7 +54,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UStaticMeshComponent>	SpaceShipMesh = nullptr;
 
+	FOnSpaceShipRotate	OnSpaceShipRotate;
+
 protected:
+	void	SpaceShipRotateInput_(const FVector2D& InInput);
+
 	// 지금 우주선의 강화 단계
 	UPROPERTY(BlueprintReadOnly, Category = "Level")
 	int32	Level_ = 0;
@@ -84,4 +90,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Energy")
 	float	OperationalEnergy_ = 0.0f;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Rotate")
+	float	RotateSpeed_ = 0.0f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Rotate")
+	FRotator	SpaceShipRotateState_;
 };
