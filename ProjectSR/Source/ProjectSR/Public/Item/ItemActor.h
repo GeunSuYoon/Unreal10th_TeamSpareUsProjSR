@@ -26,6 +26,8 @@ public:
     virtual void InitializeItemActor(const UItemDataAsset* InItemData);
     virtual void Interact_Implementation(AActor* InTarget) override;
 
+	void	SetRelativeVelocity(const FVector& InVelocity);
+
 protected:
     virtual void OnConstruction(const FTransform& Transform) override;
     virtual void BeginPlay() override;
@@ -43,5 +45,8 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
+
+private:
+	FVector RelativeVelocity__;
 
 };
