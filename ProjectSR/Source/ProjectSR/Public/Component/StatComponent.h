@@ -88,7 +88,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseMaxHealth = 100.0f;
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseMaxOxygen = 150.0f;
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float MaxHunger = 100.0f;	// 장비 영향 없다고 가정
-	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseGravityMoveSpeed = 600.0f;
+	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseMoveSpeed = 600.0f;
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseZeroGravityMoveSpeed = 400.0f;
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseBoostSpeed = 900.0f;
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseZeroGravityBoostSpeed = 700.0f;
