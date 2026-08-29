@@ -2,6 +2,7 @@
 
 
 #include "Framework/Subsystem/ItemActorFactorySubsystem.h"
+#include "Framework/Subsystem/ObjectPoolSubsystem.h"
 #include "Data/Item/ItemDataAsset.h"
 #include "Item/ItemActor.h"
 
@@ -127,11 +128,17 @@ void UItemActorFactorySubsystem::K2_SpawnItemActorAsync(const UItemDataAsset* In
 
 AItemActor* UItemActorFactorySubsystem::SpawnProcess__(const UItemDataAsset* InItemData, const FTransform& InTransform)
 {
+    if (!InItemData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnProcess__()] : InItemData가 nullptr입니다."));
+        return nullptr;
+    }
+
     UWorld* World = GetWorld();
 
     if (!World)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnProcess__()] : World가 없습니다."));
+        UE_LOG(LogTemp, Error, TEXT("[UItemActorFactorySubsystem::SpawnProcess__()] : World가 nullptr입니다!"));
         return nullptr;
     }
 
@@ -144,10 +151,15 @@ AItemActor* UItemActorFactorySubsystem::SpawnProcess__(const UItemDataAsset* InI
         return nullptr;
     }
 
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    UObjectPoolSubsystem* ObjectPool = World->GetSubsystem<UObjectPoolSubsystem>();
 
-    AItemActor* Spawned = World->SpawnActor<AItemActor>(ItemActorClass, InTransform, SpawnParams);
+    if (!ObjectPool)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnProcess__()] : ObjectPoolSubsystem이 nullptr 입니다."));
+        return nullptr;
+    }
+
+    AItemActor* Spawned = ObjectPool->SpawnFromPool<AItemActor>(ItemActorClass, InTransform);
 
     if (Spawned)
     {
