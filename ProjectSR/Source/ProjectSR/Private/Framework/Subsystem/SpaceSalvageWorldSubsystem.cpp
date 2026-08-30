@@ -163,22 +163,38 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 	FVector		SpawnPos = SpaceShipForward * this->ItemSpawnDist__;
 	FTransform	WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
 
-	UItemDataAsset*	TargetItemData = this->SelectSpawnItemData__();
-	if (!TargetItemData)
-	{
-		return ;
-	}
-	AItemActor* ItemActor = ItemFactory->SpawnItemActor(TargetItemData, WorldSpawnTransform);
-
-	// 먼가 바꿔야한대영
-	ItemActor->AttachToComponent(ItemPivot, FAttachmentTransformRules::KeepWorldTransform);
 	SpaceShipBackward.Y += FMath::FRandRange(-0.3, 0.3);
 	SpaceShipBackward.Z += FMath::FRandRange(-0.3, 0.3);
-	float	ItemSpeed = this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
 
-	SpaceShipBackward *= ItemSpeed;
-	ItemActor->SetRelativeVelocity(SpaceShipBackward);
-	UE_LOG(LogTemp, Log, TEXT("SpawnItemActor %s가 [%.1f %.1f %.1f]에 생성됐습니다."), *ItemActor->GetName(), SpawnPos.X, SpawnPos.Y, SpawnPos.Z);
+	const float ItemSpeed =
+		this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
+	const FVector Velocity = SpaceShipBackward * ItemSpeed;
+
+	TWeakObjectPtr<USceneComponent> WeakPivot(ItemPivot);
+	UItemDataAsset*	TargetItemData = this->SelectSpawnItemData__();
+
+	ItemFactory->SpawnItemActorAsync(
+		TargetItemData,
+		WorldSpawnTransform,
+		FOnPickupSpawned::CreateWeakLambda(
+			this,
+			[WeakPivot, Velocity](AItemActor* ItemActor)
+			{
+				if (!IsValid(ItemActor))
+				{
+					return;
+				}
+				if (!WeakPivot.IsValid())
+				{
+					ItemActor->Destroy();
+					return;
+				}
+				ItemActor->AttachToComponent(WeakPivot.Get(), FAttachmentTransformRules::KeepWorldTransform);				ItemActor->SetRelativeVelocity(Velocity);
+				ItemActor->SetRelativeVelocity(Velocity);
+
+				UE_LOG(LogTemp, Log, TEXT("아이템 %s 생성 위치: %s"), *ItemActor->GetName(), *ItemActor->GetActorLocation().ToString()	);
+			})
+	);
 }
 
 void USpaceSalvageWorldSubsystem::UpdateVirtualMeteors__(float CurrentWorldTime)
