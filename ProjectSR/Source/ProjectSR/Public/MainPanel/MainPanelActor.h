@@ -55,9 +55,9 @@ protected:
 	TObjectPtr<UStaticMeshComponent>	MainPanelMesh_ = nullptr;
 
 private:
-	TWeakObjectPtr<ASpaceShipActor>		SpaceShip__ = nullptr;
-	TWeakObjectPtr<UInventoryComponent>	Warehouse__ = nullptr;
-	TWeakObjectPtr<UCraftComponent>		Craft__ = nullptr;
+	TWeakObjectPtr<ASpaceShipActor>	SpaceShip__ = nullptr;
+	TObjectPtr<UInventoryComponent>	Warehouse__ = nullptr;
+	TObjectPtr<UCraftComponent>		Craft__ = nullptr;
 
 	EMainPanelType	MainPanelState = EMainPanelType::None;
 };
