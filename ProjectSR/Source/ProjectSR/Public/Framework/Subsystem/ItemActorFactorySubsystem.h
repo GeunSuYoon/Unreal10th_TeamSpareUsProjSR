@@ -38,7 +38,7 @@ public:
     // 아이템 액터 스폰(비동기 방식, 로딩 완료 후 OnSpawned 델리게이트 호출)
     void SpawnItemActorAsync(const UItemDataAsset* InItemData, const FTransform& InTransform, FOnPickupSpawned OnSpawned);
 
-    UFUNCTION(BlueprintCallable, Category = "Factory|Pickup", meta = (DisplayName = "Spawn Pickup Async"))
+    UFUNCTION(BlueprintCallable, Category = "Factory|Pickup", meta = (DisplayName = "Spawn ItemActor Async"))
     void K2_SpawnItemActorAsync(const UItemDataAsset* InItemData, const FTransform& InTransform, FOnPickupSpawnedDynamic OnSpawned);
 
 private:
