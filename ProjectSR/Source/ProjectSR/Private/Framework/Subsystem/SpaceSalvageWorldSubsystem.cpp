@@ -110,6 +110,18 @@ void USpaceSalvageWorldSubsystem::EndOfDay()
 	TimerManager.ClearTimer(this->ItemSpawnHandler__);
 }
 
+void USpaceSalvageWorldSubsystem::SpaceShipRotateDetect(const FRotator& InRotate)
+{
+	if (this->SpaceRootActor__)
+	{
+		this->SpaceRootActor__->RotateSpaceRoot(InRotate);
+	}
+	if (this->MeteorAvoidanceComponent__)
+	{
+		//this->MeteorAvoidanceComponent__->
+	}
+}
+
 void USpaceSalvageWorldSubsystem::SpawnSpaceRoot__()
 {
 	if (this->SpaceRootActor__)
