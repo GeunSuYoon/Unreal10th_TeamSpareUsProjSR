@@ -2,6 +2,7 @@
 
 
 #include "Framework/Subsystem/ItemActorFactorySubsystem.h"
+#include "Framework/Subsystem/ObjectPoolSubsystem.h"
 #include "Data/Item/ItemDataAsset.h"
 #include "Item/ItemActor.h"
 
@@ -26,7 +27,7 @@ void UItemActorFactorySubsystem::Initialize(FSubsystemCollectionBase& Collection
 void UItemActorFactorySubsystem::Deinitialize()
 {
     // 진행중인 비동기 로딩 핸들 정리(월드가 종료될 경우에는 콜백을 호출하지 않음)
-    for (TSharedPtr<FStreamableHandle>& Handle : ActiveStreamableHandles)
+    for (TSharedPtr<FStreamableHandle>& Handle : ActiveStreamableHandles__)
     {
         if (Handle.IsValid() && Handle->IsActive())
         {
@@ -34,7 +35,7 @@ void UItemActorFactorySubsystem::Deinitialize()
         }
     }
 
-    ActiveStreamableHandles.Empty();
+    ActiveStreamableHandles__.Empty();
     UE_LOG(LogTemp, Log, TEXT("[UItemActorFactorySubsystem::Deinitialize()] : Deinitialized"));
 
     Super::Deinitialize();
@@ -55,7 +56,7 @@ AItemActor* UItemActorFactorySubsystem::SpawnItemActor(const UItemDataAsset* InI
         return nullptr;
     }
 
-    return SpawnProcess(InItemData, InTransform);
+    return SpawnProcess__(InItemData, InTransform);
 }
 
 void UItemActorFactorySubsystem::SpawnItemActorAsync(const UItemDataAsset* InItemData, const FTransform& InTransform, FOnPickupSpawned OnSpawned)
@@ -70,7 +71,7 @@ void UItemActorFactorySubsystem::SpawnItemActorAsync(const UItemDataAsset* InIte
     // 아이템 데이터가 이미 로딩된 상태면 즉시 스폰
     if (InItemData->IsLoaded())
     {
-        AItemActor* Spawned = SpawnProcess(InItemData, InTransform);
+        AItemActor* Spawned = SpawnProcess__(InItemData, InTransform);
         OnSpawned.ExecuteIfBound(Spawned);
         return;
     }
@@ -85,15 +86,15 @@ void UItemActorFactorySubsystem::SpawnItemActorAsync(const UItemDataAsset* InIte
                 {
                     UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnItemActorAsync()] : 비동기 로딩 요청 중 InItemData가 유효하지 않습니다."));
                     OnSpawned.ExecuteIfBound(nullptr);
-                    CleanupCompletedHandles();
+                    CleanupCompletedHandles__();
                     return;
                 }
 
                 const UItemDataAsset* LoadedItemData = WeakItemData.Get();
-                AItemActor* Spawned = SpawnProcess(LoadedItemData, InTransform);
+                AItemActor* Spawned = SpawnProcess__(LoadedItemData, InTransform);
 
                 OnSpawned.ExecuteIfBound(Spawned);
-                CleanupCompletedHandles();
+                CleanupCompletedHandles__();
 
                 UE_LOG(LogTemp, Log, TEXT("[UItemActorFactorySubsystem::SpawnItemActorAsync()] : 비동기 스폰 완료 (%s)"),
                        *LoadedItemData->DisplayName.ToString());
@@ -103,7 +104,7 @@ void UItemActorFactorySubsystem::SpawnItemActorAsync(const UItemDataAsset* InIte
 
     if (Handle.IsValid())
     {
-        ActiveStreamableHandles.Add(Handle);
+        ActiveStreamableHandles__.Add(Handle);
     }
     else
     {
@@ -125,13 +126,19 @@ void UItemActorFactorySubsystem::K2_SpawnItemActorAsync(const UItemDataAsset* In
     );
 }
 
-AItemActor* UItemActorFactorySubsystem::SpawnProcess(const UItemDataAsset* InItemData, const FTransform& InTransform)
+AItemActor* UItemActorFactorySubsystem::SpawnProcess__(const UItemDataAsset* InItemData, const FTransform& InTransform)
 {
+    if (!InItemData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnProcess__()] : InItemData가 nullptr입니다."));
+        return nullptr;
+    }
+
     UWorld* World = GetWorld();
 
     if (!World)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnProcess()] : World가 없습니다."));
+        UE_LOG(LogTemp, Error, TEXT("[UItemActorFactorySubsystem::SpawnProcess__()] : World가 nullptr입니다!"));
         return nullptr;
     }
 
@@ -139,34 +146,39 @@ AItemActor* UItemActorFactorySubsystem::SpawnProcess(const UItemDataAsset* InIte
 
     if (!ItemActorClass)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnProcess()] : %s의 ItemActorClass가 없습니다."),
+        UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnProcess__()] : %s의 ItemActorClass가 없습니다."),
                *InItemData->DisplayName.ToString());
         return nullptr;
     }
 
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    UObjectPoolSubsystem* ObjectPool = World->GetSubsystem<UObjectPoolSubsystem>();
 
-    AItemActor* Spawned = World->SpawnActor<AItemActor>(ItemActorClass, InTransform, SpawnParams);
+    if (!ObjectPool)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnProcess__()] : ObjectPoolSubsystem이 nullptr 입니다."));
+        return nullptr;
+    }
+
+    AItemActor* Spawned = ObjectPool->SpawnFromPool<AItemActor>(ItemActorClass, InTransform);
 
     if (Spawned)
     {
         Spawned->InitializeItemActor(InItemData);
-        UE_LOG(LogTemp, Log, TEXT("[UItemActorFactorySubsystem::SpawnProcess()] : %s를 %s 위치에 스폰했습니다."),
+        UE_LOG(LogTemp, Log, TEXT("[UItemActorFactorySubsystem::SpawnProcess__()] : %s를 %s 위치에 스폰했습니다."),
                *InItemData->DisplayName.ToString(), *InTransform.GetLocation().ToString());
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("[UItemActorFactorySubsystem::SpawnProcess()] : %s를 스폰하는데 실패했습니다."),
+        UE_LOG(LogTemp, Error, TEXT("[UItemActorFactorySubsystem::SpawnProcess__()] : %s를 스폰하는데 실패했습니다."),
                *InItemData->DisplayName.ToString());
     }
 
     return Spawned;
 }
 
-void UItemActorFactorySubsystem::CleanupCompletedHandles()
+void UItemActorFactorySubsystem::CleanupCompletedHandles__()
 {
-    ActiveStreamableHandles.RemoveAll(
+    ActiveStreamableHandles__.RemoveAll(
         [](const TSharedPtr<FStreamableHandle>& Handle) {
             return !Handle.IsValid() || Handle->HasLoadCompleted();
         }

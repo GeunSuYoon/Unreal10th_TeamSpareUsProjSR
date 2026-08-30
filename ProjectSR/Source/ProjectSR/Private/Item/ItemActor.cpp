@@ -6,6 +6,7 @@
 #include "Component/InventoryComponent.h"
 #include "CommonHeader/InventoryCommandTypes.h"
 #include "Data/Item/ItemDataAsset.h"
+#include "Framework/Subsystem/ObjectPoolSubsystem.h"
 
 #include "Components/SphereComponent.h"
 
@@ -22,6 +23,28 @@ AItemActor::AItemActor()
     Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
     Mesh->SetupAttachment(GetRootComponent());
     Mesh->SetCollisionProfileName("NoCollision");
+}
+
+void AItemActor::FinishUsingPoolable()
+{
+    if (UObjectPoolSubsystem* ObjectPool = GetWorld()->GetSubsystem<UObjectPoolSubsystem>())
+    {
+        ObjectPool->ReturnToPool(this);
+    }
+}
+
+void AItemActor::OnSpawnFromPool_Implementation()
+{
+    SetActorHiddenInGame(false);
+    SetActorTickEnabled(true);
+    SetActorEnableCollision(true);
+}
+
+void AItemActor::OnReturnToPool_Implementation()
+{
+    SetActorHiddenInGame(true);
+    SetActorTickEnabled(false);
+    SetActorEnableCollision(false);
 }
 
 void AItemActor::InitializeItemActor(const UItemDataAsset* InItemData)
@@ -61,7 +84,7 @@ void AItemActor::Interact_Implementation(AActor* InTarget)
 
     if (Result.bSuccess)
     {
-        Destroy();
+        FinishUsingPoolable();
     }
 }
 
