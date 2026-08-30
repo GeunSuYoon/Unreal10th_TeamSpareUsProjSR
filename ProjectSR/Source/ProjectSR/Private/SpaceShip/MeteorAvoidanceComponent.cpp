@@ -34,13 +34,17 @@ void UMeteorAvoidanceComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 void UMeteorAvoidanceComponent::MeteorDetect(const FMeteor& InMeteor)
 {
-	this->TargetMeteorList_.Add(InMeteor);
+	this->TargetMeteor_ = InMeteor;
 	//this->TargetMeteor_ = InMeteor;
 }
 
-void UMeteorAvoidanceComponent::SpaceShipRotateChange(const FRotator& InSpaceShipRotate)
+void UMeteorAvoidanceComponent::SpaceShipRotateChange(const FRotator& InRotate)
 {
-	this->SpaceShipRotate_ = InSpaceShipRotate;
+	this->SpaceShipForward_ = InRotate.Vector();
+	if (!this->TargetMeteor_)
+	{
+		return ;
+	}
 }
 
 void UMeteorAvoidanceComponent::EvaluateMeteorAvoidance()

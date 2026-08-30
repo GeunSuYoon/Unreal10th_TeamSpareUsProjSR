@@ -29,14 +29,17 @@ public:
 	FOnMeteorDetect	OnMeteorDetect;
 
 	void	MeteorDetect(const FMeteor& InMeteor);
-	void	SpaceShipRotateChange(const FRotator& InSpaceShipRotate);
+	void	SpaceShipRotateChange(const FRotator& InRotate);
 	void	EvaluateMeteorAvoidance();
 
 protected:
-	TArray<FMeteor>	TargetMeteorList_;
+	TOptional<FMeteor>	TargetMeteor_;
 
-	FRotator	SpaceShipRotate_;
+	FVector				SpaceShipForward_;
 
 private:
 	//void	
+	FTimerHandle	MeteorDetectTimer__;
+
+	float			MeteorDetectTime__ = 10.0f;
 };
