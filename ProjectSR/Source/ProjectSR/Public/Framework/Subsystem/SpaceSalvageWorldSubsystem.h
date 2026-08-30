@@ -50,6 +50,7 @@ public:
 	void	EndOfDay();
 
 	UFUNCTION(BlueprintCallable)
+	void	SpaceShipRotateDetect(const FRotator& InRotate);
 	ASpaceRootActor*	GetSpaceRootActor() { return (this->SpaceRootActor__); }
 private:
 	void	SpawnSpaceRoot__();
@@ -68,7 +69,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<ASpaceShipActor>					SpaceShipActor__ = nullptr;
 
-	TWeakObjectPtr<UMeteorAvoidanceComponent>	MeteorAvoidanceComponent__;
+	TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
 
 	TObjectPtr<USpaceMapItemSpawnRateDataAsset>	ItemSpawnRateData__ = nullptr;
 	// USTRUCT는 값으로 보관
