@@ -24,6 +24,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	//void	RotateSpaceRoot(const FVector2D& InInput, const float InRotateSpeed);
+	UFUNCTION(BlueprintCallable)
 	void	RotateSpaceRoot(const FRotator& InRotate);
 
 	inline USceneComponent* GetBackgroundPivot() const { return (this->BackgroundPivot_); };

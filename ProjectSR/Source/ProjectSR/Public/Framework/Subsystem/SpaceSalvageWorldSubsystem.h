@@ -49,6 +49,8 @@ public:
 	void	RegisterVirtualMeteor(const FMeteor& InMeteor);
 	void	EndOfDay();
 
+	UFUNCTION(BlueprintCallable)
+	ASpaceRootActor*	GetSpaceRootActor() { return (this->SpaceRootActor__); }
 private:
 	void	SpawnSpaceRoot__();
 	void	SpawnItemActor__();
