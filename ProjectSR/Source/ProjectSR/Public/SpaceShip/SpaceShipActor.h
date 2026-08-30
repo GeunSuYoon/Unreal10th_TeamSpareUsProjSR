@@ -38,6 +38,7 @@ public:
 	inline float	GetCurrentDurability() const { return (this->CurrentDurability_); }
 	inline float	GetMaxEnergy() const { return (this->MaxEnergy_); }
 	inline float	GetCurrentEnergy() const { return (this->CurrentEnergy_); }
+	inline float	GetMoveSpeed() const { return (this->MoveSpeed_); }
 	//inline UInventoryComponent*	GetWarehouse() const { return (this->Warehouse_); }
 
 	virtual UInventoryComponent*	GetInventoryComponent_Implementation() override;
@@ -89,6 +90,10 @@ protected:
 	float	CurrentEnergy_ = 0.0f;
 	UPROPERTY(BlueprintReadOnly, Category = "Energy")
 	float	OperationalEnergy_ = 0.0f;
+
+	// 가상의 우주선 이동 속도
+	UPROPERTY(BlueprintReadOnly, Category = "Speed")
+	float	MoveSpeed_ = 0.0f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Rotate")
 	float	RotateSpeed_ = 0.0f;
