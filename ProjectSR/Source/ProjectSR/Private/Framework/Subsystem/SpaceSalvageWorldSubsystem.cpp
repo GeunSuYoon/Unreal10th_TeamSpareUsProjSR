@@ -8,6 +8,7 @@
 #include "SpaceShip/MeteorAvoidanceComponent.h"
 #include "Data/SpaceMap/SpaceMapDataAsset.h"
 #include "Interface/PoolableInterface.h"
+#include "Components/SphereComponent.h"
 //#include "Item/ItemActor.h"
 
 bool USpaceSalvageWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
@@ -15,7 +16,10 @@ bool USpaceSalvageWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	Super::ShouldCreateSubsystem(Outer);
 	const UWorld*	World = Cast<UWorld>(Outer);
 
-	UE_LOG(LogTemp, Log, TEXT("SpaceSalvageWorldSubsystem 실행"));
+	UE_LOG(LogTemp, 
+		Log,
+		TEXT("[USpaceSalvageWorldSubsystem::ShouldCreateSubsystem] 실행")
+	);
 
 	return (IsValid(World) && World->IsGameWorld());
 }
@@ -52,37 +56,28 @@ void USpaceSalvageWorldSubsystem::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InItemRateData)
+void USpaceSalvageWorldSubsystem::SetSafeArea(float InArea)
 {
-	if (!InItemRateData)
+	this->SafeArea__ = InArea;
+	this->SafeAreaSquared__ = FMath::Square(InArea);
+	this->SafeAreaVisualizer_->SetSphereRadius(InArea);
+}
+
+void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData)
+{
+	if (!InSpaceMapData)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("MapData가 nullptr입니다."));
+		UE_LOG(LogTemp,
+			Warning,
+			TEXT("[USpaceSalvageWorldSubsystem::SetSpaceMapData] MapData가 nullptr입니다."));
 		return ;
 	}
-	this->ItemSpawnRateData__ = InItemRateData;
-	this->ItemSpawnTimer__ = InItemRateData->ItemSpawnTime;
-	this->ItemSpawnDist__ = InItemRateData->ItemSpawnDist;
-	this->ItemDespawnDist__ = FMath::Square(InItemRateData->ItemSpawnDist * 1.5);
-	this->ItemMoveSpeed__ = InItemRateData->ItemMoveSpeed;
-	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
-
-	TimerManager.SetTimer(
-		this->ItemSpawnHandler__,
-		this,
-		&USpaceSalvageWorldSubsystem::SpawnItemActor__,
-		1.0f,
-		true,
-		this->ItemSpawnTimer__
-	);
-	TimerManager.SetTimer(
-		this->ItemDespawnHandler__,
-		this,
-		&USpaceSalvageWorldSubsystem::DespawnItemActor__,
-		1.0f,
-		true,
-		this->ItemDespawnTimer__
-	);
-	UE_LOG(LogTemp, Log, TEXT("MapData %s가 할당됐습니다."), *InItemRateData->MapName.ToString());
+	this->SpaceMapData__ = InSpaceMapData;
+	this->ItemSpawnTimer__ = InSpaceMapData->ItemSpawnTime;
+	this->ItemSpawnDist__ = InSpaceMapData->ItemSpawnDist;
+	this->ItemDespawnDist__ = FMath::Square(InSpaceMapData->ItemSpawnDist * 1.5);
+	this->ItemMoveSpeed__ = InSpaceMapData->ItemMoveSpeed;
+	this->TryStartItemSpawn__();
 }
 
 void USpaceSalvageWorldSubsystem::RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip)
@@ -93,6 +88,9 @@ void USpaceSalvageWorldSubsystem::RegisterSpaceShipActor(ASpaceShipActor* InSpac
 	}
 	this->SpaceShipActor__ = InSpaceShip;
 	this->SpaceShipActor__.Get()->OnSpaceShipRotate.BindUFunction(this, TEXT("SpaceShipRotateDetect"));
+	//this->SafeAreaSquared__ = FMath::Square(InSpaceShip->GetSafeArea());
+	this->SetSafeArea(InSpaceShip->GetSafeArea());
+	this->TryStartItemSpawn__();
 }
 
 void USpaceSalvageWorldSubsystem::RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent)
@@ -133,6 +131,41 @@ void USpaceSalvageWorldSubsystem::SpaceShipRotateDetect(const FRotator& InRotate
 	//}
 }
 
+void USpaceSalvageWorldSubsystem::TryStartItemSpawn__()
+{
+	// 나중에 주석 지우기
+		//|| !IsValid(this->SpaceShipActor__)
+	if (!IsValid(this->SpaceMapData__)
+		|| !IsValid(this->SpaceRootActor__))
+	{
+		return;
+	}
+	this->SpawnItemLevelStart__(this->SpaceMapData__->ItemSpawnInitCount);
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	TimerManager.SetTimer(
+		this->ItemSpawnHandler__,
+		this,
+		&USpaceSalvageWorldSubsystem::SpawnItemActor__,
+		this->ItemSpawnTimer__,
+		true,
+		0.0f
+	);
+	TimerManager.SetTimer(
+		this->ItemDespawnHandler__,
+		this,
+		&USpaceSalvageWorldSubsystem::DespawnItemActor__,
+		this->ItemDespawnTimer__,
+		true,
+		1.0f
+	);
+	UE_LOG(LogTemp,
+		Log,
+		TEXT("[USpaceSalvageWorldSubsystem::SetSpaceMapData] MapData %s가 할당됐습니다."),
+		*this->SpaceMapData__->MapName.ToString()
+	);
+}
+
 void USpaceSalvageWorldSubsystem::SpawnSpaceRoot__()
 {
 	if (this->SpaceRootActor__)
@@ -153,8 +186,56 @@ void USpaceSalvageWorldSubsystem::SpawnSpaceRoot__()
 	UE_LOG(
 		LogTemp, 
 		Log, 
-		TEXT("Log: [USpaceSalvageWorldSubsystem::SpawnSpaceRoot__] SpaceRootActor %s가 할당됐습니다."),
+		TEXT("[USpaceSalvageWorldSubsystem::SpawnSpaceRoot__] SpaceRootActor %s가 할당됐습니다."),
 		*this->SpaceRootActor__.GetName());
+	this->SafeAreaVisualizer_ = NewObject<USphereComponent>(
+		this->SpaceRootActor__,
+		TEXT("SafeAreaVisualizer")
+	);
+	this->TryStartItemSpawn__();
+	// 테스트용 코드
+	this->SpaceRootActor__->AddInstanceComponent(this->SafeAreaVisualizer_);
+	this->SafeAreaVisualizer_->SetupAttachment(this->SpaceRootActor__->GetRootComponent());
+	this->SafeAreaVisualizer_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	this->SafeAreaVisualizer_->SetGenerateOverlapEvents(false);
+	this->SafeAreaVisualizer_->SetHiddenInGame(false);
+	this->SafeAreaVisualizer_->InitSphereRadius(this->SafeArea__);
+	this->SafeAreaVisualizer_->RegisterComponent();
+}
+
+void USpaceSalvageWorldSubsystem::SpawnItemLevelStart__(int32 InitItemCount)
+{
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("[USpaceSalvageWorldSubsystem::SpawnItemLevelStart__] 아이템 스폰 시작.")
+	);
+	for (int32 SpawnCount = 0; SpawnCount < InitItemCount; SpawnCount++)
+	{
+		FVector	ItemSpawnPos;
+		int32	TryCount = 0;
+		do
+		{
+			TryCount++;
+			ItemSpawnPos = FVector(
+				FMath::FRandRange(-1.0f * this->ItemSpawnDist__, 1.0f * this->ItemSpawnDist__), 
+				FMath::FRandRange(-1.0f * this->ItemSpawnDist__, 1.0f * this->ItemSpawnDist__), 
+				FMath::FRandRange(-1.0f * this->ItemSpawnDist__, 1.0f * this->ItemSpawnDist__)
+				);
+		} while	(
+			FVector::DistSquared(ItemSpawnPos, this->SpaceRootActor__->GetActorLocation()) < this->SafeAreaSquared__
+			&& TryCount < this->ItemSpawnMaxRetryCount__);
+		if (TryCount == this->ItemSpawnMaxRetryCount__)
+		{
+			continue ;
+		}
+		this->SpawnItemActor__();
+	}
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("[USpaceSalvageWorldSubsystem::SpawnItemLevelStart__] 아이템 스폰 종료.")
+	);
 }
 
 void USpaceSalvageWorldSubsystem::SpawnItemActor__()
@@ -162,7 +243,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 	UE_LOG(
 		LogTemp, 
 		Log, 
-		TEXT("Log: [USpaceSalvageWorldSubsystem::SpawnItemActor__] 아이템 스폰 시작.")
+		TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] 아이템 스폰 시작.")
 	);
 	// 테스트용. 나중에 주석 지워야함
 	//if (!this->SpaceShipActor__)
@@ -177,7 +258,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 		UE_LOG(
 			LogTemp, 
 			Error, 
-			TEXT("Error: [USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemFactory가 nullptr입니다.")
+			TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemFactory가 nullptr입니다.")
 		);
 		return ;
 	}
@@ -188,35 +269,23 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 		UE_LOG(
 			LogTemp, 
 			Error, 
-			TEXT("Error: [USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemPivot이 nullptr입니다."));
+			TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemPivot이 nullptr입니다."));
 		return ;
 	}
-	//// 테스트용, 나중에 지우고 주석처리한 코드로 교체해야함
-	//FVector	SpaceShipForward = this->SpaceRootActor__->GetActorForwardVector();
-	////FVector	SpaceShipForward = this->SpaceShipActor__->GetActorForwardVector();
-	//FVector	SpaceShipBackward = -1.0f * SpaceShipForward;
 	FVector	ItemSpawnDir(FMath::FRandRange(-1.0f, 1.0f), FMath::FRandRange(-1.0f, 1.0f), FMath::FRandRange(-1.0f, 1.0f));
 
 	ItemSpawnDir.Normalize();
 	FVector	ItemMoveDir = ItemSpawnDir * -1.0f;
 
-	//SpaceShipForward.Y += FMath::FRandRange(-0.5, 0.5);
-	//SpaceShipForward.Z += FMath::FRandRange(-0.5, 0.5);
 	FVector		SpawnPos = ItemSpawnDir * this->ItemSpawnDist__;
 	FTransform	WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
 	FVector		ToItem = SpawnPos - this->SpaceRootActor__->GetActorLocation();
-	// 테스트용. 나중에 지우고 주석처리한 코드로 교체해야함
-	float		SafeAreaSquared = FMath::Square(500.0f);
-	//float		SafeArea = this->SpaceShipActor__->GetSafeArea();
-	//float		SafeAreaSquared = FMath::Square(SafeArea);
 	int32		TryCount = 0;
 
 	while (TryCount < this->ItemSpawnMaxRetryCount__)
 	{
 		++TryCount;
 
-		//SpaceShipBackward = -this->SpaceRootActor__->GetActorForwardVector();
-		//MoveDir.X += FMath::FRandRange(-1.0f, 1.0f);
 		ItemMoveDir.Y += FMath::FRandRange(-0.2f, 0.2f);
 		ItemMoveDir.Z += FMath::FRandRange(-0.2f, 0.2f);
 		ItemMoveDir.Normalize();
@@ -225,7 +294,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 		float	ClosestDist = FMath::Max(0.0f, -FVector::DotProduct(ToItem, ItemMoveDir));
 		FVector	ClosestPos = ToItem + ItemMoveDir * ClosestDist;
 
-		if (ClosestPos.SizeSquared() > SafeAreaSquared)
+		if (ClosestPos.SizeSquared() > this->SafeAreaSquared__)
 		{
 			break;
 		}
@@ -236,7 +305,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 			UE_LOG(
 				LogTemp,
 				Warning,
-				TEXT("Warning: [USpaceSalvageWorldSubsystem::SpawnItemActor__] 안전한 아이템 속도를 찾지 못했습니다."));
+				TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] 안전한 아이템 속도를 찾지 못했습니다."));
 			return;
 		}
 	}
@@ -259,7 +328,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 					UE_LOG(
 						LogTemp,
 						Error,
-						TEXT("Error: [USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemActor가 스폰되지 않았습니다.")
+						TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemActor가 스폰되지 않았습니다.")
 					);
 					return;
 				}
@@ -268,7 +337,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 					UE_LOG(
 						LogTemp,
 						Error,
-						TEXT("Error: [USpaceSalvageWorldSubsystem::SpawnItemActor__] WeakPivot이 Valid하지 않습니다.")
+						TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] WeakPivot이 Valid하지 않습니다.")
 					);
 					ItemActor->Destroy();
 					return;
@@ -283,7 +352,126 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 				UE_LOG(
 					LogTemp,
 					Log,
-					TEXT("Log: [USpaceSalvageWorldSubsystem::SpawnItemActor__] 아이템 %s 생성 위치: %s"),
+					TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] 아이템 %s 생성 위치: %s"),
+					*ItemActor->GetName(),
+					*ItemActor->GetActorLocation().ToString()
+				);
+			})
+	);
+}
+
+void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
+{
+	// 테스트용. 나중에 주석 지워야함
+	//if (!this->SpaceShipActor__)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("SpaceShipActor가 nullptr입니다."));
+	//	return ;
+	//}
+	UItemActorFactorySubsystem* ItemFactory = GetWorld()->GetSubsystem<UItemActorFactorySubsystem>();
+
+	if (!ItemFactory)
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemFactory가 nullptr입니다.")
+		);
+		return;
+	}
+	USceneComponent* ItemPivot = SpaceRootActor__->GetItemPivot();
+
+	if (!IsValid(ItemPivot))
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemPivot이 nullptr입니다."));
+		return;
+	}
+	FVector	SpawnPos = InLocation;
+	FVector	ItemMoveDir = SpawnPos - this->SpaceRootActor__->GetActorLocation();
+	ItemMoveDir.Normalize();
+
+	//FVector		SpawnPos = ItemSpawnDir * this->ItemSpawnDist__;
+	FTransform	WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
+	FVector		ToItem = SpawnPos - this->SpaceRootActor__->GetActorLocation();
+	// 테스트용. 나중에 지우고 주석 코드 주석 해제
+	float		SafeAreaSquared = FMath::Square(500.0f);
+	//float		SafeAreaSquared = FMath::Square(this->SpaceShipActor__->GetSafeArea());
+	int32		TryCount = 0;
+
+	while (TryCount < this->ItemSpawnMaxRetryCount__)
+	{
+		++TryCount;
+
+		ItemMoveDir.Y += FMath::FRandRange(-0.2f, 0.2f);
+		ItemMoveDir.Z += FMath::FRandRange(-0.2f, 0.2f);
+		ItemMoveDir.Normalize();
+
+		// 앞으로 이동할 경로에서 우주선에 가장 가까워지는 지점
+		float	ClosestDist = FMath::Max(0.0f, -FVector::DotProduct(ToItem, ItemMoveDir));
+		FVector	ClosestPos = ToItem + ItemMoveDir * ClosestDist;
+
+		if (ClosestPos.SizeSquared() > SafeAreaSquared)
+		{
+			break;
+		}
+
+		if (TryCount == this->ItemSpawnMaxRetryCount__)
+		{
+			// 안전한 방향을 찾지 못하면 이번 스폰은 건너뜀
+			UE_LOG(
+				LogTemp,
+				Warning,
+				TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] 안전한 아이템 속도를 찾지 못했습니다."));
+			return;
+		}
+	}
+
+	float	ItemSpeed = this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
+	FVector	Velocity = ItemMoveDir * ItemSpeed;
+
+	TWeakObjectPtr<USceneComponent> WeakPivot(ItemPivot);
+	UItemDataAsset* TargetItemData = this->SelectSpawnItemData__();
+
+	ItemFactory->SpawnItemActorAsync(
+		TargetItemData,
+		WorldSpawnTransform,
+		FOnPickupSpawned::CreateWeakLambda(
+			this,
+			[this, WeakPivot, Velocity](AItemActor* ItemActor)
+			{
+				if (!IsValid(ItemActor))
+				{
+					UE_LOG(
+						LogTemp,
+						Error,
+						TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemActor가 스폰되지 않았습니다.")
+					);
+					return;
+				}
+				if (!WeakPivot.IsValid())
+				{
+					UE_LOG(
+						LogTemp,
+						Error,
+						TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] WeakPivot이 Valid하지 않습니다.")
+					);
+					ItemActor->Destroy();
+					return;
+				}
+				ItemActor->AttachToComponent(
+					WeakPivot.Get(),
+					FAttachmentTransformRules::KeepWorldTransform
+				);
+				ItemActor->SetRelativeVelocity(Velocity);
+				ItemActor->SetRelativeVelocity(Velocity);
+				this->SpawnedItem__.AddUnique(ItemActor);
+				UE_LOG(
+					LogTemp,
+					Log,
+					TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] 아이템 %s 생성 위치: %s"),
 					*ItemActor->GetName(),
 					*ItemActor->GetActorLocation().ToString()
 				);
@@ -311,7 +499,7 @@ void USpaceSalvageWorldSubsystem::DespawnItemActor__()
 			UE_LOG(
 				LogTemp, 
 				Log, 
-				TEXT("Log: [USpaceSalvageWorldSubsystem::DespawnItemActor__] 아이템 %s가 Return됐습니다."), 
+				TEXT("[USpaceSalvageWorldSubsystem::DespawnItemActor__] 아이템 %s가 Return됐습니다."), 
 				*TargetItem->GetName()
 			);
 		}
@@ -327,28 +515,24 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__()
 	//float	MeteorRadius;
 }
 
-//void USpaceSalvageWorldSubsystem::UpdateVirtualMeteors__(float CurrentWorldTime)
-//{
-//}
-
 void USpaceSalvageWorldSubsystem::ResolveMeteor__(FMeteor& Meteor)
 {
 }
 
 UItemDataAsset* USpaceSalvageWorldSubsystem::SelectSpawnItemData__()
 {
-	if (!this->ItemSpawnRateData__)
+	if (!this->SpaceMapData__)
 	{
 		UE_LOG(
 			LogTemp, 
 			Error,
-			TEXT("Error: [USpaceSalvageWorldSubsystem::SelectSpawnItemData__] ItemSpawnRateData가 nullptr입니다.")
+			TEXT("[USpaceSalvageWorldSubsystem::SelectSpawnItemData__] ItemSpawnRateData가 nullptr입니다.")
 		);
 		return (nullptr);
 	}
 	int32	TotalWeight = 0;
 
-	for (auto& RateData : this->ItemSpawnRateData__->ItemSpawnRate)
+	for (auto& RateData : this->SpaceMapData__->ItemSpawnRate)
 	{
 		TotalWeight += RateData.Value;
 	}
@@ -356,14 +540,14 @@ UItemDataAsset* USpaceSalvageWorldSubsystem::SelectSpawnItemData__()
 	{
 		UE_LOG(
 			LogTemp, 
-			Log, 
-			TEXT("TotalWeight가 0 이하입니다.")
+			Warning, 
+			TEXT("[USpaceSalvageWorldSubsystem::SelectSpawnItemData__] TotalWeight가 0 이하입니다.")
 		);
 		return (nullptr);
 	}
 	int32	RandomWeight = FMath::RandRange(0, TotalWeight);
 
-	for (auto& RateData : this->ItemSpawnRateData__->ItemSpawnRate)
+	for (auto& RateData : this->SpaceMapData__->ItemSpawnRate)
 	{
 		if (!IsValid(RateData.Key) || RateData.Value <= 0)
 		{
@@ -379,7 +563,7 @@ UItemDataAsset* USpaceSalvageWorldSubsystem::SelectSpawnItemData__()
 	UE_LOG(
 		LogTemp, 
 		Error, 
-		TEXT("Error: [USpaceSalvageWorldSubsystem::SelectSpawnItemData__] 아이템이 생성되지 않았습니다.")
+		TEXT("[USpaceSalvageWorldSubsystem::SelectSpawnItemData__] 아이템이 생성되지 않았습니다.")
 	);
 	return (nullptr);
 }

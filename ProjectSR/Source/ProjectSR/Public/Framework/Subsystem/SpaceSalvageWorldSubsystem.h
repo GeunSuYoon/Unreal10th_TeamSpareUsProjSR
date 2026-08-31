@@ -7,12 +7,14 @@
 #include "Meteor.h"
 #include "Item/ItemActor.h"
 #include "SpaceSalvageWorldSubsystem.generated.h"
+//#include "Components/SphereComponent.h"
 
 class ASpaceShipActor;
 class ASpaceRootActor;
 class UMeteorAvoidanceComponent;
 class UItemDataAsset;
 class USpaceMapDataAsset;
+class USphereComponent;
 //class AItemActor;
 //class AMeteorActor;
 
@@ -43,8 +45,11 @@ public:
 		);
 	}
 
+	// 블루프린트 테스트용 함수
 	UFUNCTION(BlueprintCallable)
-	void	SetSpaceMapData(USpaceMapDataAsset* InItemRateData);
+	void	SetSafeArea(float InArea);
+	UFUNCTION(BlueprintCallable)
+	void	SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData);
 	void	RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip);
 	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
 	//void	RotateSpaceRoot(const FVector2D& InRotationInput);
@@ -54,9 +59,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void	SpaceShipRotateDetect(const FRotator& InRotate);
 	ASpaceRootActor*	GetSpaceRootActor() { return (this->SpaceRootActor__); }
+
+protected:
+	// 테스트용 코드에용
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Area")
+	TObjectPtr<USphereComponent> SafeAreaVisualizer_;
+
 private:
+	void	TryStartItemSpawn__();
 	void	SpawnSpaceRoot__();
+	void	SpawnItemLevelStart__(int32 InitItemCount);
 	void	SpawnItemActor__();
+	void	SpawnItemActor__(FVector InLocation);
 	void	DespawnItemActor__();
 	void	SpawnMeteor__();
 	//void	UpdateVirtualMeteors__(float CurrentWorldTime);
@@ -75,7 +89,7 @@ private:
 
 	//TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
 
-	TObjectPtr<USpaceMapDataAsset>	ItemSpawnRateData__ = nullptr;
+	TObjectPtr<USpaceMapDataAsset>	SpaceMapData__ = nullptr;
 	// USTRUCT는 값으로 보관
 	TArray<FMeteor> ActiveVirtualMeteors__;
 
@@ -96,4 +110,7 @@ private:
 	FTimerHandle	ItemDespawnHandler__;
 	float			ItemDespawnTimer__ = 0.5f;
 
+	// 테스트용 할당값
+	float	SafeArea__ = 500.0f;
+	float	SafeAreaSquared__ = FMath::Square(500.0f);
 };
