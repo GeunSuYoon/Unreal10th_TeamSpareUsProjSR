@@ -39,6 +39,7 @@ public:
 	inline float	GetMaxEnergy() const { return (this->MaxEnergy_); }
 	inline float	GetCurrentEnergy() const { return (this->CurrentEnergy_); }
 	inline float	GetMoveSpeed() const { return (this->MoveSpeed_); }
+	inline float	GetSafeArea() const { return (this->SafeArea_); }
 	//inline UInventoryComponent*	GetWarehouse() const { return (this->Warehouse_); }
 
 	virtual UInventoryComponent*	GetInventoryComponent_Implementation() override;
@@ -100,4 +101,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Rotate")
 	FRotator	SpaceShipRotateState_;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Area")
+	float	SafeArea_ = 100.0f;
+
 };
