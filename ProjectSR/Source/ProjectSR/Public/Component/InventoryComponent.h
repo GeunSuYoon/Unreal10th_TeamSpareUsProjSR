@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CommonHeader/InventoryCommandTypes.h"
-#include "CommonHeader/RecipeTable.h"
+//#include "CommonHeader/RecipeTable.h"
 #include "Data/Item/ItemDataAsset.h"
 
 #include "Components/ActorComponent.h"
