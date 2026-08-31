@@ -108,10 +108,10 @@ void USpaceSalvageWorldSubsystem::RegisterMeteorAvoidance(UMeteorAvoidanceCompon
 //	//this->SpaceRootActor__()
 //}
 
-void USpaceSalvageWorldSubsystem::RegisterVirtualMeteor(const FMeteor& InMeteor)
+void USpaceSalvageWorldSubsystem::RegisterVirtualMeteor()
 {
-	this->ActiveVirtualMeteors__.Add(InMeteor);
-	this->MeteorAvoidanceComponent__.Get()->MeteorDetect(InMeteor);
+	//this->ActiveVirtualMeteors__.Add();
+	//this->MeteorAvoidanceComponent__.Get()->MeteorDetect(InMeteor);
 }
 
 void USpaceSalvageWorldSubsystem::EndOfDay()
@@ -127,10 +127,10 @@ void USpaceSalvageWorldSubsystem::SpaceShipRotateDetect(const FRotator& InRotate
 	{
 		this->SpaceRootActor__->RotateSpaceRoot(InRotate);
 	}
-	if (this->MeteorAvoidanceComponent__)
-	{
-		//this->MeteorAvoidanceComponent__->
-	}
+	//if (this->MeteorAvoidanceComponent__)
+	//{
+	//	//this->MeteorAvoidanceComponent__->
+	//}
 }
 
 void USpaceSalvageWorldSubsystem::SpawnSpaceRoot__()
@@ -150,12 +150,20 @@ void USpaceSalvageWorldSubsystem::SpawnSpaceRoot__()
 	);
 
 	this->SpaceRootActor__ = SpaceRootActor;
-	UE_LOG(LogTemp, Log, TEXT("SpaceRootActor %s가 할당됐습니다."), *this->SpaceRootActor__.GetName());
+	UE_LOG(
+		LogTemp, 
+		Log, 
+		TEXT("Log: [USpaceSalvageWorldSubsystem::SpawnSpaceRoot__] SpaceRootActor %s가 할당됐습니다."),
+		*this->SpaceRootActor__.GetName());
 }
 
 void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 {
-	UE_LOG(LogTemp, Log, TEXT("아이템 스폰 시작."));
+	UE_LOG(
+		LogTemp, 
+		Log, 
+		TEXT("Log: [USpaceSalvageWorldSubsystem::SpawnItemActor__] 아이템 스폰 시작.")
+	);
 	// 테스트용. 나중에 주석 지워야함
 	//if (!this->SpaceShipActor__)
 	//{
@@ -166,24 +174,35 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 
 	if (!ItemFactory)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ItemFactory가 nullptr입니다."));
+		UE_LOG(
+			LogTemp, 
+			Error, 
+			TEXT("Error: [USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemFactory가 nullptr입니다.")
+		);
 		return ;
 	}
 	USceneComponent* ItemPivot = SpaceRootActor__->GetItemPivot();
 
 	if (!IsValid(ItemPivot))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ItemPivot이 nullptr입니다."));
+		UE_LOG(
+			LogTemp, 
+			Error, 
+			TEXT("Error: [USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemPivot이 nullptr입니다."));
 		return ;
 	}
-	// 테스트용, 나중에 지우고 주석처리한 코드로 교체해야함
-	FVector	SpaceShipForward = this->SpaceRootActor__->GetActorForwardVector();
-	//FVector	SpaceShipForward = this->SpaceShipActor__->GetActorForwardVector();
-	FVector	SpaceShipBackward = -1.0f * SpaceShipForward;
+	//// 테스트용, 나중에 지우고 주석처리한 코드로 교체해야함
+	//FVector	SpaceShipForward = this->SpaceRootActor__->GetActorForwardVector();
+	////FVector	SpaceShipForward = this->SpaceShipActor__->GetActorForwardVector();
+	//FVector	SpaceShipBackward = -1.0f * SpaceShipForward;
+	FVector	ItemSpawnDir(FMath::FRandRange(-1.0f, 1.0f), FMath::FRandRange(-1.0f, 1.0f), FMath::FRandRange(-1.0f, 1.0f));
 
-	SpaceShipForward.Y += FMath::FRandRange(-0.5, 0.5);
-	SpaceShipForward.Z += FMath::FRandRange(-0.5, 0.5);
-	FVector		SpawnPos = SpaceShipForward * this->ItemSpawnDist__;
+	ItemSpawnDir.Normalize();
+	FVector	ItemMoveDir = ItemSpawnDir * -1.0f;
+
+	//SpaceShipForward.Y += FMath::FRandRange(-0.5, 0.5);
+	//SpaceShipForward.Z += FMath::FRandRange(-0.5, 0.5);
+	FVector		SpawnPos = ItemSpawnDir * this->ItemSpawnDist__;
 	FTransform	WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
 	FVector		ToItem = SpawnPos - this->SpaceRootActor__->GetActorLocation();
 	// 테스트용. 나중에 지우고 주석처리한 코드로 교체해야함
@@ -196,14 +215,15 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 	{
 		++TryCount;
 
-		SpaceShipBackward = -this->SpaceRootActor__->GetActorForwardVector();
-		SpaceShipBackward.Y += FMath::FRandRange(-0.3f, 0.3f);
-		SpaceShipBackward.Z += FMath::FRandRange(-0.3f, 0.3f);
-		SpaceShipBackward.Normalize();
+		//SpaceShipBackward = -this->SpaceRootActor__->GetActorForwardVector();
+		//MoveDir.X += FMath::FRandRange(-1.0f, 1.0f);
+		ItemMoveDir.Y += FMath::FRandRange(-0.2f, 0.2f);
+		ItemMoveDir.Z += FMath::FRandRange(-0.2f, 0.2f);
+		ItemMoveDir.Normalize();
 
 		// 앞으로 이동할 경로에서 우주선에 가장 가까워지는 지점
-		float	ClosestDist = FMath::Max(0.0f, -FVector::DotProduct(ToItem, SpaceShipBackward));
-		FVector	ClosestPos = ToItem + SpaceShipBackward * ClosestDist;
+		float	ClosestDist = FMath::Max(0.0f, -FVector::DotProduct(ToItem, ItemMoveDir));
+		FVector	ClosestPos = ToItem + ItemMoveDir * ClosestDist;
 
 		if (ClosestPos.SizeSquared() > SafeAreaSquared)
 		{
@@ -213,12 +233,16 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 		if (TryCount == this->ItemSpawnMaxRetryCount__)
 		{
 			// 안전한 방향을 찾지 못하면 이번 스폰은 건너뜀
+			UE_LOG(
+				LogTemp,
+				Warning,
+				TEXT("Warning: [USpaceSalvageWorldSubsystem::SpawnItemActor__] 안전한 아이템 속도를 찾지 못했습니다."));
 			return;
 		}
 	}
 
 	float	ItemSpeed =	this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
-	FVector	Velocity = SpaceShipBackward * ItemSpeed;
+	FVector	Velocity = ItemMoveDir * ItemSpeed;
 
 	TWeakObjectPtr<USceneComponent> WeakPivot(ItemPivot);
 	UItemDataAsset*	TargetItemData = this->SelectSpawnItemData__();
@@ -232,17 +256,37 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 			{
 				if (!IsValid(ItemActor))
 				{
+					UE_LOG(
+						LogTemp,
+						Error,
+						TEXT("Error: [USpaceSalvageWorldSubsystem::SpawnItemActor__] ItemActor가 스폰되지 않았습니다.")
+					);
 					return;
 				}
 				if (!WeakPivot.IsValid())
 				{
+					UE_LOG(
+						LogTemp,
+						Error,
+						TEXT("Error: [USpaceSalvageWorldSubsystem::SpawnItemActor__] WeakPivot이 Valid하지 않습니다.")
+					);
 					ItemActor->Destroy();
 					return;
 				}
-				ItemActor->AttachToComponent(WeakPivot.Get(), FAttachmentTransformRules::KeepWorldTransform);				ItemActor->SetRelativeVelocity(Velocity);
+				ItemActor->AttachToComponent(
+					WeakPivot.Get(), 
+					FAttachmentTransformRules::KeepWorldTransform
+				);
+				ItemActor->SetRelativeVelocity(Velocity);
 				ItemActor->SetRelativeVelocity(Velocity);
 				this->SpawnedItem__.AddUnique(ItemActor);
-				UE_LOG(LogTemp, Log, TEXT("아이템 %s 생성 위치: %s"), *ItemActor->GetName(), *ItemActor->GetActorLocation().ToString()	);
+				UE_LOG(
+					LogTemp,
+					Log,
+					TEXT("Log: [USpaceSalvageWorldSubsystem::SpawnItemActor__] 아이템 %s 생성 위치: %s"),
+					*ItemActor->GetName(),
+					*ItemActor->GetActorLocation().ToString()
+				);
 			})
 	);
 }
@@ -264,14 +308,28 @@ void USpaceSalvageWorldSubsystem::DespawnItemActor__()
 		{
 			SpawnedItem__.RemoveAtSwap(Index);
 			TargetItem->FinishUsingPoolable();
-			UE_LOG(LogTemp, Log, TEXT("아이템 %s가 Return됐습니다."), *TargetItem->GetName());
+			UE_LOG(
+				LogTemp, 
+				Log, 
+				TEXT("Log: [USpaceSalvageWorldSubsystem::DespawnItemActor__] 아이템 %s가 Return됐습니다."), 
+				*TargetItem->GetName()
+			);
 		}
 	}
 }
 
-void USpaceSalvageWorldSubsystem::UpdateVirtualMeteors__(float CurrentWorldTime)
+void USpaceSalvageWorldSubsystem::SpawnMeteor__()
 {
+	//FVector	MeteorRelativePosition;
+	//FVector	MeteorMoveDir;
+	//float	MeteorMoveSpeed;
+	//float	MeteorImpactWorldTime;
+	//float	MeteorRadius;
 }
+
+//void USpaceSalvageWorldSubsystem::UpdateVirtualMeteors__(float CurrentWorldTime)
+//{
+//}
 
 void USpaceSalvageWorldSubsystem::ResolveMeteor__(FMeteor& Meteor)
 {
@@ -281,7 +339,11 @@ UItemDataAsset* USpaceSalvageWorldSubsystem::SelectSpawnItemData__()
 {
 	if (!this->ItemSpawnRateData__)
 	{
-		UE_LOG(LogTemp, Log, TEXT("ItemSpawnRateData가 nullptr입니다."));
+		UE_LOG(
+			LogTemp, 
+			Error,
+			TEXT("Error: [USpaceSalvageWorldSubsystem::SelectSpawnItemData__] ItemSpawnRateData가 nullptr입니다.")
+		);
 		return (nullptr);
 	}
 	int32	TotalWeight = 0;
@@ -292,7 +354,11 @@ UItemDataAsset* USpaceSalvageWorldSubsystem::SelectSpawnItemData__()
 	}
 	if (TotalWeight <= 0)
 	{
-		UE_LOG(LogTemp, Log, TEXT("TotalWeight가 0 이하입니다."));
+		UE_LOG(
+			LogTemp, 
+			Log, 
+			TEXT("TotalWeight가 0 이하입니다.")
+		);
 		return (nullptr);
 	}
 	int32	RandomWeight = FMath::RandRange(0, TotalWeight);
@@ -310,6 +376,10 @@ UItemDataAsset* USpaceSalvageWorldSubsystem::SelectSpawnItemData__()
 			return (RateData.Key.Get());
 		}
 	}
-	UE_LOG(LogTemp, Log, TEXT("아이템이 생성되지 않았습니다."));
+	UE_LOG(
+		LogTemp, 
+		Error, 
+		TEXT("Error: [USpaceSalvageWorldSubsystem::SelectSpawnItemData__] 아이템이 생성되지 않았습니다.")
+	);
 	return (nullptr);
 }

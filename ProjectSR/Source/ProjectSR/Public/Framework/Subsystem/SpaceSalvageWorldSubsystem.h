@@ -48,7 +48,7 @@ public:
 	void	RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip);
 	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
 	//void	RotateSpaceRoot(const FVector2D& InRotationInput);
-	void	RegisterVirtualMeteor(const FMeteor& InMeteor);
+	void	RegisterVirtualMeteor();
 	void	EndOfDay();
 
 	UFUNCTION(BlueprintCallable)
@@ -58,7 +58,8 @@ private:
 	void	SpawnSpaceRoot__();
 	void	SpawnItemActor__();
 	void	DespawnItemActor__();
-	void	UpdateVirtualMeteors__(float CurrentWorldTime);
+	void	SpawnMeteor__();
+	//void	UpdateVirtualMeteors__(float CurrentWorldTime);
 	void	ResolveMeteor__(FMeteor& Meteor);
 
 	UItemDataAsset*	SelectSpawnItemData__();
@@ -72,7 +73,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<ASpaceShipActor>					SpaceShipActor__ = nullptr;
 
-	TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
+	//TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
 
 	TObjectPtr<USpaceMapDataAsset>	ItemSpawnRateData__ = nullptr;
 	// USTRUCT는 값으로 보관
