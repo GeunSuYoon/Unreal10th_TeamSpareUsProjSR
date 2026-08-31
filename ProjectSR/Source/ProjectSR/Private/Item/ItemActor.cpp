@@ -111,7 +111,7 @@ void AItemActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-	this->GetRootComponent()->AddRelativeLocation(this->RelativeVelocity__ * DeltaTime);
+	this->GetRootComponent()->AddWorldOffset(this->RelativeVelocity__ * DeltaTime);
 }
 
 void AItemActor::OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
