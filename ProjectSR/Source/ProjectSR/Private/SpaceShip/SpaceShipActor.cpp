@@ -2,6 +2,7 @@
 
 
 #include "SpaceShip/SpaceShipActor.h"
+#include "SpaceShip/SpaceShipVisualActor.h"
 #include "MainPanel/MainPanelActor.h"
 
 // Sets default values
@@ -10,6 +11,12 @@ ASpaceShipActor::ASpaceShipActor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	USceneComponent*	RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+
+	SetRootComponent(RootSceneComponent);
+	
+	this->SpaceShipVisualActor_ = CreateDefaultSubobject<UChildActorComponent>(TEXT("SpaceShipVisual"));
+	this->SpaceShipVisualActor_->SetupAttachment(RootSceneComponent);
 }
 
 // Called when the game starts or when spawned
@@ -20,12 +27,11 @@ void ASpaceShipActor::BeginPlay()
 	this->SpaceShipRotateState_ = FRotator::ZeroRotator;
 	FActorSpawnParameters Params;
 	Params.Owner = this;
-
 	this->MainPanel_ = GetWorld()->SpawnActor<AMainPanelActor>(
 		AMainPanelActor::StaticClass(),
 		GetActorTransform(),
-		Params);
-
+		Params
+	);
 	if (this->MainPanel_)
 	{
 		this->MainPanel_->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
@@ -77,4 +83,3 @@ void ASpaceShipActor::SpaceShipRotateInput_(const FVector2D& InInput)
 	this->OnSpaceShipRotate.ExecuteIfBound(this->SpaceShipRotateState_);
 	//AddActorLocalRotation(DeltaRotation);
 }
-
