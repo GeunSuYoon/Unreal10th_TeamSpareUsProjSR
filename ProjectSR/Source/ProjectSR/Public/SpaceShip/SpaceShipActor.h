@@ -12,6 +12,7 @@ class AMainPanelActor;
 class ULazerComponent;
 class UMachineArmComponent;
 class UInventoryComponent;
+class ASpaceShipVisualActor;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipRotate, const FRotator&, InSpaceShipRotate);
 
@@ -53,13 +54,13 @@ public:
 	virtual void	RepairDurability_Implementation(float InDurability) override;
 	virtual void	ConsumDurability_Implementation(float InDurability) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UStaticMeshComponent>	SpaceShipMesh = nullptr;
-
 	FOnSpaceShipRotate	OnSpaceShipRotate;
 
 protected:
 	void	SpaceShipRotateInput_(const FVector2D& InInput);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
+	TObjectPtr<UChildActorComponent>	SpaceShipVisualActor_ = nullptr;
 
 	// 지금 우주선의 강화 단계
 	UPROPERTY(BlueprintReadOnly, Category = "Level")
