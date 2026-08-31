@@ -20,6 +20,11 @@ bool UItemDataAsset::IsLoaded() const
     return ItemActorClass.IsValid() && Mesh.IsValid() && (Icon.IsNull() || Icon.IsValid());
 }
 
+FPrimaryAssetId UItemDataAsset::GetPrimaryAssetId() const
+{
+    return FPrimaryAssetId(TEXT("Item"), ItemId);
+}
+
 void UItemDataAsset::OnAsyncRequest_(TArray<FSoftObjectPath>& InOutArray) const
 {
     InOutArray.Add(ItemActorClass.ToSoftObjectPath());
