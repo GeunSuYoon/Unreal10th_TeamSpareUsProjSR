@@ -4,10 +4,55 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Meteor.h"
 #include "MeteorAvoidanceComponent.generated.h"
+//#include "Meteor.h"
+
+USTRUCT(BlueprintType)
+struct FMeteor
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
+	float	MeteorRemainTime = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
+	float	MeteorSpawnLeadTime = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
+	float	MeteorDamage = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
+	float	MeteorSpeed = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
+	float	MeteorSize = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
+	FVector	MoveDir = FVector::Zero();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
+	FVector	SpawnPos = FVector::Zero();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
+	FVector	DespawnPos = FVector::Zero();
+
+	void	Clear()
+	{
+		MeteorRemainTime = 0.0f;
+		MeteorSpawnLeadTime = 0.0f;
+		MeteorDamage = 0.0f;
+		MeteorSpeed = 0.0f;
+		MeteorSize = 0.0f;
+		MoveDir = FVector::Zero();
+		SpawnPos = FVector::Zero();
+		DespawnPos = FVector::Zero();
+	}
+};
 
 DECLARE_DYNAMIC_DELEGATE(FOnMeteorDetect);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMeteorAvoid, const FMeteor&, InMeteor);
+
+class USpaceMapDataAsset;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PROJECTSR_API UMeteorAvoidanceComponent : public UActorComponent
@@ -27,19 +72,24 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	FOnMeteorDetect	OnMeteorDetect;
+	FOnMeteorAvoid	OnMeteorAvoid;
 
-	void	MeteorDetect(const FMeteor& InMeteor);
-	void	SpaceShipRotateChange(const FRotator& InRotate);
+	void	MeteorDetect(const USpaceMapDataAsset* InSpaceMapData);
+	void	SpaceShipMoveInput(const FVector2D& InMoveInput, const float InSpaceShipSpeed);
 	void	EvaluateMeteorAvoidance();
+	void	MeteorAlarm();
+	void	ClearMeteor();
 
 protected:
-	TOptional<FMeteor>	TargetMeteor_;
+	FMeteor	TargetMeteor_;
 
-	FVector				SpaceShipForward_;
+	//FVector	SpaceShipForward_;
 
 private:
 	//void	
-	FTimerHandle	MeteorDetectTimer__;
+	bool	bIsMeteor__ = false;
+	bool	bIsAvoid__ = false;
 
-	float			MeteorDetectTime__ = 10.0f;
+	FTimerHandle	MeteorAlarmTimer__;
+	float			MeteorAlarmTime__ = 1.0f;
 };
