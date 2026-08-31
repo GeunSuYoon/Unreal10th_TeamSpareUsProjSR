@@ -5,13 +5,15 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Meteor.h"
+#include "Item/ItemActor.h"
 #include "SpaceSalvageWorldSubsystem.generated.h"
 
 class ASpaceShipActor;
 class ASpaceRootActor;
 class UMeteorAvoidanceComponent;
 class UItemDataAsset;
-class USpaceMapItemSpawnRateDataAsset;
+class USpaceMapDataAsset;
+//class AItemActor;
 //class AMeteorActor;
 
 /**
@@ -42,7 +44,7 @@ public:
 	}
 
 	UFUNCTION(BlueprintCallable)
-	void	SetSpaceMapData(USpaceMapItemSpawnRateDataAsset* InItemRateData);
+	void	SetSpaceMapData(USpaceMapDataAsset* InItemRateData);
 	void	RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip);
 	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
 	//void	RotateSpaceRoot(const FVector2D& InRotationInput);
@@ -55,6 +57,7 @@ public:
 private:
 	void	SpawnSpaceRoot__();
 	void	SpawnItemActor__();
+	void	DespawnItemActor__();
 	void	UpdateVirtualMeteors__(float CurrentWorldTime);
 	void	ResolveMeteor__(FMeteor& Meteor);
 
@@ -71,18 +74,25 @@ private:
 
 	TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
 
-	TObjectPtr<USpaceMapItemSpawnRateDataAsset>	ItemSpawnRateData__ = nullptr;
+	TObjectPtr<USpaceMapDataAsset>	ItemSpawnRateData__ = nullptr;
 	// USTRUCT는 값으로 보관
 	TArray<FMeteor> ActiveVirtualMeteors__;
 
-	float	ItemSpawnDist__ = 5000.0f;
-	float	ItemMoveSpeed__ = 300.0f;
+	TArray<TWeakObjectPtr<AItemActor>>	SpawnedItem__;
 
+	float	ItemSpawnDist__ = 0.0f;
+	float	ItemDespawnDist__ = 0.0f;
+	float	ItemMoveSpeed__ = 0.0f;
+
+	int32	ItemSpawnMaxRetryCount__ = 30;
 	// Actor는 UObject이므로 TObjectPtr 사용 가능
 	//UPROPERTY()
 	//TArray<TObjectPtr<AMeteorActor>> InactiveMeteorPool_;
 
 	FTimerHandle	ItemSpawnHandler__;
 	float			ItemSpawnTimer__ = 0.0f;
+
+	FTimerHandle	ItemDespawnHandler__;
+	float			ItemDespawnTimer__ = 0.5f;
 
 };

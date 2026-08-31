@@ -6,15 +6,16 @@
 #include "RootActor/SpaceRootActor.h"
 #include "SpaceShip/SpaceShipActor.h"
 #include "SpaceShip/MeteorAvoidanceComponent.h"
-#include "Data/SpaceMap/SpaceMapItemSpawnRateDataAsset.h"
-#include "Item/ItemActor.h"
+#include "Data/SpaceMap/SpaceMapDataAsset.h"
+#include "Interface/PoolableInterface.h"
+//#include "Item/ItemActor.h"
 
 bool USpaceSalvageWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	Super::ShouldCreateSubsystem(Outer);
 	const UWorld*	World = Cast<UWorld>(Outer);
 
-	UE_LOG(LogTemp, Warning, TEXT("SpaceSalvageWorldSubsystem 실행"));
+	UE_LOG(LogTemp, Log, TEXT("SpaceSalvageWorldSubsystem 실행"));
 
 	return (IsValid(World) && World->IsGameWorld());
 }
@@ -23,14 +24,14 @@ void USpaceSalvageWorldSubsystem::Initialize(FSubsystemCollectionBase& Collectio
 {
 	Super::Initialize(Collection);
 
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("SpaceSalvageSubsystem Created | World: %s | Type: %d | NetMode: %d"),
-		*GetWorld()->GetName(),
-		static_cast<int32>(GetWorld()->WorldType),
-		static_cast<int32>(GetWorld()->GetNetMode())
-	);
+	//UE_LOG(
+	//	LogTemp,
+	//	Log,
+	//	TEXT("SpaceSalvageSubsystem Created | World: %s | Type: %d | NetMode: %d"),
+	//	*GetWorld()->GetName(),
+	//	static_cast<int32>(GetWorld()->WorldType),
+	//	static_cast<int32>(GetWorld()->GetNetMode())
+	//);
 }
 
 void USpaceSalvageWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
@@ -51,15 +52,17 @@ void USpaceSalvageWorldSubsystem::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapItemSpawnRateDataAsset* InItemRateData)
+void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InItemRateData)
 {
 	if (!InItemRateData)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("MapData가 nullptr입니다."));
 		return ;
 	}
 	this->ItemSpawnRateData__ = InItemRateData;
 	this->ItemSpawnTimer__ = InItemRateData->ItemSpawnTime;
 	this->ItemSpawnDist__ = InItemRateData->ItemSpawnDist;
+	this->ItemDespawnDist__ = FMath::Square(InItemRateData->ItemSpawnDist * 1.5);
 	this->ItemMoveSpeed__ = InItemRateData->ItemMoveSpeed;
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
@@ -71,6 +74,14 @@ void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapItemSpawnRateDataAsse
 		true,
 		this->ItemSpawnTimer__
 	);
+	TimerManager.SetTimer(
+		this->ItemDespawnHandler__,
+		this,
+		&USpaceSalvageWorldSubsystem::DespawnItemActor__,
+		1.0f,
+		true,
+		this->ItemDespawnTimer__
+	);
 	UE_LOG(LogTemp, Log, TEXT("MapData %s가 할당됐습니다."), *InItemRateData->MapName.ToString());
 }
 
@@ -81,7 +92,7 @@ void USpaceSalvageWorldSubsystem::RegisterSpaceShipActor(ASpaceShipActor* InSpac
 		return;
 	}
 	this->SpaceShipActor__ = InSpaceShip;
-	this->SpaceShipActor__.Get()->OnSpaceShipRotate.BindUFunction(this->SpaceRootActor__, TEXT("RotateSpaceRoot"));
+	this->SpaceShipActor__.Get()->OnSpaceShipRotate.BindUFunction(this, TEXT("SpaceShipRotateDetect"));
 }
 
 void USpaceSalvageWorldSubsystem::RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent)
@@ -170,17 +181,44 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 	//FVector	SpaceShipForward = this->SpaceShipActor__->GetActorForwardVector();
 	FVector	SpaceShipBackward = -1.0f * SpaceShipForward;
 
-	SpaceShipForward.Y += FMath::FRandRange(-0.2, 0.2);
-	SpaceShipForward.Z += FMath::FRandRange(-0.2, 0.2);
+	SpaceShipForward.Y += FMath::FRandRange(-0.5, 0.5);
+	SpaceShipForward.Z += FMath::FRandRange(-0.5, 0.5);
 	FVector		SpawnPos = SpaceShipForward * this->ItemSpawnDist__;
 	FTransform	WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
+	FVector		ToItem = SpawnPos - this->SpaceRootActor__->GetActorLocation();
+	// 테스트용. 나중에 지우고 주석처리한 코드로 교체해야함
+	float		SafeAreaSquared = FMath::Square(500.0f);
+	//float		SafeArea = this->SpaceShipActor__->GetSafeArea();
+	//float		SafeAreaSquared = FMath::Square(SafeArea);
+	int32		TryCount = 0;
 
-	SpaceShipBackward.Y += FMath::FRandRange(-0.3, 0.3);
-	SpaceShipBackward.Z += FMath::FRandRange(-0.3, 0.3);
+	while (TryCount < this->ItemSpawnMaxRetryCount__)
+	{
+		++TryCount;
 
-	const float ItemSpeed =
-		this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
-	const FVector Velocity = SpaceShipBackward * ItemSpeed;
+		SpaceShipBackward = -this->SpaceRootActor__->GetActorForwardVector();
+		SpaceShipBackward.Y += FMath::FRandRange(-0.3f, 0.3f);
+		SpaceShipBackward.Z += FMath::FRandRange(-0.3f, 0.3f);
+		SpaceShipBackward.Normalize();
+
+		// 앞으로 이동할 경로에서 우주선에 가장 가까워지는 지점
+		float	ClosestDist = FMath::Max(0.0f, -FVector::DotProduct(ToItem, SpaceShipBackward));
+		FVector	ClosestPos = ToItem + SpaceShipBackward * ClosestDist;
+
+		if (ClosestPos.SizeSquared() > SafeAreaSquared)
+		{
+			break;
+		}
+
+		if (TryCount == this->ItemSpawnMaxRetryCount__)
+		{
+			// 안전한 방향을 찾지 못하면 이번 스폰은 건너뜀
+			return;
+		}
+	}
+
+	float	ItemSpeed =	this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
+	FVector	Velocity = SpaceShipBackward * ItemSpeed;
 
 	TWeakObjectPtr<USceneComponent> WeakPivot(ItemPivot);
 	UItemDataAsset*	TargetItemData = this->SelectSpawnItemData__();
@@ -190,7 +228,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 		WorldSpawnTransform,
 		FOnPickupSpawned::CreateWeakLambda(
 			this,
-			[WeakPivot, Velocity](AItemActor* ItemActor)
+			[this, WeakPivot, Velocity](AItemActor* ItemActor)
 			{
 				if (!IsValid(ItemActor))
 				{
@@ -203,10 +241,32 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 				}
 				ItemActor->AttachToComponent(WeakPivot.Get(), FAttachmentTransformRules::KeepWorldTransform);				ItemActor->SetRelativeVelocity(Velocity);
 				ItemActor->SetRelativeVelocity(Velocity);
-
+				this->SpawnedItem__.AddUnique(ItemActor);
 				UE_LOG(LogTemp, Log, TEXT("아이템 %s 생성 위치: %s"), *ItemActor->GetName(), *ItemActor->GetActorLocation().ToString()	);
 			})
 	);
+}
+
+void USpaceSalvageWorldSubsystem::DespawnItemActor__()
+{
+	for (int32 Index = SpawnedItem__.Num() - 1; Index >= 0; --Index)
+	{
+		AItemActor*	TargetItem = SpawnedItem__[Index].Get();
+
+		if (!IsValid(TargetItem))
+		{
+			SpawnedItem__.RemoveAtSwap(Index);
+			continue;
+		}
+		float	ItemDistance = FVector::DistSquared(TargetItem->GetActorLocation(), this->SpaceRootActor__->GetActorLocation());
+
+		if (ItemDistance > this->ItemDespawnDist__)
+		{
+			SpawnedItem__.RemoveAtSwap(Index);
+			TargetItem->FinishUsingPoolable();
+			UE_LOG(LogTemp, Log, TEXT("아이템 %s가 Return됐습니다."), *TargetItem->GetName());
+		}
+	}
 }
 
 void USpaceSalvageWorldSubsystem::UpdateVirtualMeteors__(float CurrentWorldTime)
