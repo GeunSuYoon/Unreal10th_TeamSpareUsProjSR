@@ -7,7 +7,7 @@
 
 // 운석 충돌은 적당한 미니게임으로 만들자...
 USTRUCT(BlueprintType)
-struct FMeteor
+struct FNotMeteor
 {
 	GENERATED_BODY()
 
