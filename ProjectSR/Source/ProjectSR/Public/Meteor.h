@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Meteor.generated.h"
 
+// 운석 충돌은 적당한 미니게임으로 만들자...
 USTRUCT(BlueprintType)
 struct FMeteor
 {
@@ -36,7 +37,7 @@ struct FMeteor
 
 	// 운석 크기 [m]
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
-	float	MeteorRadius;
+	float	Radius;
 
 	void	SetMoveDir(const FVector& InMoveDir)
 	{
