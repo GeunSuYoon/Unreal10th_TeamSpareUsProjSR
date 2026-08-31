@@ -23,21 +23,30 @@ public:
 	TMap<TObjectPtr<UItemDataAsset>, int32>	ItemSpawnRate;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
-	float	ItemSpawnTime;
+	float	ItemSpawnTime = 0.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
-	float	ItemSpawnDist;
+	float	ItemSpawnDist = 0.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
-	float	ItemMoveSpeed;
+	float	ItemMoveSpeed = 0.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
-	int32	ItemSpawnInitCount;
+	int32	ItemSpawnInitCount = 0;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
-	float	MeteorAlarmTimer;
+	float	MeteorAlarmTimer = 0.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
-	float	MeteorDamage;
+	float	MeteorSpawnLeadTime = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
+	float	MeteorDamage = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
+	float	MeteorSpeed = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
+	float	MeteorSize = 0.0f;
 
 };
