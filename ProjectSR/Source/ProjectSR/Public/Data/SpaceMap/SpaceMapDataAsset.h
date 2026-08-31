@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "Data/Item/ItemDataAsset.h"
-#include "SpaceMapItemSpawnRateDataAsset.generated.h"
+#include "SpaceMapDataAsset.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTSR_API USpaceMapItemSpawnRateDataAsset : public UPrimaryDataAsset
+class PROJECTSR_API USpaceMapDataAsset : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 	
