@@ -10,7 +10,7 @@ ASpaceRootActor::ASpaceRootActor()
 	PrimaryActorTick.bCanEverTick = false;
 
 	this->RootScene_ = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
-	SetRootComponent(this->RootComponent);
+	SetRootComponent(this->RootScene_);
 	SetActorLocation(FVector::ZeroVector);
 	SetActorRotation(FRotator::ZeroRotator);
 
