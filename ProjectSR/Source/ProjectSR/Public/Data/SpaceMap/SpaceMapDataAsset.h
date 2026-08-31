@@ -19,15 +19,25 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData")
 	FText	MapName;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
 	TMap<TObjectPtr<UItemDataAsset>, int32>	ItemSpawnRate;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
 	float	ItemSpawnTime;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
 	float	ItemSpawnDist;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
 	float	ItemMoveSpeed;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
+	int32	ItemSpawnInitCount;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
+	float	MeteorAlarmTimer;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
+	float	MeteorDamage;
+
 };
