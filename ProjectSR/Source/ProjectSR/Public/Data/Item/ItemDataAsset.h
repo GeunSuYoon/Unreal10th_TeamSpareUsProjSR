@@ -27,7 +27,7 @@ class PROJECTSR_API UItemDataAsset : public UPrimaryDataAsset
 public:
     TSharedPtr<FStreamableHandle> RequestDataLoad(FStreamableDelegate InDelegate) const;
     virtual bool IsLoaded() const;
-
+    virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 protected:
     virtual void OnAsyncRequest_(TArray<FSoftObjectPath>& InOutArray) const;
 
