@@ -21,9 +21,17 @@ void UStatComponent::BeginPlay()
 	Super::BeginPlay();
 
 	OwnerCharacter = Cast<APlayerCharacter>(GetOwner());
+
+	// 장착물이 없는 순수 맨몸 상태 초기화 (보너스 0, 배율 1.0)
+	FEquipmentStatModifier DefaultModifier;
+	DefaultModifier.HealthBonus = 0.0f;
+	DefaultModifier.OxygenBonus = 0.0f;
+	DefaultModifier.MoveSpeedMultiplier = 1.0f;
+	DefaultModifier.OxygenDrainMultiplier = 1.0f;
 	
 	// 스탯 기본값으로 초기화
-	RecalculateMaxStats(0.0f, 0.0f);
+	RecalculateMaxStats(DefaultModifier);
+
 	CurrentHealth = MaxHealth;
 	CurrentHunger = MaxHunger;
 	CurrentOxygen = MaxOxygen;
@@ -94,21 +102,24 @@ void UStatComponent::ModifyOxygen(float Amount)
 }
 
 // 장비 착용시 보너스 스탯값 더해서 UI 갱신
-void UStatComponent::RecalculateMaxStats(float OxygenBonus, float HealthBonus)
+void UStatComponent::RecalculateMaxStats(const FEquipmentStatModifier& Modifiers)
 {
-	MaxOxygen = BaseMaxOxygen + OxygenBonus;
-	MaxHealth = BaseMaxHealth + HealthBonus;
+	// 1. 최대 체력 및 산소 재계산 (Base + Bonus)
+	MaxHealth = BaseMaxHealth + Modifiers.HealthBonus;
+	MaxOxygen = BaseMaxOxygen + Modifiers.OxygenBonus;
 
-	// 장비 보너스 로직 확정 전까지 Base값 채워두기
-	MoveSpeed = BaseMoveSpeed;
-	ZeroGravityMoveSpeed = BaseZeroGravityMoveSpeed;
-	BoostSpeed = BaseBoostSpeed;
-	ZeroGravityBoostSpeed = BaseZeroGravityBoostSpeed;
-	CrouchSpeed = BaseCrouchSpeed;
+	// 2. 이동 속도 배율 적용 (Base * Multiplier)
+	MoveSpeed = BaseMoveSpeed * Modifiers.MoveSpeedMultiplier;
+	ZeroGravityMoveSpeed = BaseZeroGravityMoveSpeed * Modifiers.MoveSpeedMultiplier;
+	BoostSpeed = BaseBoostSpeed * Modifiers.MoveSpeedMultiplier;
+	ZeroGravityBoostSpeed = BaseZeroGravityBoostSpeed * Modifiers.MoveSpeedMultiplier;
+	CrouchSpeed = BaseCrouchSpeed * Modifiers.MoveSpeedMultiplier;
 
+	// 3. 현재 수치가 최대치를 넘지 않도록 Clamp
 	CurrentOxygen = FMath::Min(CurrentOxygen, MaxOxygen);
 	CurrentHealth = FMath::Min(CurrentHealth, MaxHealth);
 
+	// 4. UI 및 방송 알림
 	OnOxygenChanged.Broadcast(CurrentOxygen, MaxOxygen);
 	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 }

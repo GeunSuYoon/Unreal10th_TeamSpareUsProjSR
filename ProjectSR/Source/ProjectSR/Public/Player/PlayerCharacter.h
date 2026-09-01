@@ -114,7 +114,7 @@ protected:
 private:
 	bool bIsBoosting = false;
 
-protected:
+public:
 	// 종합 이동속도 갱신 함수
 	void RefreshMovementSpeed();
 
