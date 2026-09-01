@@ -3,16 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Subsystems/WorldSubsystem.h"
-#include "Meteor.h"
 #include "Item/ItemActor.h"
+#include "CommonHeader/Meteor.h"
+
+#include "Subsystems/WorldSubsystem.h"
 #include "SpaceSalvageWorldSubsystem.generated.h"
+//#include "Components/SphereComponent.h"
 
 class ASpaceShipActor;
 class ASpaceRootActor;
 class UMeteorAvoidanceComponent;
 class UItemDataAsset;
 class USpaceMapDataAsset;
+class USphereComponent;
 //class AItemActor;
 //class AMeteorActor;
 
@@ -43,22 +46,37 @@ public:
 		);
 	}
 
+	// 블루프린트 테스트용 함수
 	UFUNCTION(BlueprintCallable)
-	void	SetSpaceMapData(USpaceMapDataAsset* InItemRateData);
+	void	SetSafeArea(float InArea);
+	UFUNCTION(BlueprintCallable)
+	void	SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData);
 	void	RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip);
 	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
 	//void	RotateSpaceRoot(const FVector2D& InRotationInput);
-	void	RegisterVirtualMeteor(const FMeteor& InMeteor);
+	void	MeteorDetect();
 	void	EndOfDay();
 
 	UFUNCTION(BlueprintCallable)
 	void	SpaceShipRotateDetect(const FRotator& InRotate);
+
+	UFUNCTION(BlueprintCallable)
 	ASpaceRootActor*	GetSpaceRootActor() { return (this->SpaceRootActor__); }
+
+protected:
+	// 테스트용 코드에용
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Area")
+	TObjectPtr<USphereComponent> SafeAreaVisualizer_;
+
 private:
+	void	TryStartItemSpawn__();
 	void	SpawnSpaceRoot__();
+	void	SpawnItemLevelStart__(int32 InitItemCount);
 	void	SpawnItemActor__();
+	void	SpawnItemActor__(FVector InLocation);
 	void	DespawnItemActor__();
-	void	UpdateVirtualMeteors__(float CurrentWorldTime);
+	void	SpawnMeteor__();
+	//void	UpdateVirtualMeteors__(float CurrentWorldTime);
 	void	ResolveMeteor__(FMeteor& Meteor);
 
 	UItemDataAsset*	SelectSpawnItemData__();
@@ -67,16 +85,16 @@ private:
 	//AMeteorActor*	AcquireMeteor();
 
 	UPROPERTY()
-	TObjectPtr<ASpaceRootActor>					SpaceRootActor__ = nullptr;
+	TObjectPtr<ASpaceRootActor>		SpaceRootActor__ = nullptr;
 
 	UPROPERTY()
-	TObjectPtr<ASpaceShipActor>					SpaceShipActor__ = nullptr;
+	TObjectPtr<ASpaceShipActor>		SpaceShipActor__ = nullptr;
 
-	TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
+	//TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
 
-	TObjectPtr<USpaceMapDataAsset>	ItemSpawnRateData__ = nullptr;
+	TObjectPtr<USpaceMapDataAsset>	SpaceMapData__ = nullptr;
 	// USTRUCT는 값으로 보관
-	TArray<FMeteor> ActiveVirtualMeteors__;
+	//TArray<FMeteor> ActiveVirtualMeteors__;
 
 	TArray<TWeakObjectPtr<AItemActor>>	SpawnedItem__;
 
@@ -95,4 +113,11 @@ private:
 	FTimerHandle	ItemDespawnHandler__;
 	float			ItemDespawnTimer__ = 0.5f;
 
+	// 테스트용 할당값
+	float	SafeArea__ = 500.0f;
+	float	SafeAreaSquared__ = FMath::Square(500.0f);
+
+	float	LevelTime__ = 0.0f;
+	float	MeteorSpawnTime__ = 0.0f;
+	FTimerHandle	MeteorSpawnHandler__;
 };
