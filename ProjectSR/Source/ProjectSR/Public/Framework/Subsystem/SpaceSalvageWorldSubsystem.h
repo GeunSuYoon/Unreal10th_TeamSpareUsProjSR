@@ -54,11 +54,13 @@ public:
 	void	RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip);
 	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
 	//void	RotateSpaceRoot(const FVector2D& InRotationInput);
-	void	RegisterVirtualMeteor();
+	void	MeteorDetect();
 	void	EndOfDay();
 
 	UFUNCTION(BlueprintCallable)
 	void	SpaceShipRotateDetect(const FRotator& InRotate);
+
+	UFUNCTION(BlueprintCallable)
 	ASpaceRootActor*	GetSpaceRootActor() { return (this->SpaceRootActor__); }
 
 protected:
@@ -83,16 +85,16 @@ private:
 	//AMeteorActor*	AcquireMeteor();
 
 	UPROPERTY()
-	TObjectPtr<ASpaceRootActor>					SpaceRootActor__ = nullptr;
+	TObjectPtr<ASpaceRootActor>		SpaceRootActor__ = nullptr;
 
 	UPROPERTY()
-	TObjectPtr<ASpaceShipActor>					SpaceShipActor__ = nullptr;
+	TObjectPtr<ASpaceShipActor>		SpaceShipActor__ = nullptr;
 
 	//TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
 
 	TObjectPtr<USpaceMapDataAsset>	SpaceMapData__ = nullptr;
 	// USTRUCT는 값으로 보관
-	TArray<FMeteor> ActiveVirtualMeteors__;
+	//TArray<FMeteor> ActiveVirtualMeteors__;
 
 	TArray<TWeakObjectPtr<AItemActor>>	SpawnedItem__;
 
@@ -114,4 +116,8 @@ private:
 	// 테스트용 할당값
 	float	SafeArea__ = 500.0f;
 	float	SafeAreaSquared__ = FMath::Square(500.0f);
+
+	float	LevelTime__ = 0.0f;
+	float	MeteorSpawnTime__ = 0.0f;
+	FTimerHandle	MeteorSpawnHandler__;
 };
