@@ -132,19 +132,30 @@ void UMeteorAvoidanceComponent::EvaluateMeteorAvoidance()
 	);
 	if (ClosetDistSquared > this->CollisionRadiusSquared__)
 	{
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("[UMeteorAvoidanceComponent::SpawnMeteor] 운석 회피 성공")
+		);
 		this->ClearMeteor();
 	}
 }
 
 void UMeteorAvoidanceComponent::MeteorAlarm()
 {
-	this->TargetMeteor_.MeteorRemainTime -= this->MeteorAlarmTime__;
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("운석 충돌까지 남은 시간: [%.1f]"),
+		this->TargetMeteor_.MeteorRemainTime
+	);
 	if (this->TargetMeteor_.MeteorRemainTime <= 0.0f)
 	{
 		this->SpawnMeteor();
 		return ;
 	}
-	OnMeteorDetect.ExecuteIfBound();
+	this->TargetMeteor_.MeteorRemainTime -= this->MeteorAlarmTime__;
+	OnMeteorDetect.ExecuteIfBound(this->TargetMeteor_);
 }
 
 void UMeteorAvoidanceComponent::SpawnMeteor()
@@ -161,20 +172,15 @@ void UMeteorAvoidanceComponent::SpawnMeteor()
 	);
 	// 운석 spawn
 	OnMeteorCollision.ExecuteIfBound(this->TargetMeteor_);
-	this->TargetMeteor_.Clear();
+	this->ClearMeteor();
 }
 
 void UMeteorAvoidanceComponent::ClearMeteor()
 {
-	this->TargetMeteor_.Clear();
-	this->bIsMeteor__ = false;
-	this->bIsAvoid__ = true;
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
 	TimerManager.ClearTimer(this->MeteorAlarmTimer__);
-	UE_LOG(
-		LogTemp,
-		Log,
-		TEXT("[UMeteorAvoidanceComponent::SpawnMeteor] 운석 회피 성공")
-	);
+	this->TargetMeteor_.Clear();
+	this->bIsMeteor__ = false;
+	this->bIsAvoid__ = true;
 }

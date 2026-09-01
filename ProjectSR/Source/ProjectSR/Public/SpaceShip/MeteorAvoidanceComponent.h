@@ -9,7 +9,7 @@
 #include "MeteorAvoidanceComponent.generated.h"
 //#include "Meteor.h"
 
-DECLARE_DYNAMIC_DELEGATE(FOnMeteorDetect);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMeteorDetect, const FMeteor&, InMeteor);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMeteorMove, const FMeteor&, InMeteor);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMeteorCollision, const FMeteor&, InMeteor);
 
