@@ -6,6 +6,8 @@
 #include "Data/Item/ItemDataAsset.h"
 #include "InventoryCommandTypes.generated.h"
 
+class UInventoryComponent;
+
 UENUM(BlueprintType)
 enum class EInventoryCommandType : uint8
 {
@@ -34,6 +36,9 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category = "Inventory|Command")
     TObjectPtr<const UItemDataAsset> ItemData = nullptr;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Inventory|Command")
+    TObjectPtr<UInventoryComponent> SourceInventoryComponent = 0;
 
     UPROPERTY(BlueprintReadWrite, Category = "Inventory|Command")
     int32 SourceIndex = 0;
@@ -75,10 +80,11 @@ public:
         return Command;
     }
 
-    static FInventoryCommand MakeMoveCommand(int32 InSourceIndex, int32 InTargetIndex)
+    static FInventoryCommand MakeMoveCommand(UInventoryComponent* InSourceInventoryComponent, int32 InSourceIndex, int32 InTargetIndex)
     {
         FInventoryCommand Command;
         Command.Type = EInventoryCommandType::Move;
+        Command.SourceInventoryComponent = InSourceInventoryComponent;
         Command.SourceIndex = InSourceIndex;
         Command.TargetIndex = InTargetIndex;
 
