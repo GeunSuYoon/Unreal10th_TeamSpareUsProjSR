@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Subsystems/WorldSubsystem.h"
-#include "Meteor.h"
 #include "Item/ItemActor.h"
+#include "CommonHeader/Meteor.h"
+
+#include "Subsystems/WorldSubsystem.h"
 #include "SpaceSalvageWorldSubsystem.generated.h"
 //#include "Components/SphereComponent.h"
 
