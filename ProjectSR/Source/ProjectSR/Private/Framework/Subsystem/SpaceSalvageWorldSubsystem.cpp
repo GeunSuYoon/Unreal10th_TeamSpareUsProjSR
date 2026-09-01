@@ -548,32 +548,40 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 		LogTemp,
 		Log,
 		TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] 운석 생성."));
-	USceneComponent* ItemPivot = SpaceRootActor__->GetItemPivot();
+	//USceneComponent* ItemPivot = SpaceRootActor__->GetItemPivot();
 
-	if (!IsValid(ItemPivot))
-	{
-		UE_LOG(
-			LogTemp,
-			Error,
-			TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] ItemPivot이 nullptr입니다."));
-		return;
-	}
-	TWeakObjectPtr<USceneComponent> WeakPivot(ItemPivot);
-	// 운석 궤도 수선 거리 제곱
-	float	ClosestDistSquared = InMeteor.ClosestApproachPos.SizeSquared();
-	// 아이템 생성 위치 거리 제곱
-	float	SpawnDistSquared = FMath::Square(this->ItemSpawnDist__);
-
-	// 너무 멀면 생성 X
-	if (SpawnDistSquared <= ClosestDistSquared)
+	//if (!IsValid(ItemPivot))
+	//{
+	//	UE_LOG(
+	//		LogTemp,
+	//		Error,
+	//		TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] ItemPivot이 nullptr입니다."));
+	//	return;
+	//}
+	if (this->ItemSpawnDist__ <= 0.0f)
 	{
 		UE_LOG(
 			LogTemp,
 			Warning,
-			TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] 운석 궤도가 생성 반경 밖에 있습니다.")
-		);
+			TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] ItemSpawnDist가 0입니다."));
 		return;
 	}
+	//TWeakObjectPtr<USceneComponent> WeakPivot(ItemPivot);
+	// 운석 궤도 수선 거리 제곱
+	float	ClosestDistSquared = InMeteor.ClosestApproachPos.SizeSquared();
+	// 아이템 생성 위치 거리 2배의 제곱
+	float	SpawnDistSquared = FMath::Square(this->ItemSpawnDist__ * 2);
+
+	// 너무 멀면 생성 X
+	//if (SpawnDistSquared <= ClosestDistSquared)
+	//{
+	//	UE_LOG(
+	//		LogTemp,
+	//		Warning,
+	//		TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] 운석 궤도가 생성 반경 밖에 있습니다.")
+	//	);
+	//	return;
+	//}
 	// 운석 궤도 수선에서 운석 생성할 곳 까지 거리 (피타고라스)
 	float	AlongDistance = FMath::Sqrt(SpawnDistSquared - ClosestDistSquared);
 	FVector	ShipCenter = SpaceRootActor__->GetActorLocation();
@@ -618,7 +626,7 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 		WorldSpawnTransform,
 		FOnPickupSpawned::CreateWeakLambda(
 			this,
-			[this, WeakPivot, Velocity](AItemActor* ItemActor)
+			[this, Velocity, InMeteor](AItemActor* ItemActor)
 			{
 				if (!IsValid(ItemActor))
 				{
@@ -629,23 +637,28 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 					);
 					return;
 				}
-				if (!WeakPivot.IsValid())
-				{
-					UE_LOG(
-						LogTemp,
-						Error,
-						TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] WeakPivot이 Valid하지 않습니다.")
-					);
-					ItemActor->Destroy();
-					return;
-				}
+				//if (!WeakPivot.IsValid())
+				//{
+				//	UE_LOG(
+				//		LogTemp,
+				//		Error,
+				//		TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] WeakPivot이 Valid하지 않습니다.")
+				//	);
+				//	ItemActor->Destroy();
+				//	return;
+				//}
 				AMeteorItemActor* MeteorActor = Cast<AMeteorItemActor>(ItemActor);
-				MeteorActor->AttachToComponent(
-					WeakPivot.Get(),
-					FAttachmentTransformRules::KeepWorldTransform
-				);
+				//MeteorActor->AttachToComponent(
+				//	WeakPivot.Get(),
+				//	FAttachmentTransformRules::KeepWorldTransform
+				//);
 				MeteorActor->SetRelativeVelocity(Velocity);
-				this->SpawnedItem__.AddUnique(ItemActor);
+				MeteorActor->InitMeteor(
+					InMeteor, 
+					this->SpaceRootActor__->GetActorLocation(), 
+					this->SpaceMapData__->ItemSpawnDist
+				);
+				//this->SpawnedItem__.AddUnique(ItemActor);
 				UE_LOG(
 					LogTemp,
 					Log,
