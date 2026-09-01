@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Data/Item/EquipmentDataAsset.h"
 #include "StatComponent.generated.h"
 
 
@@ -44,8 +45,8 @@ public:
 
 	// 장비 장착/해제시 EquipComponent가 호출
 	// 장비의 스탯 보너스 추가 여부에 따라 파라미터를 구조체로 만들수도 --- 추후 논의
-	UFUNCTION()
-	void RecalculateMaxStats(float OxygenBonus, float HealthBonus);
+	UFUNCTION(BlueprintCallable, Category = "Stat")
+	void RecalculateMaxStats(const FEquipmentStatModifier& Modifiers);
 
 	// --- Getter --- 스탯
 	UFUNCTION(BlueprintPure, Category = "Stat")
@@ -96,13 +97,13 @@ protected:
 
 
 	// --- Effective 최대 스탯값 --- 장비 보정 반영된 실 최대값, 런타임 계산
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float MaxHealth;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float MaxOxygen;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float MoveSpeed;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float ZeroGravityMoveSpeed;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float BoostSpeed;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float ZeroGravityBoostSpeed;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float CrouchSpeed;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float MaxHealth = 100.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float MaxOxygen = 150.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float MoveSpeed = 600.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float ZeroGravityMoveSpeed = 400.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float BoostSpeed = 900.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float ZeroGravityBoostSpeed = 700.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat|Effective") float CrouchSpeed = 300.0f;
 	
 	// --- 초당 스탯 소모율 ---
 	// 기본 허기 감소율
