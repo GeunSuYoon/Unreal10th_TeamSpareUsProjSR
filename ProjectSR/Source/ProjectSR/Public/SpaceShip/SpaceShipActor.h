@@ -41,6 +41,8 @@ public:
 	inline float	GetCurrentEnergy() const { return (this->CurrentEnergy_); }
 	inline float	GetMoveSpeed() const { return (this->MoveSpeed_); }
 	inline float	GetSafeArea() const { return (this->SafeArea_); }
+
+	UMeteorAvoidanceComponent*	GetMeteorAvoidance() const { return (this->MeteorAvoidance_); }
 	//inline UInventoryComponent*	GetWarehouse() const { return (this->Warehouse_); }
 
 	virtual UInventoryComponent*	GetInventoryComponent_Implementation() override;
