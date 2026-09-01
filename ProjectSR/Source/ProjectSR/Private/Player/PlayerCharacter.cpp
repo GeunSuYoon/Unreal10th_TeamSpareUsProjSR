@@ -11,6 +11,7 @@
 #include "Component/InteractionComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Data/Item/EquipmentDataAsset.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -68,20 +69,26 @@ void APlayerCharacter::BeginPlay()
 		}
 	}
 
-	// 게임 시작시 이동속도 초기화 (캐릭터는 우주선 내부=중력 상태로 스폰된다는 전제)
-	GetCharacterMovement()->MaxWalkSpeedCrouched = StatComponent->GetCrouchSpeed();
-	RefreshMovementSpeed();
+	// 초기화된 StatComponent 기반으로 이동속도 적용
+	if (StatComponent)
+	{
+		if (UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent())
+		{
+			MoveComp->MaxWalkSpeedCrouched = StatComponent->GetCrouchSpeed();
+		}
+
+		RefreshMovementSpeed();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerCharacter::BeginPlay - StatComponent is NULL!"));
+	}
 }
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	// 부스트시 스탯 소모 로직
-	//
-	//
-	//
 }
 
 // Called to bind functionality to input
