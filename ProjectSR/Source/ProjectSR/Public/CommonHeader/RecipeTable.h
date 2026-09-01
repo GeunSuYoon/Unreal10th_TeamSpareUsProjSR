@@ -6,6 +6,8 @@
 #include "Engine/DataTable.h"
 #include "RecipeTable.generated.h"
 
+class UItemDataAsset;
+
 USTRUCT(BlueprintType)
 struct PROJECTSR_API FIngredient
 {
@@ -13,7 +15,7 @@ struct PROJECTSR_API FIngredient
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FPrimaryAssetId ItemId;
+    TObjectPtr<UItemDataAsset> ItemData;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     int32 Quantity = 1;
