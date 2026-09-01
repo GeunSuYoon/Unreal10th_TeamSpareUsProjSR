@@ -34,7 +34,7 @@ void UMeteorAvoidanceComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	// ...
 }
 
-// 몇 분 후 운석 충돌 관측 시 불려올 함수
+// 서브시스템에서 운석 충돌 관측 시 불려올 함수
 void UMeteorAvoidanceComponent::MeteorDetect(const USpaceMapDataAsset* InSpaceMapData)
 {
 	if (!InSpaceMapData)
