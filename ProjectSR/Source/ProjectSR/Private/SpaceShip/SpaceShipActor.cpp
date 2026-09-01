@@ -3,6 +3,10 @@
 
 #include "SpaceShip/SpaceShipActor.h"
 #include "SpaceShip/SpaceShipVisualActor.h"
+#include "SpaceShip/LazerComponent.h"
+#include "SpaceShip/MachineArmComponent.h"
+#include "SpaceShip/MeteorAvoidanceComponent.h"
+#include "Component/InventoryComponent.h"
 #include "MainPanel/MainPanelActor.h"
 
 // Sets default values
@@ -37,6 +41,10 @@ void ASpaceShipActor::BeginPlay()
 		this->MainPanel_->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 		this->MainPanel_->OnSpaceShipRotateInput.BindUFunction(this, TEXT("SpaceShipRotateInput_"));
 	}
+	if (this->MeteorAvoidance_)
+	{
+		this->MeteorAvoidance_->SetSpaceShipSafeArea(this->SafeArea_);
+	}
 }
 
 // Called every frame
@@ -61,7 +69,7 @@ float ASpaceShipActor::RequestEnergy(float InEnergy)
 
 void ASpaceShipActor::RepairDurability_Implementation(float InDurability)
 {
-	this->CurrentDurability_ = FMath::Min(this->CurrentDurability_ + InDurability, this->MaxDurability_);
+	this->CurrentDurability_ = FMath::Max(this->CurrentDurability_ + InDurability, this->MaxDurability_);
 }
 
 void ASpaceShipActor::ConsumDurability_Implementation(float InDurability)
@@ -69,17 +77,22 @@ void ASpaceShipActor::ConsumDurability_Implementation(float InDurability)
 	this->CurrentDurability_ = FMath::Min(this->CurrentDurability_ - InDurability, 0.0f);
 }
 
-void ASpaceShipActor::SpaceShipRotateInput_(const FVector2D& InInput)
+void	ASpaceShipActor::MeteorDetect(const USpaceMapDataAsset* InMapData)
 {
-	float	DeltaTime = GetWorld()->GetDeltaSeconds();
-
-	FVector2D	InputToRotate = InInput.GetClampedToMaxSize(1.0f) * this->RotateSpeed_ * DeltaTime;
-
-	this->SpaceShipRotateState_ += FRotator(
-		-InputToRotate.Y,	// Pitch
-		-InputToRotate.X,	// Yaw
-		0.0f				// Roll
-	);
-	this->OnSpaceShipRotate.ExecuteIfBound(this->SpaceShipRotateState_);
-	//AddActorLocalRotation(DeltaRotation);
+	this->MeteorAvoidance_->MeteorDetect(InMapData);
 }
+
+//void ASpaceShipActor::SpaceShipRotateInput_(const FVector2D& InInput)
+//{
+//	float	DeltaTime = GetWorld()->GetDeltaSeconds();
+//
+//	FVector2D	InputToRotate = InInput.GetClampedToMaxSize(1.0f) * this->RotateSpeed_ * DeltaTime;
+//
+//	this->SpaceShipRotateState_ += FRotator(
+//		-InputToRotate.Y,	// Pitch
+//		-InputToRotate.X,	// Yaw
+//		0.0f				// Roll
+//	);
+//	this->OnSpaceShipRotate.ExecuteIfBound(this->SpaceShipRotateState_);
+//	//AddActorLocalRotation(DeltaRotation);
+//}

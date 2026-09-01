@@ -12,7 +12,9 @@ class AMainPanelActor;
 class ULazerComponent;
 class UMachineArmComponent;
 class UInventoryComponent;
+class UMeteorAvoidanceComponent;
 class ASpaceShipVisualActor;
+class USpaceMapDataAsset;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipRotate, const FRotator&, InSpaceShipRotate);
 
@@ -48,6 +50,8 @@ public:
 	// 하루 끝날 때 불러올 함수
 	void	EndOfDay();
 
+	void	MeteorDetect(const USpaceMapDataAsset* InMapData);
+
 	// CurrentEnergy에서 에너지를 요청하는 함수
 	float	RequestEnergy(float InEnergy);
 
@@ -68,16 +72,19 @@ protected:
 
 	// 우주선이 가지고 있는 컴포넌트
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
-	TObjectPtr<AMainPanelActor>			MainPanel_;
+	TObjectPtr<AMainPanelActor>				MainPanel_ = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
-	TObjectPtr<ULazerComponent>			Lazor_;
+	TObjectPtr<ULazerComponent>				Lazer_ = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
-	TObjectPtr<UMachineArmComponent>	MainArm_;
+	TObjectPtr<UMachineArmComponent>		MainArm_ = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
-	TObjectPtr<UInventoryComponent>		Warehouse_;
+	TObjectPtr<UInventoryComponent>			Warehouse_ = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Component")
+	TObjectPtr<UMeteorAvoidanceComponent>	MeteorAvoidance_ = nullptr;
 
 	// 우주선 내구도 관련 변수
 	UPROPERTY(BlueprintReadOnly, Category = "Durability")
