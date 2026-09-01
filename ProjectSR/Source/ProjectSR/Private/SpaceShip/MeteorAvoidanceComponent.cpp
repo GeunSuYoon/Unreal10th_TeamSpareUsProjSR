@@ -47,7 +47,7 @@ void UMeteorAvoidanceComponent::MeteorDetect(const USpaceMapDataAsset* InSpaceMa
 		return ;
 	}
 	// 운석 데이터가 이상하면 에러 로그 띄운 후 리턴
-	if (InSpaceMapData->MeteorAlarmTimer <= 0.0f
+	if (InSpaceMapData->MeteorAlarmTime <= 0.0f
 		|| InSpaceMapData->MeteorSpeed <= 0.0f)
 	{
 		UE_LOG(
@@ -59,7 +59,7 @@ void UMeteorAvoidanceComponent::MeteorDetect(const USpaceMapDataAsset* InSpaceMa
 		return ;
 	}
 	// 충돌 할 운석에 데이터 세팅하기
-	this->TargetMeteor_.MeteorRemainTime = InSpaceMapData->MeteorAlarmTimer;
+	this->TargetMeteor_.MeteorRemainTime = InSpaceMapData->MeteorAlarmTime;
 	this->TargetMeteor_.MeteorDamage = InSpaceMapData->MeteorDamage;
 	this->TargetMeteor_.MeteorSpeed = InSpaceMapData->MeteorSpeed;
 	this->TargetMeteor_.MeteorSize = InSpaceMapData->MeteorSize * FMath::FRandRange(0.8f, 1.2f);
@@ -117,12 +117,19 @@ void UMeteorAvoidanceComponent::EvaluateMeteorAvoidance()
 	FVector		MeteorSegment = MeteorEnd - MeteorStart;
 	// 운석 궤도의 길이(제곱)
 	float		SegmentLengthSquared = MeteorSegment.SizeSquared();
-	// 운석과 우주선이 가장 가까운 거리 비율 (외적)
-	float		ClosetT = FVector::CrossProduct(MeteorStart, MeteorSegment).SizeSquared() / SegmentLengthSquared;
+	// 운석과 우주선이 가장 가까운 거리 비율 (내적)
+	float		ClosetT = FVector::DotProduct(-MeteorStart, MeteorSegment) / SegmentLengthSquared;
 	// 가장 가까울 때 위치 업데이트
 	this->TargetMeteor_.ClosestApproachPos = MeteorStart + MeteorSegment * ClosetT;
 	float		ClosetDistSquared = this->TargetMeteor_.ClosestApproachPos.SizeSquared();
 
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("운석 크기와 우주선 안전 지역 사이 거리 제곱: [%.1f], 현재 거리 제곱: [%.1f]"),
+		CollisionRadiusSquared__,
+		ClosetDistSquared
+	);
 	if (ClosetDistSquared > this->CollisionRadiusSquared__)
 	{
 		this->ClearMeteor();
