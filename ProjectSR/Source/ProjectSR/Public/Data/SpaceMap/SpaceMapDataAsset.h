@@ -34,15 +34,27 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
 	int32	ItemSpawnInitCount = 0;
 
+	// 몇 초마다 운석 스폰을 결정할지 정하는 값 [s]
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
-	float	MeteorAlarmTimer = 0.0f;
+	float	MeteorSpawnTime = 0.0f;
 
+	// 운석이 충돌할 확률 [%]
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
+	float	MeteorSpawnRate = 0.0f;
+
+	// 운석이 몇 초 뒤에 충돌할지 정하는 값 [s]
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
+	float	MeteorAlarmTime = 0.0f;
+
+	// 운석이 충돌할 때 우주선에 줄 데미지
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
 	float	MeteorDamage = 0.0f;
 
+	// 운석 속도. 아마 지울 가능성이 크다
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
 	float	MeteorSpeed = 0.0f;
 
+	// 운석 크기
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
 	float	MeteorSize = 0.0f;
 
