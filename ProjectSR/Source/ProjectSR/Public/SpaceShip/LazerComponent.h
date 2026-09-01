@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "LazerComponent.generated.h"
 
-class ULazorDataAsset;
+class ULazerDataAsset;
 class UMeteo;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -29,11 +29,11 @@ public:
 
 public:
 	// 레이저 데이터를 세팅하는 함수 다른 값도 해당 데이터의 값으로 변경된다.
-	void	SetLazorData(ULazorDataAsset* InLazorData);
+	void	SetLazerData(ULazerDataAsset* InLazerData);
 
 	// private 멤버 변수 getter 함수.
 	inline int32	GetLevel() const { return (this->Level_); }
-	inline float	GetLazorPower() const { return (this->LazorPower__); }
+	inline float	GetLazerPower() const { return (this->LazerDamage__); }
 	inline float	GetReactiveEnergy() const { return (this->ReactiveEnergy__); }
 	inline float	GetOperationalEnergy() const { return (this->OperationalEnergy__); }
 
@@ -45,9 +45,9 @@ protected:
 	int32	Level_ = 0;
 
 private:
-	TObjectPtr<ULazorDataAsset>	LazorData__ = nullptr;
+	TObjectPtr<ULazerDataAsset>	LazerData__ = nullptr;
 
-	float	LazorPower__ = 0.0f;
+	float	LazerDamage__ = 0.0f;
 	float	ReactiveEnergy__ = 0.0f;
 	float	OperationalEnergy__ = 0.0f;
 };
