@@ -253,3 +253,35 @@ void APlayerCharacter::RefreshMovementSpeed()
 	MoveComp->MaxWalkSpeed = bIsZeroGravity ? StatComponent->GetZeroGravityMoveSpeed() : StatComponent->GetMoveSpeed();
 }
 
+void APlayerCharacter::IncreaseHP_Implementation(float InHP)
+{
+	if (StatComponent)
+	{
+		StatComponent->ModifyHealth(InHP);
+	}
+}
+
+void APlayerCharacter::DecreaseHP_Implementation(float InHP)
+{
+	if (StatComponent)
+	{
+		StatComponent->ModifyHealth(-InHP);
+	}
+}
+
+void APlayerCharacter::ConsumOxigen_Implementation(float InOxigen)
+{
+	if (StatComponent)
+	{
+		StatComponent->ModifyOxygen(-InOxigen);
+	}
+}
+
+void APlayerCharacter::RecoverOxigen_Implementation(float InOxigen)
+{
+	if (StatComponent)
+	{
+		StatComponent->ModifyOxygen(InOxigen);
+	}
+}
+
