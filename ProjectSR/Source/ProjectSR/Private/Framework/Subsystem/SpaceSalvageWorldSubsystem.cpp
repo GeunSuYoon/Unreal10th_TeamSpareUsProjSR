@@ -36,13 +36,14 @@ void USpaceSalvageWorldSubsystem::Initialize(FSubsystemCollectionBase& Collectio
 	//	static_cast<int32>(GetWorld()->WorldType),
 	//	static_cast<int32>(GetWorld()->GetNetMode())
 	//);
+	this->SpawnSpaceRoot__();
 }
 
 void USpaceSalvageWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
-	this->SpawnSpaceRoot__();
+	//this->SpawnSpaceRoot__();
 }
 
 void USpaceSalvageWorldSubsystem::Deinitialize()
@@ -54,6 +55,21 @@ void USpaceSalvageWorldSubsystem::Deinitialize()
 void USpaceSalvageWorldSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	if (this->MeteorSpawnTime__ <= 0.0f)
+	{
+		return ;
+	}
+	if (this->LevelTime__ == 0.0f)
+	{
+		this->MeteorDetect();
+	}
+	this->LevelTime__ += DeltaTime;
+	if (this->LevelTime__ >= this->MeteorSpawnTime__)
+	{
+		this->MeteorSpawnTime__ *= 2.0f;
+		this->MeteorDetect();
+	}
 }
 
 void USpaceSalvageWorldSubsystem::SetSafeArea(float InArea)
@@ -77,6 +93,40 @@ void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMap
 	this->ItemSpawnDist__ = InSpaceMapData->ItemSpawnDist;
 	this->ItemDespawnDist__ = FMath::Square(InSpaceMapData->ItemSpawnDist * 1.5);
 	this->ItemMoveSpeed__ = InSpaceMapData->ItemMoveSpeed;
+	this->MeteorSpawnTime__ = InSpaceMapData->MeteorSpawnTime;
+	if (this->MeteorSpawnTime__ > 0.0f)
+	{
+		FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+		// 테스트용 나중에 주석코드로 대체해야함
+		TimerManager.SetTimer(
+			this->MeteorSpawnHandler__,
+			this,
+			&USpaceSalvageWorldSubsystem::MeteorDetect,
+			this->MeteorSpawnTime__,
+			true,
+			0.0f
+		);
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("[USpaceSalvageWorldSubsystem::SetSpaceMapData] 운석 타이머가 설정됐습니다.")
+		);
+		//TimerManager.SetTimer(
+		//	this->MeteorSpawnHandler__,
+		//	this,
+		//	&USpaceSalvageWorldSubsystem::SpawnItemActor__,
+		//	this->MeteorSpawnTime__,
+		//	true,
+		//	this->MeteorSpawnTime__
+		//);
+	}
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("[USpaceSalvageWorldSubsystem::SetSpaceMapData] MapData %s가 할당됐습니다."),
+		*this->SpaceMapData__->MapName.ToString()
+	);
 	this->TryStartItemSpawn__();
 }
 
@@ -106,10 +156,19 @@ void USpaceSalvageWorldSubsystem::RegisterMeteorAvoidance(UMeteorAvoidanceCompon
 //	//this->SpaceRootActor__()
 //}
 
-void USpaceSalvageWorldSubsystem::RegisterVirtualMeteor()
+void USpaceSalvageWorldSubsystem::MeteorDetect()
 {
-	//this->ActiveVirtualMeteors__.Add();
-	//this->MeteorAvoidanceComponent__.Get()->MeteorDetect(InMeteor);
+	if (FMath::FRand() < this->SpaceMapData__->MeteorSpawnRate)
+	{
+		// 나중에 주석 해제해야함
+		//this->SpaceShipActor__->MeteorDetect(this->SpaceMapData__);
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("[USpaceSalvageWorldSubsystem::MeteorDetect] 운석이 관측됐습니다.")
+		);
+		this->SpaceRootActor__->TestMeteorAvoidanceComponent->MeteorDetect(this->SpaceMapData__);
+	}
 }
 
 void USpaceSalvageWorldSubsystem::EndOfDay()
@@ -125,10 +184,6 @@ void USpaceSalvageWorldSubsystem::SpaceShipRotateDetect(const FRotator& InRotate
 	{
 		this->SpaceRootActor__->RotateSpaceRoot(InRotate);
 	}
-	//if (this->MeteorAvoidanceComponent__)
-	//{
-	//	//this->MeteorAvoidanceComponent__->
-	//}
 }
 
 void USpaceSalvageWorldSubsystem::TryStartItemSpawn__()
@@ -158,11 +213,6 @@ void USpaceSalvageWorldSubsystem::TryStartItemSpawn__()
 		this->ItemDespawnTimer__,
 		true,
 		1.0f
-	);
-	UE_LOG(LogTemp,
-		Log,
-		TEXT("[USpaceSalvageWorldSubsystem::SetSpaceMapData] MapData %s가 할당됐습니다."),
-		*this->SpaceMapData__->MapName.ToString()
 	);
 }
 
