@@ -3,8 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataAsset.h"
 #include "Data/Item/ItemDataAsset.h"
+#include "Item/MeteorItemActor.h"
+
+#include "Engine/DataAsset.h"
 #include "SpaceMapDataAsset.generated.h"
 
 /**
@@ -33,6 +35,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Item")
 	int32	ItemSpawnInitCount = 0;
+
+	// 운석 액터 클래스
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
+	TSubclassOf<AMeteorItemActor>	MeteorActorClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
+	TObjectPtr<UItemDataAsset>		MeteorData;
 
 	// 몇 초마다 운석 스폰을 결정할지 정하는 값 [s]
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
