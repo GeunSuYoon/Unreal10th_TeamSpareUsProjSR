@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Interface/StatComponentInterface.h"
+#include "Interface/InventoryComponentInterface.h"
+#include "Interface/EquipComponentInterface.h"
 #include "PlayerCharacter.generated.h"
 
 class USpringArmComponent;
@@ -19,7 +22,10 @@ class UInputMappingContext;
 class UInputAction;
 
 UCLASS()
-class PROJECTSR_API APlayerCharacter : public ACharacter
+class PROJECTSR_API APlayerCharacter : public ACharacter,
+	public IStatComponentInterface,
+	public IInventoryComponentInterface,
+	public IEquipComponentInterface
 {
 	GENERATED_BODY()
 
@@ -111,5 +117,18 @@ private:
 protected:
 	// 종합 이동속도 갱신 함수
 	void RefreshMovementSpeed();
+
+public:
+	// 각종 인터페이스 구현
+	virtual UStatComponent* GetStatComponent_Implementation() override { return StatComponent; }
+
+	virtual void IncreaseHP_Implementation(float InHP) override;
+	virtual void DecreaseHP_Implementation(float InHP) override;
+	virtual void ConsumOxigen_Implementation(float InOxigen) override;
+	virtual void RecoverOxigen_Implementation(float InOxigen) override;
+
+	virtual UInventoryComponent* GetInventoryComponent_Implementation() override { return InventoryComponent; }
+
+	virtual UEquipComponent* GetEquipComponent_Implementation() override { return EquipComponent; }
 };
  
