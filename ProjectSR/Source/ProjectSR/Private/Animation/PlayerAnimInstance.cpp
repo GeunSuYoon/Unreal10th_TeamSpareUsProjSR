@@ -2,4 +2,5 @@
 
 
 #include "Animation/PlayerAnimInstance.h"
+#include "Component/InSpaceMovementComponent.h"
 
