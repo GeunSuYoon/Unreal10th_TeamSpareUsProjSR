@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "SpaceRootActor.generated.h"
 
+// 테스트용 나중에 지워야함
+class UMeteorAvoidanceComponent;
+
 UCLASS()
 class PROJECTSR_API ASpaceRootActor : public AActor
 {
@@ -24,13 +27,20 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	//void	RotateSpaceRoot(const FVector2D& InInput, const float InRotateSpeed);
+	UFUNCTION(BlueprintCallable)
 	void	RotateSpaceRoot(const FRotator& InRotate);
+
+	UFUNCTION(BlueprintCallable)
+	void	InputMove(const FVector2D& InMove);
 
 	inline USceneComponent* GetBackgroundPivot() const { return (this->BackgroundPivot_); };
 	inline USceneComponent* GetItemPivot() const { return (this->ItemPivot_); };
 	inline USceneComponent* GetMeteorPivot() const { return (this->MeteorPivot_); };
 	//USceneComponent* GetBackgroundPivot() const;
 	//USceneComponent* GetBackgroundPivot() const;
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TestComponent")
+	//TObjectPtr<UMeteorAvoidanceComponent>	TestMeteorAvoidanceComponent;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "World Space")
@@ -47,4 +57,5 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "World Space")
 	TObjectPtr<USceneComponent> MeteorPivot_;
+
 };

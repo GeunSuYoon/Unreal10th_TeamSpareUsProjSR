@@ -2,6 +2,7 @@
 
 
 #include "RootActor/SpaceRootActor.h"
+#include "SpaceShip/MeteorAvoidanceComponent.h"
 
 // Sets default values
 ASpaceRootActor::ASpaceRootActor()
@@ -25,6 +26,8 @@ ASpaceRootActor::ASpaceRootActor()
 
 	this->MeteorPivot_ = CreateDefaultSubobject<USceneComponent>(TEXT("MeteorPivot"));
 	this->MeteorPivot_->SetupAttachment(this->RootScene_);
+
+	//this->TestMeteorAvoidanceComponent = CreateDefaultSubobject<UMeteorAvoidanceComponent>(TEXT("MeteorAvoidance"));
 }
 
 // Called when the game starts or when spawned
@@ -41,22 +44,12 @@ void ASpaceRootActor::Tick(float DeltaTime)
 
 }
 
-//void ASpaceRootActor::RotateSpaceRoot(const FVector2D& InInput, const float InRotateSpeed)
-//{
-//	float	DeltaTime = GetWorld()->GetDeltaSeconds();
-//
-//	FVector2D	InputToRotate = InInput.GetClampedToMaxSize(1.0f) * InRotateSpeed * DeltaTime;
-//
-//	FQuat DeltaRotation = FRotator(
-//		-InputToRotate.Y,	// Pitch
-//		-InputToRotate.X,	// Yaw
-//		0.0f				// Roll
-//	).Quaternion();
-//
-//	AddActorLocalRotation(DeltaRotation);
-//}
-
 void ASpaceRootActor::RotateSpaceRoot(const FRotator& InRotate)
 {
-	this->SetActorRotation(InRotate);
+	//this->SetActorRotation(InRotate);
+}
+
+void ASpaceRootActor::InputMove(const FVector2D& InMove)
+{
+	//this->TestMeteorAvoidanceComponent->SpaceShipMoveInput(InMove, 100.0f);
 }
