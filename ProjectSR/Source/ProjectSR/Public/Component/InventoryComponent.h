@@ -141,7 +141,7 @@ protected:
 
     // 인벤토리에서 아이템을 제거하는 함수
     UFUNCTION(BlueprintCallable)
-    void SubtractItem_(const UItemDataAsset* InItemData, int32 InCount);
+    int32 SubtractItem_(const UItemDataAsset* InItemData, int32 InCount);
 
     // 인벤토리의 특정 슬롯에 들어있는 아이템 사용하는 함수
     void UseItem_(int32 InIndex);
