@@ -34,29 +34,12 @@ void ADoorButtonActor::Tick(float DeltaTime)
 
 void ADoorButtonActor::Interact_Implementation(AActor* InTarget)
 {
-	//if (!this->DoorMesh_)
-	//{
-	//	UE_LOG(
-	//		LogTemp,
-	//		Error,
-	//		TEXT("[ADoorButtonActor::Interact_Implementation] DoorMesh가 설정되지 않았습니다.")
-	//	);
-	//	return ;
-	//}
-
-	//FRotator	DoorRotation = this->DoorMesh_->GetRelativeRotation();
-
-	//this->TargetRotation_.Pitch = this->bIsOpen_
-	//		? -this->DoorOpenAngle_
-	//		: this->DoorOpenAngle_;
-	//this->bIsOpen_ = !this->bIsOpen_;
-	//GetWorldTimerManager().SetTimer(
-	//	this->DoorMoveTimerHandle_,
-	//	this,
-	//	&ADoorButtonActor::UpdateDoorRotation,
-	//	this->DoorMoveTime_,
-	//	true
-	//);
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("[ADoorButtonActor::Interact_Implementation] DoorButtonActor가 상호작용을 시작했습니다.")
+	);
+	OnDoorButtonClick.ExecuteIfBound();
 }
 
 //void ADoorButtonActor::UpdateDoorRotation()
