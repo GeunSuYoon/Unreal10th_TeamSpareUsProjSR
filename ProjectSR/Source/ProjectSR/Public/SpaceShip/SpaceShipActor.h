@@ -20,6 +20,8 @@ class AMainPanelActor;
 class ASpaceShipVisualActor;
 class ADoorButtonActor;
 
+class USphereComponent;
+
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipRotate, const FRotator&, InSpaceShipRotate);
 
 UCLASS()
@@ -46,7 +48,7 @@ public:
 	inline float	GetMaxEnergy() const { return (this->MaxEnergy_); }
 	inline float	GetCurrentEnergy() const { return (this->CurrentEnergy_); }
 	inline float	GetMoveSpeed() const { return (this->MoveSpeed_); }
-	inline float	GetSafeArea() const { return (this->SafeArea_); }
+	inline float	GetSafeAreaRadius() const { return (this->SafeAreaRadius_); }
 
 	UMeteorAvoidanceComponent*	GetMeteorAvoidance() const { return (this->MeteorAvoidanceComponent_); }
 	//inline UInventoryComponent*	GetWarehouse() const { return (this->Warehouse_); }
@@ -68,6 +70,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	ADoorButtonActor*	GetDoorButtonActor() { return (this->DoorButtonActor_); }
+
+	// 블루프린트 테스트용 함수
+	UFUNCTION(BlueprintCallable)
+	UMeteorAvoidanceComponent*	GetMeteorAvoidanceComponent() { return (this->MeteorAvoidanceComponent_); }
+
+	UFUNCTION(BlueprintCallable)
+	void	SpaceShipMoveInput(const FVector2D& InInput);
 
 protected:
 	void	SpaceShipRotateInput_(const FVector2D& InInput);
@@ -146,8 +155,8 @@ protected:
 	float	OperationalEnergy_ = 0.0f;
 
 	// 가상의 우주선 이동 속도
-	UPROPERTY(BlueprintReadOnly, Category = "Speed")
-	float	MoveSpeed_ = 0.0f;
+	UPROPERTY(BlueprintReadOnly, Category = "MoveSpeed")
+	float	MoveSpeed_ = 100.0f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Rotate")
 	float	RotateSpeed_ = 0.0f;
@@ -155,9 +164,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Rotate")
 	FRotator	SpaceShipRotateState_;
 
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SafeArea")
+	TObjectPtr<USphereComponent>	SafeArea_ = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SafeArea")
-	float	SafeArea_ = 100.0f;
+	float							SafeAreaRadius_ = 1500.0f;
 
 };
