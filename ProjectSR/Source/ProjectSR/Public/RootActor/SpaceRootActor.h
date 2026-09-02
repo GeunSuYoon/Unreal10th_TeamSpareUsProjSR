@@ -39,8 +39,8 @@ public:
 	//USceneComponent* GetBackgroundPivot() const;
 	//USceneComponent* GetBackgroundPivot() const;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TestComponent")
-	TObjectPtr<UMeteorAvoidanceComponent>	TestMeteorAvoidanceComponent;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TestComponent")
+	//TObjectPtr<UMeteorAvoidanceComponent>	TestMeteorAvoidanceComponent;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "World Space")

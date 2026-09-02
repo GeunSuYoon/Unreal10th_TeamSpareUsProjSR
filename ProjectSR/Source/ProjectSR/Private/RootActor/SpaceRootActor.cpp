@@ -27,7 +27,7 @@ ASpaceRootActor::ASpaceRootActor()
 	this->MeteorPivot_ = CreateDefaultSubobject<USceneComponent>(TEXT("MeteorPivot"));
 	this->MeteorPivot_->SetupAttachment(this->RootScene_);
 
-	this->TestMeteorAvoidanceComponent = CreateDefaultSubobject<UMeteorAvoidanceComponent>(TEXT("MeteorAvoidance"));
+	//this->TestMeteorAvoidanceComponent = CreateDefaultSubobject<UMeteorAvoidanceComponent>(TEXT("MeteorAvoidance"));
 }
 
 // Called when the game starts or when spawned
@@ -51,5 +51,5 @@ void ASpaceRootActor::RotateSpaceRoot(const FRotator& InRotate)
 
 void ASpaceRootActor::InputMove(const FVector2D& InMove)
 {
-	this->TestMeteorAvoidanceComponent->SpaceShipMoveInput(InMove, 100.0f);
+	//this->TestMeteorAvoidanceComponent->SpaceShipMoveInput(InMove, 100.0f);
 }
