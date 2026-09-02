@@ -10,6 +10,8 @@
 #include "Component/InventoryComponent.h"
 #include "Component/CraftingComponent.h"
 #include "MainPanel/MainPanelActor.h"
+#include "Components/SphereComponent.h"
+#include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
 
 // Sets default values
 ASpaceShipActor::ASpaceShipActor()
@@ -20,7 +22,10 @@ ASpaceShipActor::ASpaceShipActor()
 	USceneComponent*	RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 
 	SetRootComponent(RootSceneComponent);
-	
+	this->SafeArea_ = CreateDefaultSubobject<USphereComponent>(TEXT("SafeArea"));
+	this->SafeArea_->SetSphereRadius(this->SafeAreaRadius_);
+	this->SafeArea_->SetupAttachment(GetRootComponent());
+
 	this->SpaceShipVisualActor_ = CreateDefaultSubobject<UChildActorComponent>(TEXT("SpaceShipVisual"));
 	this->SpaceShipVisualActor_->SetupAttachment(GetRootComponent());
 
@@ -32,6 +37,11 @@ ASpaceShipActor::ASpaceShipActor()
 
 	this->DoorMesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
 	this->DoorMesh_->SetupAttachment(GetRootComponent());
+
+	this->LazerComponent_ = CreateDefaultSubobject<ULazerComponent>(TEXT("LazerComponent"));
+	this->MainArmComponent_ = CreateDefaultSubobject<UMachineArmComponent>(TEXT("MainArmComponent"));
+	this->WarehouseComponent_ = CreateDefaultSubobject<UInventoryComponent>(TEXT("WarehouseComponent"));
+	this->MeteorAvoidanceComponent_ = CreateDefaultSubobject<UMeteorAvoidanceComponent>(TEXT("MeteorAvoidanceComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -95,7 +105,7 @@ void ASpaceShipActor::BeginPlay()
 	}
 	if (this->MeteorAvoidanceComponent_)
 	{
-		this->MeteorAvoidanceComponent_->SetSpaceShipSafeArea(this->SafeArea_);
+		this->MeteorAvoidanceComponent_->SetSpaceShipSafeArea(this->SafeAreaRadius_);
 	}
 	else
 	{
@@ -105,6 +115,18 @@ void ASpaceShipActor::BeginPlay()
 			TEXT("[ASpaceShipActor::BeginPlay] MeteorAvoidanceComponent가 nullptr입니다.")
 		);
 	}
+	USpaceSalvageWorldSubsystem* SpaceSubsystem = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+
+	if (!IsValid(SpaceSubsystem))
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("[ASpaceShipActor::BeginPlay] SpaceSalvageWorldSubsystem을 찾지 못했습니다.")
+		);
+		return;
+	}
+	SpaceSubsystem->RegisterSpaceShipActor(this);
 }
 
 // Called every frame
@@ -135,6 +157,11 @@ void ASpaceShipActor::RepairDurability_Implementation(float InDurability)
 void ASpaceShipActor::ConsumDurability_Implementation(float InDurability)
 {
 	this->CurrentDurability_ = FMath::Min(this->CurrentDurability_ - InDurability, 0.0f);
+}
+
+void ASpaceShipActor::SpaceShipMoveInput(const FVector2D& InInput)
+{
+	this->MeteorAvoidanceComponent_->SpaceShipMoveInput(InInput, this->MoveSpeed_);
 }
 
 void ASpaceShipActor::DetectDoorButtonClick_()
