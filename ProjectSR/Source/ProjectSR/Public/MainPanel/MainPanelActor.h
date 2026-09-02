@@ -16,6 +16,7 @@ DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipRotateInput, const FVector2D&, InI
 class ASpaceShipActor;
 class UInventoryComponent;
 class UCraftComponent;
+class USphereComponent;
 
 UCLASS()
 class PROJECTSR_API AMainPanelActor : public AActor, public IInteractInterface
@@ -52,6 +53,9 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<USphereComponent>		SphereCollision_ = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UStaticMeshComponent>	MainPanelMesh_ = nullptr;
 
 private:

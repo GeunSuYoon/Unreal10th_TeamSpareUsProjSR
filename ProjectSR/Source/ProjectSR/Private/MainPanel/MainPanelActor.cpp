@@ -5,6 +5,7 @@
 #include "SpaceShip/SpaceShipActor.h"
 #include "Data/SpaceShip/SpaceShipUpgradeDataTable.h"
 #include "Data/Item/ItemDataAsset.h"
+#include "Components/SphereComponent.h"
 
 // Sets default values for this component's properties
 AMainPanelActor::AMainPanelActor()
@@ -14,10 +15,15 @@ AMainPanelActor::AMainPanelActor()
 	PrimaryActorTick.bCanEverTick = false;
 
 	// ...
-	this->MainPanelMesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainPanelMesh"));
-	SetRootComponent(this->MainPanelMesh_);
-}
+	//USceneComponent*	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 
+
+	this->SphereCollision_ = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
+	SetRootComponent(this->SphereCollision_);
+
+	this->MainPanelMesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainPanelMesh"));
+	this->MainPanelMesh_->SetupAttachment(GetRootComponent());
+}
 
 // Called when the game starts
 void AMainPanelActor::BeginPlay()
