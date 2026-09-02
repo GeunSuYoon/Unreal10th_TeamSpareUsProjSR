@@ -8,11 +8,17 @@
 #include "Interface/InventoryComponentInterface.h"
 #include "SpaceShipActor.generated.h"
 
-class AMainPanelActor;
+class USpaceMapDataAsset;
+
 class ULazerComponent;
 class UMachineArmComponent;
 class UInventoryComponent;
+class UCraftingComponent;
+class UMeteorAvoidanceComponent;
+
+class AMainPanelActor;
 class ASpaceShipVisualActor;
+class ADoorButtonActor;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipRotate, const FRotator&, InSpaceShipRotate);
 
@@ -42,13 +48,15 @@ public:
 	inline float	GetMoveSpeed() const { return (this->MoveSpeed_); }
 	inline float	GetSafeArea() const { return (this->SafeArea_); }
 
-	UMeteorAvoidanceComponent*	GetMeteorAvoidance() const { return (this->MeteorAvoidance_); }
+	UMeteorAvoidanceComponent*	GetMeteorAvoidance() const { return (this->MeteorAvoidanceComponent_); }
 	//inline UInventoryComponent*	GetWarehouse() const { return (this->Warehouse_); }
 
 	virtual UInventoryComponent*	GetInventoryComponent_Implementation() override;
 
 	// 하루 끝날 때 불러올 함수
 	void	EndOfDay();
+
+	void	MeteorDetect(const USpaceMapDataAsset* InMapData);
 
 	// CurrentEnergy에서 에너지를 요청하는 함수
 	float	RequestEnergy(float InEnergy);
@@ -58,28 +66,70 @@ public:
 
 	FOnSpaceShipRotate	OnSpaceShipRotate;
 
+	UFUNCTION(BlueprintCallable)
+	ADoorButtonActor*	GetDoorButtonActor() { return (this->DoorButtonActor_); }
+
 protected:
 	void	SpaceShipRotateInput_(const FVector2D& InInput);
 
+	UFUNCTION()
+	void	DetectDoorButtonClick_();
+	void	UpdateDoorRotation_();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
-	TObjectPtr<UChildActorComponent>	SpaceShipVisualActor_ = nullptr;
+	TObjectPtr<UChildActorComponent>		SpaceShipVisualActor_ = nullptr;
 
 	// 지금 우주선의 강화 단계
 	UPROPERTY(BlueprintReadOnly, Category = "Level")
 	int32	Level_ = 0;
 
+	UPROPERTY(BlueprintReadOnly, Category = "MainPanel")
+	TObjectPtr<UChildActorComponent>		MainPanel_ = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, Category = "MainPanel")
+	TObjectPtr<AMainPanelActor>	MainPanelActor_ = nullptr;
+
+	// 문 여닫기 관련 변수들
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DoorButton")
+	TObjectPtr<UChildActorComponent>		DoorButton_ = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DoorButton")
+	TObjectPtr<ADoorButtonActor>			DoorButtonActor_ = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DoorButton")
+	TObjectPtr<UStaticMeshComponent>		DoorMesh_ = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DoorButton")
+	float			DoorInteractTime_ = 0.02f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DoorButton")
+	float			DoorOpenAngle_ = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DoorButton")
+	float			DoorCloseAngle_ = 90.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DoorButton")
+	float			DoorRotationSpeed_ = 90.0f;
+
+	FTimerHandle	DoorMoveTimerHandle_;
+
+	FRotator		DoorTargetRotate_;
+
+	bool			bIsDoorOpen_ = false;
+
+
 	// 우주선이 가지고 있는 컴포넌트
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
-	TObjectPtr<AMainPanelActor>			MainPanel_;
+	TObjectPtr<ULazerComponent>				LazerComponent_ = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
-	TObjectPtr<ULazerComponent>			Lazor_;
+	TObjectPtr<UMachineArmComponent>		MainArmComponent_ = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
-	TObjectPtr<UMachineArmComponent>	MainArm_;
+	TObjectPtr<UInventoryComponent>			WarehouseComponent_ = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
-	TObjectPtr<UInventoryComponent>		Warehouse_;
+	TObjectPtr<UMeteorAvoidanceComponent>	MeteorAvoidanceComponent_ = nullptr;
 
 	// 우주선 내구도 관련 변수
 	UPROPERTY(BlueprintReadOnly, Category = "Durability")
@@ -105,7 +155,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Rotate")
 	FRotator	SpaceShipRotateState_;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Area")
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SafeArea")
 	float	SafeArea_ = 100.0f;
 
 };
