@@ -89,18 +89,10 @@ bool UInventoryComponent::HandleAddCommand_(const FInventoryCommand& Command, FI
     int32 RemainingCount = AddItem_(Command.ItemData, Command.Count);
 
     //RemainingCount가 0이면 인벤토리에 잘 들어갔음. 0을 초과하면 그만큼은 인벤토리에 못들어갔다는 의미
-    if (RemainingCount > 0)
-    {
-        OutResult.bSuccess = false;
-        OutResult.RemainingCount = RemainingCount;
-    }
-    else
-    {
-        OutResult.bSuccess = true;
-        OutResult.RemainingCount = 0;
-    }
+    OutResult.bSuccess = true;
+    OutResult.RemainingCount = RemainingCount;
 
-    if (OutResult.bSuccess)
+    if (OutResult.RemainingCount > 0)
     {
         UE_LOG(LogTemp, Log, TEXT("[UInventoryComponent::HandleAddCommand_()] : %s 추가가 성공적으로 완료되었습니다."), *(Command.ItemData->DisplayName.ToString()));
     }
@@ -128,17 +120,9 @@ bool UInventoryComponent::HandleSubtractCommand_(const FInventoryCommand& Comman
         return OutResult.bSuccess;
     }
 
-    int32 TotalCount = GetTotalItemCount(Command.ItemData);
-
-    if (TotalCount < Command.Count)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::HandleSubtractCommand_()] : 인벤토리 내에 %s의 개수가 %d보다 적습니다 (%d)."),
-               *Command.ItemData->DisplayName.ToString(), Command.Count, TotalCount);
-        return OutResult.bSuccess;
-    }
-
-    SubtractItem_(Command.ItemData, Command.Count);
+    int32 RemainingCount = SubtractItem_(Command.ItemData, Command.Count);
     OutResult.bSuccess = true;
+    OutResult.RemainingCount = RemainingCount;
 
     return OutResult.bSuccess;
 }
@@ -405,18 +389,18 @@ int32 UInventoryComponent::AddItem_(const UItemDataAsset* InItemData, int32 InCo
     return RemainingCount;
 }
 
-void UInventoryComponent::SubtractItem_(const UItemDataAsset* InItemData, int32 InCount)
+int32 UInventoryComponent::SubtractItem_(const UItemDataAsset* InItemData, int32 InCount)
 {
     if (!InItemData)
     {
         UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::SubtractItem_] : InItemData가 nullptr 입니다."));
-        return;
+        return InCount;
     }
 
     if (InCount <= 0)
     {
         UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::SubtractItem_] : InCount가 0이하 입니다."));
-        return;
+        return InCount;
     }
 
     int32 RemainingCount = InCount;
@@ -442,6 +426,8 @@ void UInventoryComponent::SubtractItem_(const UItemDataAsset* InItemData, int32 
         RemainingCount -= AmountToSubtract;	// 남은 개수 갱신
         StartIndex = FoundIndex + 1;	// 새 시작 위치 갱신
     }
+
+    return RemainingCount;
 }
 
 int32 UInventoryComponent::GetTotalItemCount(const UItemDataAsset* InItemData)
