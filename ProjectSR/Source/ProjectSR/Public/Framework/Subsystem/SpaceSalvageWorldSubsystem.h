@@ -55,7 +55,6 @@ public:
 
 	void	RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip);
 	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
-	//void	RotateSpaceRoot(const FVector2D& InRotationInput);
 	void	MeteorDetect();
 	void	EndOfDay();
 
@@ -64,6 +63,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	ASpaceRootActor*	GetSpaceRootActor() { return (this->SpaceRootActor__); }
+
+	UFUNCTION(BlueprintCallable)
+	ASpaceShipActor*	GetSpaceShipActor() const { return (this->SpaceShipActor__); }
 
 protected:
 	// 테스트용 코드에용
@@ -80,13 +82,8 @@ private:
 	void	SpawnItemActor__();
 	void	SpawnItemActor__(FVector InLocation);
 	void	DespawnItemActor__();
-	//void	UpdateVirtualMeteors__(float CurrentWorldTime);
-	//void	ResolveMeteor__(FMeteor& Meteor);
 
 	UItemDataAsset*	SelectSpawnItemData__();
-	//void	ReturnMeteor(AMeteorActor* Meteor);
-
-	//AMeteorActor*	AcquireMeteor();
 
 	UPROPERTY()
 	TObjectPtr<ASpaceRootActor>		SpaceRootActor__ = nullptr;

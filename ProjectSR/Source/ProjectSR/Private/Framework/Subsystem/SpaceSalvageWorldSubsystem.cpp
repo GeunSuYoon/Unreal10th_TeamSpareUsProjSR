@@ -131,10 +131,9 @@ void USpaceSalvageWorldSubsystem::RegisterSpaceShipActor(ASpaceShipActor* InSpac
 	}
 	this->SpaceShipActor__ = InSpaceShip;
 	this->SpaceShipActor__.Get()->OnSpaceShipRotate.BindUFunction(this, TEXT("SpaceShipRotateDetect"));
-	this->SetSafeArea(InSpaceShip->GetSafeArea());
+	this->SetSafeArea(InSpaceShip->GetSafeAreaRadius());
 	this->TryStartItemSpawn__();
-	InSpaceShip->GetMeteorAvoidance()->OnMeteorCollision.BindUFunction(this, "SpawnMeteor__");
-	//this->SpaceRootActor__->TestMeteorAvoidanceComponent->OnMeteorCollision.BindUFunction(this, "SpawnMeteor__");
+	InSpaceShip->GetMeteorAvoidance()->OnMeteorCollision.BindUFunction(this, TEXT("SpawnMeteor__"));
 }
 
 void USpaceSalvageWorldSubsystem::RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent)
@@ -146,13 +145,12 @@ void USpaceSalvageWorldSubsystem::MeteorDetect()
 	if (FMath::FRand() < this->SpaceMapData__->MeteorSpawnRate)
 	{
 		// 나중에 주석 해제해야함
-		//this->SpaceShipActor__->MeteorDetect(this->SpaceMapData__);
+		this->SpaceShipActor__->MeteorDetect(this->SpaceMapData__);
 		UE_LOG(
 			LogTemp,
 			Log,
 			TEXT("[USpaceSalvageWorldSubsystem::MeteorDetect] 운석이 관측됐습니다.")
 		);
-		this->SpaceRootActor__->TestMeteorAvoidanceComponent->MeteorDetect(this->SpaceMapData__);
 	}
 }
 
@@ -173,9 +171,8 @@ void USpaceSalvageWorldSubsystem::SpaceShipRotateDetect(const FRotator& InRotate
 
 void USpaceSalvageWorldSubsystem::TryStartItemSpawn__()
 {
-	// 나중에 주석 지우기
-		//|| !IsValid(this->SpaceShipActor__)
 	if (!IsValid(this->SpaceMapData__)
+		|| !IsValid(this->SpaceShipActor__)
 		|| !IsValid(this->SpaceRootActor__))
 	{
 		return;
@@ -236,7 +233,7 @@ void USpaceSalvageWorldSubsystem::SpawnSpaceRoot__()
 	this->SafeAreaVisualizer_->SetHiddenInGame(false);
 	this->SafeAreaVisualizer_->InitSphereRadius(this->SafeArea__);
 	this->SafeAreaVisualizer_->RegisterComponent();
-	this->SpaceRootActor__->TestMeteorAvoidanceComponent->OnMeteorCollision.BindUFunction(this, TEXT("SpawnMeteor__"));
+	//this->SpaceRootActor__->TestMeteorAvoidanceComponent->OnMeteorCollision.BindUFunction(this, TEXT("SpawnMeteor__"));
 }
 
 void USpaceSalvageWorldSubsystem::SpawnItemLevelStart__(int32 InitItemCount)
@@ -282,11 +279,11 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 		TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] 아이템 스폰 시작.")
 	);
 	// 테스트용. 나중에 주석 지워야함
-	//if (!this->SpaceShipActor__)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("SpaceShipActor가 nullptr입니다."));
-	//	return ;
-	//}
+	if (!this->SpaceShipActor__)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpaceShipActor가 nullptr입니다."));
+		return ;
+	}
 	UItemActorFactorySubsystem* ItemFactory = GetWorld()->GetSubsystem<UItemActorFactorySubsystem>();
 
 	if (!ItemFactory)
@@ -399,11 +396,11 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 {
 	// 테스트용. 나중에 주석 지워야함
-	//if (!this->SpaceShipActor__)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("SpaceShipActor가 nullptr입니다."));
-	//	return ;
-	//}
+	if (!this->SpaceShipActor__)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpaceShipActor가 nullptr입니다."));
+		return ;
+	}
 	UItemActorFactorySubsystem* ItemFactory = GetWorld()->GetSubsystem<UItemActorFactorySubsystem>();
 
 	if (!ItemFactory)
@@ -433,8 +430,7 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 	FTransform	WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
 	FVector		ToItem = SpawnPos - this->SpaceRootActor__->GetActorLocation();
 	// 테스트용. 나중에 지우고 주석 코드 주석 해제
-	float		SafeAreaSquared = FMath::Square(500.0f);
-	//float		SafeAreaSquared = FMath::Square(this->SpaceShipActor__->GetSafeArea());
+	float		SafeAreaSquared = FMath::Square(this->SpaceShipActor__->GetSafeAreaRadius());
 	int32		TryCount = 0;
 
 	while (TryCount < this->ItemSpawnMaxRetryCount__)
