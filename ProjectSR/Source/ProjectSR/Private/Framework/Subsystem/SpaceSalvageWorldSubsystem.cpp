@@ -129,11 +129,11 @@ void USpaceSalvageWorldSubsystem::RegisterSpaceShipActor(ASpaceShipActor* InSpac
 	{
 		return;
 	}
-	this->SpaceShipActor__ = InSpaceShip;
-	this->SpaceShipActor__.Get()->OnSpaceShipRotate.BindUFunction(this, TEXT("SpaceShipRotateDetect"));
+	InSpaceShip->OnSpaceShipRotate.BindUFunction(this, TEXT("SpaceShipRotateDetect"));
 	this->SetSafeArea(InSpaceShip->GetSafeAreaRadius());
-	this->TryStartItemSpawn__();
 	InSpaceShip->GetMeteorAvoidance()->OnMeteorCollision.BindUFunction(this, TEXT("SpawnMeteor__"));
+	this->SpaceShipActor__ = InSpaceShip;
+	this->TryStartItemSpawn__();
 }
 
 void USpaceSalvageWorldSubsystem::RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent)
@@ -256,13 +256,13 @@ void USpaceSalvageWorldSubsystem::SpawnItemLevelStart__(int32 InitItemCount)
 				FMath::FRandRange(-1.0f * this->ItemSpawnDist__, 1.0f * this->ItemSpawnDist__)
 				);
 		} while	(
-			FVector::DistSquared(ItemSpawnPos, this->SpaceRootActor__->GetActorLocation()) < this->SafeAreaSquared__
+			FVector::DistSquared(ItemSpawnPos, this->SpaceShipActor__->GetActorLocation()) < this->SafeAreaSquared__
 			&& TryCount < this->ItemSpawnMaxRetryCount__);
 		if (TryCount == this->ItemSpawnMaxRetryCount__)
 		{
 			continue ;
 		}
-		this->SpawnItemActor__();
+		this->SpawnItemActor__(ItemSpawnPos);
 	}
 	UE_LOG(
 		LogTemp,
@@ -273,17 +273,17 @@ void USpaceSalvageWorldSubsystem::SpawnItemLevelStart__(int32 InitItemCount)
 
 void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 {
+	if (!IsValid(this->SpaceMapData__)
+		|| !IsValid(this->SpaceShipActor__)
+		|| !IsValid(this->SpaceRootActor__))
+	{
+		return;
+	}
 	UE_LOG(
 		LogTemp, 
 		Log, 
 		TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] 아이템 스폰 시작.")
 	);
-	// 테스트용. 나중에 주석 지워야함
-	if (!this->SpaceShipActor__)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("SpaceShipActor가 nullptr입니다."));
-		return ;
-	}
 	UItemActorFactorySubsystem* ItemFactory = GetWorld()->GetSubsystem<UItemActorFactorySubsystem>();
 
 	if (!ItemFactory)
@@ -310,9 +310,9 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 	ItemSpawnDir.Normalize();
 	FVector	ItemMoveDir = ItemSpawnDir * -1.0f;
 
-	FVector		SpawnPos = ItemSpawnDir * this->ItemSpawnDist__;
+	FVector		SpawnPos = SpaceShipActor__->GetActorLocation() + ItemSpawnDir * this->ItemSpawnDist__;
 	FTransform	WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
-	FVector		ToItem = SpawnPos - this->SpaceRootActor__->GetActorLocation();
+	FVector		ToItem = SpawnPos - this->SpaceShipActor__->GetActorLocation();
 	int32		TryCount = 0;
 
 	while (TryCount < this->ItemSpawnMaxRetryCount__)
@@ -321,7 +321,6 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 
 		ItemMoveDir.Y += FMath::FRandRange(-0.2f, 0.2f);
 		ItemMoveDir.Z += FMath::FRandRange(-0.2f, 0.2f);
-		ItemMoveDir.Normalize();
 
 		// 앞으로 이동할 경로에서 우주선에 가장 가까워지는 지점
 		float	ClosestDist = FMath::Max(0.0f, -FVector::DotProduct(ToItem, ItemMoveDir));
@@ -342,7 +341,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 			return;
 		}
 	}
-
+	ItemMoveDir.Normalize();
 	float	ItemSpeed =	this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
 	FVector	Velocity = ItemMoveDir * ItemSpeed;
 
@@ -423,14 +422,15 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 		return;
 	}
 	FVector	SpawnPos = InLocation;
-	FVector	ItemMoveDir = SpawnPos - this->SpaceRootActor__->GetActorLocation();
+	FVector	ItemMoveDir = SpawnPos - this->SpaceShipActor__->GetActorLocation();
 	ItemMoveDir.Normalize();
 
 	//FVector		SpawnPos = ItemSpawnDir * this->ItemSpawnDist__;
 	FTransform	WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
-	FVector		ToItem = SpawnPos - this->SpaceRootActor__->GetActorLocation();
+	FVector		ToItem = SpawnPos - this->SpaceShipActor__->GetActorLocation();
 	// 테스트용. 나중에 지우고 주석 코드 주석 해제
-	float		SafeAreaSquared = FMath::Square(this->SpaceShipActor__->GetSafeAreaRadius());
+	//this->SafeAreaSquared__;
+	//float		SafeAreaSquared = FMath::Square(this->SpaceShipActor__->GetSafeAreaRadius());
 	int32		TryCount = 0;
 
 	while (TryCount < this->ItemSpawnMaxRetryCount__)
@@ -439,13 +439,12 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 
 		ItemMoveDir.Y += FMath::FRandRange(-0.2f, 0.2f);
 		ItemMoveDir.Z += FMath::FRandRange(-0.2f, 0.2f);
-		ItemMoveDir.Normalize();
 
 		// 앞으로 이동할 경로에서 우주선에 가장 가까워지는 지점
 		float	ClosestDist = FMath::Max(0.0f, -FVector::DotProduct(ToItem, ItemMoveDir));
 		FVector	ClosestPos = ToItem + ItemMoveDir * ClosestDist;
 
-		if (ClosestPos.SizeSquared() > SafeAreaSquared)
+		if (ClosestPos.SizeSquared() > this->SafeAreaSquared__)
 		{
 			break;
 		}
@@ -460,6 +459,7 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 			return;
 		}
 	}
+	ItemMoveDir.Normalize();
 
 	float	ItemSpeed = this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
 	FVector	Velocity = ItemMoveDir * ItemSpeed;
