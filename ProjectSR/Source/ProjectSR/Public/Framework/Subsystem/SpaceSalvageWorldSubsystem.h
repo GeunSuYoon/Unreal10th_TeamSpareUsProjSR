@@ -120,5 +120,6 @@ private:
 
 	float	LevelTime__ = 0.0f;
 	float	MeteorSpawnTime__ = 0.0f;
+	float	MeteorSpawnDelayTime__ = 0.0f;
 	FTimerHandle	MeteorSpawnHandler__;
 };
