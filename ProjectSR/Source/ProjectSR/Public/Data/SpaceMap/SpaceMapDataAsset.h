@@ -47,6 +47,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
 	float	MeteorSpawnTime = 0.0f;
 
+	// 운석 스폰 사이 시간을 결정할지 정하는 값 [s]
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
+	float	MeteorSpawnDelayTime = 0.0f;
+
 	// 운석이 충돌할 확률 [%]
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
 	float	MeteorSpawnRate = 0.0f;
