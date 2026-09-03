@@ -16,6 +16,8 @@ class PROJECTSR_API UPlayerAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 	
 public:
+	UPlayerAnimInstance();
+
 	// BeginPlay 역할
 	virtual void NativeInitializeAnimation() override;
 	// Tick 역할
