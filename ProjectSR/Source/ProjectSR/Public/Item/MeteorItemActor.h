@@ -42,7 +42,7 @@ protected:
 private:
 	float	Damage__ = 0.0f;
 	float	DespawnDist__ = 0.0f;
-	FVector	ClosestApproachWorldPos__ = FVector::Zero();
+	//FVector	ClosestApproachWorldPos__ = FVector::Zero();
 	FVector	MoveDir__ = FVector::Zero();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Meteor")
