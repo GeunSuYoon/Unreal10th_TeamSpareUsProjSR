@@ -10,7 +10,7 @@
 #include "Components/ActorComponent.h"
 #include "InventoryComponent.generated.h"
 
-//class UTemporarySlotWidget;
+class UTemporarySlotWidget;
 
 DECLARE_DELEGATE_OneParam(FOnInventorySlotChanged, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnInventoryMoneyChanged, int32);
@@ -95,12 +95,21 @@ public:
     UFUNCTION(BlueprintCallable)
     int32 GetTotalItemCount(const UItemDataAsset* InItemData);
 
-    // Getter ------------------------------------------------------------
+    // 특정 슬롯의 아이템 개수를 업데이트 하는 함수
+    void UpdateSlotCount(int32 InSlotIndex, int32 InDeltaCount);
+
+    // 특정 슬롯을 비우는 함수
+    void ClearSlot(int32 InSlotIndex);
+
+    // Getter, Setter -----------------------------------------------------
     // 현재 돈을 리턴하는 함수
     inline int32 GetMoney() const { return Money; }
 
     // 특정 슬롯을 리턴하는 함수
     FInventorySlot* GetSlot(int InSlotIndex);
+
+    // 특정 슬롯에 아이템과 개수를 설정하는 함수
+    void SetSlot(int32 InSlotIndex, const UItemDataAsset* InItemData, int32 InCount);
 
     // 임시 슬롯을 리턴하는 함수
     FInventorySlot* GetTempSlot();
@@ -111,7 +120,7 @@ public:
     inline int32 GetSize() const { return InventorySize; }
 
     // 임시 슬롯의 위젯 클래스를 리턴하는 함수
-    //inline TSubclassOf<UTemporarySlotWidget> GetTemporasySlotWidgetClass() const { return TemporarySlotWidgetClass; }
+    inline TSubclassOf<UTemporarySlotWidget> GetTemporarySlotWidgetClass() const { return TemporarySlotWidgetClass; }
 
     inline TArray<FInventorySlot> GetCopiedSlots() const { return Slots_; }
     // --------------------------------------------------------------------
@@ -149,15 +158,6 @@ protected:
     // 인벤토리의 특정 슬롯에 들어있는 아이템을 장비하는 함수
     void EquipItem_(int32 InIndex);
 
-    // 특정 슬롯에 아이템과 개수를 설정하는 함수
-    void SetSlot_(int32 InSlotIndex, const UItemDataAsset* InItemData, int32 InCount);
-
-    // 특정 슬롯의 아이템 개수를 업데이트 하는 함수
-    void UpdateSlotCount_(int32 InSlotIndex, int32 InDeltaCount);
-
-    // 특정 슬롯을 비우는 함수
-    void ClearSlot_(int32 InSlotIndex);
-
     virtual void BeginPlay() override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -182,16 +182,16 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Slot")
     TArray<FInventorySlot> Slots_;	// 크기는 InventorySize + 1(임시 슬롯)
 
-    //protected:
-    //    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Slot")
-    //    TSubclassOf<UTemporarySlotWidget> TemporarySlotWidgetClass;
+protected:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Slot")
+    TSubclassOf<UTemporarySlotWidget> TemporarySlotWidgetClass;
 
 private:
     // 인벤토리의 크기
     int32 InventorySize = 10;
 
     // 임시 슬롯의 인덱스
-    //int32 TempSlotIndex = InventorySize;
+    //int32 TempSlotIndex = 10;
 
     // 인벤토리 컴포넌트 함수에서 각종 실패 표시용 정수
     static constexpr int32 InventoryFail = -1;

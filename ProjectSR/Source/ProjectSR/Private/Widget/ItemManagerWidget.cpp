@@ -55,6 +55,17 @@ void UItemManagerWidget::InitializeItemManagerWidget(UInventoryComponent* InInve
                 }
             );
 
+            SlotWidget->OnDragStarted.BindWeakLambda(
+                this,
+                [this]() {
+                    if (TargetInventory__.IsValid())
+                    {
+                        SelectedSlotIndex__ = InvalidIndex;
+                        RefreshItemDetailPanel_();
+                    }
+                }
+            );
+
             SlotWidgets__.Add(SlotWidget);
         }
     }
