@@ -11,7 +11,6 @@
 #include "Components/SphereComponent.h"
 #include "Item/ItemActor.h"
 #include "Item/MeteorItemActor.h"
-
 #include "Utility/UtilFunction.h"
 
 bool USpaceSalvageWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
@@ -54,16 +53,16 @@ void USpaceSalvageWorldSubsystem::Tick(float DeltaTime)
 	{
 		return ;
 	}
-	if (this->LevelTime__ == 0.0f)
-	{
-		this->MeteorDetect();
-	}
-	this->LevelTime__ += DeltaTime;
-	if (this->LevelTime__ >= this->MeteorSpawnTime__)
-	{
-		this->MeteorSpawnTime__ *= 2.0f;
-		this->MeteorDetect();
-	}
+	//if (this->LevelTime__ == 0.0f)
+	//{
+	//	this->MeteorDetect();
+	//}
+	//this->LevelTime__ += DeltaTime;
+	//if (this->LevelTime__ >= this->MeteorSpawnTime__)
+	//{
+	//	this->MeteorSpawnTime__ *= 2.0f;
+	//	this->MeteorDetect();
+	//}
 }
 
 void USpaceSalvageWorldSubsystem::SetSafeArea(float InArea)
@@ -87,28 +86,20 @@ void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMap
 	this->ItemSpawnDist__ = InSpaceMapData->ItemSpawnDist;
 	this->ItemDespawnDist__ = FMath::Square(InSpaceMapData->ItemSpawnDist * 1.5);
 	this->ItemMoveSpeed__ = InSpaceMapData->ItemMoveSpeed;
+	this->MeteorSpawnDelayTime__ = InSpaceMapData->MeteorSpawnDelayTime;
 	this->MeteorSpawnTime__ = InSpaceMapData->MeteorSpawnTime;
 	if (this->MeteorSpawnTime__ > 0.0f)
 	{
 		FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
-		// 테스트용 나중에 주석코드로 대체해야함
 		TimerManager.SetTimer(
 			this->MeteorSpawnHandler__,
 			this,
 			&USpaceSalvageWorldSubsystem::MeteorDetect,
 			this->MeteorSpawnTime__,
 			true,
-			0.0f
+			this->MeteorSpawnDelayTime__
 		);
-		//TimerManager.SetTimer(
-		//	this->MeteorSpawnHandler__,
-		//	this,
-		//	&USpaceSalvageWorldSubsystem::SpawnItemActor__,
-		//	this->MeteorSpawnTime__,
-		//	true,
-		//	this->MeteorSpawnTime__
-		//);
 		UE_LOG(
 			LogTemp,
 			Log,
