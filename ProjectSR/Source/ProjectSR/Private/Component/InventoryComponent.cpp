@@ -89,18 +89,10 @@ bool UInventoryComponent::HandleAddCommand_(const FInventoryCommand& Command, FI
     int32 RemainingCount = AddItem_(Command.ItemData, Command.Count);
 
     //RemainingCount가 0이면 인벤토리에 잘 들어갔음. 0을 초과하면 그만큼은 인벤토리에 못들어갔다는 의미
-    if (RemainingCount > 0)
-    {
-        OutResult.bSuccess = false;
-        OutResult.RemainingCount = RemainingCount;
-    }
-    else
-    {
-        OutResult.bSuccess = true;
-        OutResult.RemainingCount = 0;
-    }
+    OutResult.bSuccess = true;
+    OutResult.RemainingCount = RemainingCount;
 
-    if (OutResult.bSuccess)
+    if (OutResult.RemainingCount > 0)
     {
         UE_LOG(LogTemp, Log, TEXT("[UInventoryComponent::HandleAddCommand_()] : %s 추가가 성공적으로 완료되었습니다."), *(Command.ItemData->DisplayName.ToString()));
     }
@@ -128,17 +120,9 @@ bool UInventoryComponent::HandleSubtractCommand_(const FInventoryCommand& Comman
         return OutResult.bSuccess;
     }
 
-    int32 TotalCount = GetTotalItemCount(Command.ItemData);
-
-    if (TotalCount < Command.Count)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::HandleSubtractCommand_()] : 인벤토리 내에 %s의 개수가 %d보다 적습니다 (%d)."),
-               *Command.ItemData->DisplayName.ToString(), Command.Count, TotalCount);
-        return OutResult.bSuccess;
-    }
-
-    SubtractItem_(Command.ItemData, Command.Count);
+    int32 RemainingCount = SubtractItem_(Command.ItemData, Command.Count);
     OutResult.bSuccess = true;
+    OutResult.RemainingCount = RemainingCount;
 
     return OutResult.bSuccess;
 }
@@ -166,43 +150,45 @@ bool UInventoryComponent::HandleSearchCommand_(const FInventoryCommand& Command,
 
 bool UInventoryComponent::HandleMoveCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult)
 {
+    OutResult.bSuccess = false;
+
     if (!IsValidIndex(Command.SourceIndex) || !IsValidIndex(Command.TargetIndex))
     {
-        OutResult.bSuccess = false;
-        return false;
+        return OutResult.bSuccess;
     }
 
     if (Command.SourceIndex == Command.TargetIndex)
     {
         OutResult.bSuccess = true;
-        return true;
+        return OutResult.bSuccess;
     }
 
-    FInventorySlot& SourceSlot = Slots_[Command.SourceIndex];
-    FInventorySlot& TargetSlot = Slots_[Command.TargetIndex];
+    FInventorySlot* SourceSlot = Command.SourceInventoryComponent->GetSlot(Command.SourceIndex);
+    FInventorySlot* TargetSlot = GetSlot(Command.TargetIndex);
 
     // 소스가 비어있으면 실패(처리안함)
-    if (SourceSlot.IsEmpty())
+    if (SourceSlot->IsEmpty())
     {
-        OutResult.bSuccess = false;
-        return false;
+        return OutResult.bSuccess;
     }
 
-    if (TargetSlot.IsEmpty())
+    if (TargetSlot->IsEmpty())
     {
         // 대상 슬롯이 비어있다 => 그대로 이동처리
-        SetSlot_(Command.TargetIndex, SourceSlot.ItemData, SourceSlot.GetCount());
-        ClearSlot_(Command.SourceIndex);
+        SetSlot(Command.TargetIndex, SourceSlot->ItemData, SourceSlot->GetCount());
+        Command.SourceInventoryComponent->ClearSlot(Command.SourceIndex);
+
         OutResult.bSuccess = true;
     }
-    else if (TargetSlot.ItemData == SourceSlot.ItemData)
+    else if (TargetSlot->ItemData == SourceSlot->ItemData)
     {
         // 이동을 시키는데 같은 아이템이 들어있다. => 병합 처리
-        int32 AmountToAdd = FMath::Min(TargetSlot.GetRemainingCount(), SourceSlot.GetCount());
+        int32 AmountToAdd = FMath::Min(TargetSlot->GetRemainingCount(), SourceSlot->GetCount());
         if (AmountToAdd > 0)
         {
-            UpdateSlotCount_(Command.TargetIndex, AmountToAdd);
-            UpdateSlotCount_(Command.SourceIndex, -AmountToAdd);
+            UpdateSlotCount(Command.TargetIndex, AmountToAdd);
+            Command.SourceInventoryComponent->UpdateSlotCount(Command.SourceIndex, -AmountToAdd);
+
             OutResult.bSuccess = true;
         }
         else
@@ -213,13 +199,14 @@ bool UInventoryComponent::HandleMoveCommand_(const FInventoryCommand& Command, F
     else
     {
         // 소스와 타겟이 서로 다른 아이템이다 => 슬롯 스왑
-        const UItemDataAsset* SourceItem = SourceSlot.ItemData;
-        int32 SourceCount = SourceSlot.GetCount();
-        const UItemDataAsset* TargetItem = TargetSlot.ItemData;
-        int32 TargetCount = TargetSlot.GetCount();
+        const UItemDataAsset* SourceItem = SourceSlot->ItemData;
+        const UItemDataAsset* TargetItem = TargetSlot->ItemData;
+        int32 SourceCount = SourceSlot->GetCount();
+        int32 TargetCount = TargetSlot->GetCount();
 
-        SetSlot_(Command.SourceIndex, TargetItem, TargetCount);
-        SetSlot_(Command.TargetIndex, SourceItem, SourceCount);
+        Command.SourceInventoryComponent->SetSlot(Command.SourceIndex, TargetItem, TargetCount);
+        SetSlot(Command.TargetIndex, SourceItem, SourceCount);
+
         OutResult.bSuccess = true;
     }
 
@@ -264,7 +251,7 @@ bool UInventoryComponent::HandleDropCommand_(const FInventoryCommand& Command, F
         Factory->SpawnItemActorAsync(Slot->ItemData, SpawnTransform, FOnPickupSpawned());
     }
 
-    ClearSlot_(Command.TargetIndex);
+    ClearSlot(Command.TargetIndex);
     OutResult.bSuccess = true;
 
     return OutResult.bSuccess;
@@ -292,7 +279,7 @@ bool UInventoryComponent::HandleClearCommand_(const FInventoryCommand& Command, 
         return OutResult.bSuccess;
     }
 
-    ClearSlot_(Command.TargetIndex);
+    ClearSlot(Command.TargetIndex);
     OutResult.bSuccess = true;
 
     return OutResult.bSuccess;
@@ -320,7 +307,7 @@ bool UInventoryComponent::HandleClearCommand_(const FInventoryCommand& Command, 
 //    int32 SellPrice = TargetSlot->ItemData->Price * 0.5f;
 //    AddMoney(SellPrice * TargetSlot->GetCount());
 //
-//    ClearSlot_(InSlotIndex);
+//    ClearSlot(InSlotIndex);
 //
 //    OutResult.bSuccess = true;
 //    return OutResult.bSuccess;
@@ -378,7 +365,7 @@ int32 UInventoryComponent::AddItem_(const UItemDataAsset* InItemData, int32 InCo
         // 같은 종류의 아이템이 들어있는 슬롯을 찾았다.
         FInventorySlot* Slot = GetSlot(FoundIndex);
         int32 AmountToAdd = FMath::Min(Slot->GetRemainingCount(), RemainingCount);
-        UpdateSlotCount_(FoundIndex, AmountToAdd);	// FoundIndex 슬롯에 채울 수 있는 만큼 채우기
+        UpdateSlotCount(FoundIndex, AmountToAdd);	// FoundIndex 슬롯에 채울 수 있는 만큼 채우기
 
         RemainingCount -= AmountToAdd;	// 남은 개수 갱신
         StartIndex = FoundIndex + 1;	// 새 시작 위치 갱신
@@ -396,7 +383,7 @@ int32 UInventoryComponent::AddItem_(const UItemDataAsset* InItemData, int32 InCo
         }
 
         int32 AmountToAdd = FMath::Min(InItemData->MaxStackCount, RemainingCount);
-        SetSlot_(EmptyIndex, InItemData, AmountToAdd);	// EmptyIndex 슬롯에 아이템 설정
+        SetSlot(EmptyIndex, InItemData, AmountToAdd);	// EmptyIndex 슬롯에 아이템 설정
 
         RemainingCount -= AmountToAdd;	// 남은 개수 갱신
     }
@@ -405,18 +392,18 @@ int32 UInventoryComponent::AddItem_(const UItemDataAsset* InItemData, int32 InCo
     return RemainingCount;
 }
 
-void UInventoryComponent::SubtractItem_(const UItemDataAsset* InItemData, int32 InCount)
+int32 UInventoryComponent::SubtractItem_(const UItemDataAsset* InItemData, int32 InCount)
 {
     if (!InItemData)
     {
         UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::SubtractItem_] : InItemData가 nullptr 입니다."));
-        return;
+        return InCount;
     }
 
     if (InCount <= 0)
     {
         UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::SubtractItem_] : InCount가 0이하 입니다."));
-        return;
+        return InCount;
     }
 
     int32 RemainingCount = InCount;
@@ -437,11 +424,13 @@ void UInventoryComponent::SubtractItem_(const UItemDataAsset* InItemData, int32 
         // 같은 종류의 아이템이 들어있는 슬롯을 찾았다
         FInventorySlot* Slot = GetSlot(FoundIndex);
         int32 AmountToSubtract = FMath::Min(Slot->GetCount(), RemainingCount);
-        UpdateSlotCount_(FoundIndex, -AmountToSubtract); // FoundIndex 슬롯을 비울 수 있는 만큼 비우기
+        UpdateSlotCount(FoundIndex, -AmountToSubtract); // FoundIndex 슬롯을 비울 수 있는 만큼 비우기
 
         RemainingCount -= AmountToSubtract;	// 남은 개수 갱신
         StartIndex = FoundIndex + 1;	// 새 시작 위치 갱신
     }
+
+    return RemainingCount;
 }
 
 int32 UInventoryComponent::GetTotalItemCount(const UItemDataAsset* InItemData)
@@ -488,7 +477,7 @@ void UInventoryComponent::UseItem_(int32 InIndex)
     }
 
     Slot->ItemData->ItemAction->ExecuteItemAction_Implementation(GetOwner(), GetOwner());
-    UpdateSlotCount_(InIndex, -1);
+    UpdateSlotCount(InIndex, -1);
 }
 
 void UInventoryComponent::EquipItem_(int32 InIndex)
@@ -501,19 +490,19 @@ void UInventoryComponent::EquipItem_(int32 InIndex)
     //        if (GetOwner()->Implements<UWeaponUserInterface>())
     //        {
     //            IWeaponUserInterface::Execute_EquipWeapon(GetOwner(), Weapon);
-    //            UpdateSlotCount_(InIndex, -1);
+    //            UpdateSlotCount(InIndex, -1);
     //        }
     //    }
     //}
 }
 
-void UInventoryComponent::SetSlot_(int32 InSlotIndex, const UItemDataAsset* InItemData, int32 InCount)
+void UInventoryComponent::SetSlot(int32 InSlotIndex, const UItemDataAsset* InItemData, int32 InCount)
 {
     FInventorySlot* Slot = GetSlot(InSlotIndex);
 
     if (!Slot)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::SetSlot_()] : %d번 슬롯 불러오기 오류."),
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::SetSlot()] : %d번 슬롯 불러오기 오류."),
                InSlotIndex);
         return;
     }
@@ -537,24 +526,24 @@ void UInventoryComponent::SetSlot_(int32 InSlotIndex, const UItemDataAsset* InIt
     OnSlotChanged.ExecuteIfBound(InSlotIndex);
 }
 
-void UInventoryComponent::UpdateSlotCount_(int32 InSlotIndex, int32 InDeltaCount)
+void UInventoryComponent::UpdateSlotCount(int32 InSlotIndex, int32 InDeltaCount)
 {
     FInventorySlot* Slot = GetSlot(InSlotIndex);
 
     if (Slot->IsEmpty())
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::UpdateSlotCount_()] : Slot이 비어 있습니다."));
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::UpdateSlotCount()] : Slot이 비어 있습니다."));
         return;
     }
 
     int32 NewCount = Slot->GetCount() + InDeltaCount;
 
-    SetSlot_(InSlotIndex, Slot->ItemData, NewCount);
+    SetSlot(InSlotIndex, Slot->ItemData, NewCount);
 }
 
-void UInventoryComponent::ClearSlot_(int32 InSlotIndex)
+void UInventoryComponent::ClearSlot(int32 InSlotIndex)
 {
-    SetSlot_(InSlotIndex, nullptr, 0);
+    SetSlot(InSlotIndex, nullptr, 0);
 }
 
 void UInventoryComponent::BeginPlay()
