@@ -86,6 +86,7 @@ void UMeteorAvoidanceComponent::MeteorDetect(const USpaceMapDataAsset* InSpaceMa
 		true,
 		0.0f
 	);
+	OnMeteorDetect.ExecuteIfBound(this->TargetMeteor_);
 }
 
 void UMeteorAvoidanceComponent::SpaceShipMoveInput(const FVector2D& InMoveInput, const float InSpaceShipSpeed)
@@ -116,12 +117,7 @@ void UMeteorAvoidanceComponent::EvaluateMeteorAvoidance()
 	FVector&	MeteorEnd = TargetMeteor_.EndPos;
 	// 운석의 궤도와 방향
 	FVector		MeteorSegment = MeteorEnd - MeteorStart;
-	//// 운석 궤도의 길이(제곱)
-	//float		SegmentLengthSquared = MeteorSegment.SizeSquared();
-	//// 운석과 우주선이 가장 가까운 거리 비율 (내적)
-	//float		ClosetT = FVector::DotProduct(-MeteorStart, MeteorSegment) / SegmentLengthSquared;
-	//// 가장 가까울 때 위치 업데이트
-	//this->TargetMeteor_.ClosestApproachPos = MeteorStart + MeteorSegment * ClosetT;
+	// 운석과 우주선 사이 거리 제곱
 	float		ClosetDistSquared = FUtilFunction::GetPointToLineDistanceSquared(FVector::ZeroVector, MeteorStart, MeteorSegment);
 
 	UE_LOG(
@@ -150,13 +146,13 @@ void UMeteorAvoidanceComponent::MeteorAlarm()
 		TEXT("운석 충돌까지 남은 시간: [%.1f]"),
 		this->TargetMeteor_.MeteorRemainTime
 	);
+	OnMeteorTimer.ExecuteIfBound(this->TargetMeteor_);
 	if (this->TargetMeteor_.MeteorRemainTime <= 0.0f)
 	{
 		this->SpawnMeteor();
 		return ;
 	}
 	this->TargetMeteor_.MeteorRemainTime -= this->MeteorAlarmTime__;
-	OnMeteorDetect.ExecuteIfBound(this->TargetMeteor_);
 }
 
 void UMeteorAvoidanceComponent::SpawnMeteor()
@@ -180,6 +176,7 @@ void UMeteorAvoidanceComponent::ClearMeteor()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
+	OnMeteorClear.ExecuteIfBound();
 	TimerManager.ClearTimer(this->MeteorAlarmTimer__);
 	this->TargetMeteor_.Clear();
 	this->bIsMeteor__ = false;

@@ -10,8 +10,10 @@
 //#include "Meteor.h"
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMeteorDetect, const FMeteor&, InMeteor);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMeteorSecond, const FMeteor&, InMeteor);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMeteorMove, const FMeteor&, InMeteor);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMeteorCollision, const FMeteor&, InMeteor);
+DECLARE_DYNAMIC_DELEGATE(FOnMeteorClear);
 
 class USpaceMapDataAsset;
 
@@ -33,8 +35,10 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	FOnMeteorDetect		OnMeteorDetect;
+	FOnMeteorSecond		OnMeteorTimer;
 	FOnMeteorMove		OnMeteorMove;
 	FOnMeteorCollision	OnMeteorCollision;
+	FOnMeteorClear		OnMeteorClear;
 
 	void	SetSpaceShipSafeArea(const float InSafeArea) { this->SpaceShipSafeArea__ = InSafeArea; }
 
