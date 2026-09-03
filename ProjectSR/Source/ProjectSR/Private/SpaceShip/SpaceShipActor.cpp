@@ -127,6 +127,7 @@ void ASpaceShipActor::BeginPlay()
 		return;
 	}
 	SpaceSubsystem->RegisterSpaceShipActor(this);
+	SpaceSubsystem->SetSafeArea(this->SafeAreaRadius_);
 }
 
 // Called every frame
