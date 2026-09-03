@@ -38,7 +38,6 @@ void USpaceSalvageWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
-	//this->SpawnSpaceRoot__();
 }
 
 void USpaceSalvageWorldSubsystem::Deinitialize()
@@ -102,11 +101,6 @@ void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMap
 			true,
 			0.0f
 		);
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("[USpaceSalvageWorldSubsystem::SetSpaceMapData] 운석 타이머가 설정됐습니다.")
-		);
 		//TimerManager.SetTimer(
 		//	this->MeteorSpawnHandler__,
 		//	this,
@@ -115,6 +109,11 @@ void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMap
 		//	true,
 		//	this->MeteorSpawnTime__
 		//);
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("[USpaceSalvageWorldSubsystem::SetSpaceMapData] 운석 타이머가 설정됐습니다.")
+		);
 	}
 	UE_LOG(
 		LogTemp,
@@ -132,7 +131,6 @@ void USpaceSalvageWorldSubsystem::RegisterSpaceShipActor(ASpaceShipActor* InSpac
 		return;
 	}
 	InSpaceShip->OnSpaceShipRotate.BindUFunction(this, TEXT("SpaceShipRotateDetect"));
-	//this->SetSafeArea(InSpaceShip->GetSafeAreaRadius());
 	InSpaceShip->GetMeteorAvoidance()->OnMeteorCollision.BindUFunction(this, TEXT("SpawnMeteor__"));
 	this->SpaceShipActor__ = InSpaceShip;
 	this->TryStartItemSpawn__();
@@ -187,16 +185,14 @@ void USpaceSalvageWorldSubsystem::TryStartItemSpawn__()
 		this,
 		&USpaceSalvageWorldSubsystem::SpawnItemActor__,
 		this->ItemSpawnTimer__,
-		true,
-		0.0f
+		true
 	);
 	TimerManager.SetTimer(
 		this->ItemDespawnHandler__,
 		this,
 		&USpaceSalvageWorldSubsystem::DespawnItemActor__,
 		this->ItemDespawnTimer__,
-		true,
-		1.0f
+		true
 	);
 }
 
@@ -235,7 +231,6 @@ void USpaceSalvageWorldSubsystem::SpawnSpaceRoot__()
 	this->SafeAreaVisualizer_->SetHiddenInGame(false);
 	this->SafeAreaVisualizer_->InitSphereRadius(this->SafeArea__);
 	this->SafeAreaVisualizer_->RegisterComponent();
-	//this->SpaceRootActor__->TestMeteorAvoidanceComponent->OnMeteorCollision.BindUFunction(this, TEXT("SpawnMeteor__"));
 }
 
 void USpaceSalvageWorldSubsystem::SpawnItemLevelStart__(int32 InitItemCount)
@@ -310,11 +305,8 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 	FVector	ItemSpawnDir(FMath::FRandRange(-1.0f, 1.0f), FMath::FRandRange(-1.0f, 1.0f), FMath::FRandRange(-1.0f, 1.0f));
 
 	ItemSpawnDir.Normalize();
-	FVector	ItemMoveDir = ItemSpawnDir * -1.0f;
-
+	FVector		ItemMoveDir = ItemSpawnDir * -1.0f;
 	FVector		SpawnPos = this->SpaceShipActor__->GetActorLocation() + ItemSpawnDir * this->ItemSpawnDist__;
-	FTransform	WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
-	FVector		ToItem = SpawnPos - this->SpaceShipActor__->GetActorLocation();
 	int32		TryCount = 0;
 
 	while (TryCount < this->ItemSpawnMaxRetryCount__)
@@ -331,11 +323,6 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 			SpawnPos,
 			TempDir
 		);
-
-		// 앞으로 이동할 경로에서 우주선에 가장 가까워지는 지점
-		//float	ClosestDist = FMath::Max(0.0f, -FVector::DotProduct(ToItem, ItemMoveDir));
-		//FVector	ClosestPos = ToItem + ItemMoveDir * ClosestDist;
-
 		if (DistSquared > this->SafeAreaSquared__)
 		{
 			ItemMoveDir = TempDir;
@@ -352,11 +339,11 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 			return;
 		}
 	}
-	float	ItemSpeed =	this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
-	FVector	Velocity = ItemMoveDir * ItemSpeed;
-
+	float							ItemSpeed =	this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
+	FVector							Velocity = ItemMoveDir * ItemSpeed;
 	TWeakObjectPtr<USceneComponent> WeakPivot(ItemPivot);
-	UItemDataAsset*	TargetItemData = this->SelectSpawnItemData__();
+	UItemDataAsset*					TargetItemData = this->SelectSpawnItemData__();
+	FTransform						WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
 
 	ItemFactory->SpawnItemActorAsync(
 		TargetItemData,
@@ -403,7 +390,6 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 
 void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 {
-	// 테스트용. 나중에 주석 지워야함
 	if (!this->SpaceShipActor__)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("SpaceShipActor가 nullptr입니다."));
@@ -432,16 +418,9 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 	}
 	FVector	SpawnPos = InLocation + this->SpaceShipActor__->GetActorLocation();
 	FVector	ItemMoveDir = -InLocation;
+	int32	TryCount = 0;
+
 	ItemMoveDir.Normalize();
-
-	//FVector		SpawnPos = ItemSpawnDir * this->ItemSpawnDist__;
-	FTransform	WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
-	FVector		ToItem = SpawnPos - this->SpaceShipActor__->GetActorLocation();
-	// 테스트용. 나중에 지우고 주석 코드 주석 해제
-	//this->SafeAreaSquared__;
-	//float		SafeAreaSquared = FMath::Square(this->SpaceShipActor__->GetSafeAreaRadius());
-	int32		TryCount = 0;
-
 	while (TryCount < this->ItemSpawnMaxRetryCount__)
 	{
 		++TryCount;
@@ -456,11 +435,6 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 			SpawnPos,
 			TempDir
 		);
-
-		// 앞으로 이동할 경로에서 우주선에 가장 가까워지는 지점
-		//float	ClosestDist = FMath::Max(0.0f, -FVector::DotProduct(ToItem, ItemMoveDir));
-		//FVector	ClosestPos = ToItem + ItemMoveDir * ClosestDist;
-
 		if (DistSquared > this->SafeAreaSquared__)
 		{
 			ItemMoveDir = TempDir;
@@ -477,12 +451,11 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 			return;
 		}
 	}
-
-	float	ItemSpeed = this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
-	FVector	Velocity = ItemMoveDir * ItemSpeed;
-
+	float							ItemSpeed = this->ItemMoveSpeed__ * FMath::FRandRange(0.8, 1.2);
+	FVector							Velocity = ItemMoveDir * ItemSpeed;
 	TWeakObjectPtr<USceneComponent> WeakPivot(ItemPivot);
-	UItemDataAsset* TargetItemData = this->SelectSpawnItemData__();
+	UItemDataAsset*					TargetItemData = this->SelectSpawnItemData__();
+	FTransform						WorldSpawnTransform(FRotator::ZeroRotator, SpawnPos);
 
 	ItemFactory->SpawnItemActorAsync(
 		TargetItemData,
@@ -560,6 +533,16 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 		LogTemp,
 		Log,
 		TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] 운석 생성."));
+	UItemActorFactorySubsystem* ItemFactory = GetWorld()->GetSubsystem<UItemActorFactorySubsystem>();
+
+	if (!ItemFactory)
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] ItemFactory가 nullptr입니다.")
+		);
+	}
 	if (this->ItemSpawnDist__ <= 0.0f)
 	{
 		UE_LOG(
@@ -568,14 +551,6 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 			TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] ItemSpawnDist가 0입니다."));
 		return;
 	}
-	//// 운석 궤도 수선 거리 제곱
-	//float	ClosestDistSquared = InMeteor.ClosestApproachPos.SizeSquared();
-	//// 아이템 생성 위치 거리 2배의 제곱
-	//float	SpawnDistSquared = FMath::Square(this->ItemSpawnDist__ * 2);
-	//// 운석 궤도 수선에서 운석 생성할 곳 까지 거리 (피타고라스)
-	//float	AlongDistance = FMath::Sqrt(SpawnDistSquared - ClosestDistSquared);
-	//// 운석 생성할 위치
-	//FVector		SpawnPosition = ShipCenter + InMeteor.ClosestApproachPos - InMeteor.MoveDir * AlongDistance;
 	FVector		ShipCenter = SpaceRootActor__->GetActorLocation();
 	FVector		SpawnPosition = ShipCenter + InMeteor.StartPos - InMeteor.MoveDir * this->ItemSpawnDist__ * 2;
 	FRotator	SpawnRotation = InMeteor.MoveDir.Rotation();
@@ -586,8 +561,6 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 	WorldSpawnTransform.SetLocation(SpawnPosition);
 	WorldSpawnTransform.SetRotation(SpawnRotation.Quaternion());
 	WorldSpawnTransform.SetScale3D(SpawnScale);
-
-	UItemActorFactorySubsystem* ItemFactory = GetWorld()->GetSubsystem<UItemActorFactorySubsystem>();
 
 	ItemFactory->SpawnItemActorAsync(
 		this->SpaceMapData__->MeteorData,
