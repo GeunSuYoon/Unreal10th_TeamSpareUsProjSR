@@ -53,9 +53,10 @@ AActor* UInteractionComponent::FindInteractableObject()
 	FVector CameraLocation;
 	FRotator CameraRotation;
 	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
-
+	float	CameraToPlayerDistance = FVector::Distance(CameraLocation, OwnerPawn->GetActorLocation());
+	float	TraceDistance = CameraToPlayerDistance + InteractionDistance;
 	FVector TraceStart = CameraLocation;
-	FVector TraceEnd = TraceStart + (CameraRotation.Vector() * InteractionDistance);
+	FVector TraceEnd = TraceStart + (CameraRotation.Vector() * TraceDistance);
 
 	FHitResult HitResult;
 	FCollisionQueryParams QueryParams;
@@ -67,6 +68,17 @@ AActor* UInteractionComponent::FindInteractableObject()
 		TraceEnd,
 		TraceChannel,
 		QueryParams
+	);
+	
+	DrawDebugLine(
+		GetWorld(),
+		TraceStart,
+		TraceEnd,
+		bHit ? FColor::Green : FColor::Red,
+		false,
+		2.0f,
+		0,
+		2.0f
 	);
 
 	if (bHit && HitResult.GetActor())
