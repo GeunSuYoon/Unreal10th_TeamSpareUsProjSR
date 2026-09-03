@@ -22,11 +22,11 @@ class PROJECTSR_API UItemManagerWidget : public UUserWidget
 public:
     void InitializeItemManagerWidget(UInventoryComponent* InInventoryComponent);
     void ClearInventoryWidget();
+    void RefreshInventoryWidget();
 
 protected:
-    void RefreshInventoryWidget_() const;
     void RefreshSlotWidget_(int32 InSlotIndex) const;
-    void RefreshItemDetailPanel_(int32 InSlotIndex) const;
+    void RefreshItemDetailPanel_() const;
 
 private:
     UFUNCTION()
@@ -66,10 +66,11 @@ protected:
     TObjectPtr<UButton> Item_Drop;
 
 private:
+    static constexpr int32 InvalidIndex = -1;
+
     TWeakObjectPtr<UInventoryComponent> TargetInventory__ = nullptr;
     TArray<TObjectPtr<UInventorySlotWidget>> SlotWidgets__;
-    TObjectPtr<UInventorySlotWidget> SelectedSlot__;
+    int32 SelectedSlotIndex__ = InvalidIndex;
     int32 SlotSize__ = 0;
 
-    static constexpr int32 InvalidIndex = -1;
 };

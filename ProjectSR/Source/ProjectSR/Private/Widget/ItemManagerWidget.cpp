@@ -49,7 +49,8 @@ void UItemManagerWidget::InitializeItemManagerWidget(UInventoryComponent* InInve
                 [this](int InIndex) {
                     if (TargetInventory__.IsValid())
                     {
-                        RefreshItemDetailPanel_(InIndex);
+                        SelectedSlotIndex__ = InIndex;
+                        RefreshItemDetailPanel_();
                     }
                 }
             );
@@ -74,7 +75,7 @@ void UItemManagerWidget::InitializeItemManagerWidget(UInventoryComponent* InInve
 
     Item_Drop->OnClicked.AddDynamic(this, &UItemManagerWidget::OnItemDropButtonClicked__);
 
-    RefreshInventoryWidget_();
+    RefreshInventoryWidget();
 }
 
 void UItemManagerWidget::ClearInventoryWidget()
@@ -90,7 +91,7 @@ void UItemManagerWidget::ClearInventoryWidget()
     SlotSize__ = 0;
 }
 
-void UItemManagerWidget::RefreshInventoryWidget_() const
+void UItemManagerWidget::RefreshInventoryWidget()
 {
     if (!TargetInventory__.IsValid())
     {
@@ -98,7 +99,8 @@ void UItemManagerWidget::RefreshInventoryWidget_() const
         return;
     }
 
-    RefreshItemDetailPanel_(InvalidIndex);
+    SelectedSlotIndex__ = InvalidIndex;
+    RefreshItemDetailPanel_();
 
     for (const UInventorySlotWidget* SlotWidget : SlotWidgets__)
     {
@@ -118,15 +120,22 @@ void UItemManagerWidget::RefreshSlotWidget_(int32 InSlotIndex) const
     }
 
     SlotWidgets__[InSlotIndex]->RefreshSlot();
+    RefreshItemDetailPanel_();
 }
 
-void UItemManagerWidget::RefreshItemDetailPanel_(int32 InSlotIndex) const
+void UItemManagerWidget::RefreshItemDetailPanel_() const
 {
     ItemInfoPanel->SetVisibility(ESlateVisibility::Hidden);
 
-    if (!IsValidIndex__(InSlotIndex) || !SlotWidgets__[InSlotIndex])
+    // 아이템 정보를 비우도록 의도된 InvalidIndex 설정이므로 바로 리턴
+    if (SelectedSlotIndex__ == InvalidIndex)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshItemDetailPanel_()] : InSlotIndex가 유효하지 않습니다."));
+        return;
+    }
+
+    if (!IsValidIndex__(SelectedSlotIndex__) || !SlotWidgets__[SelectedSlotIndex__])
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshItemDetailPanel_()] : SelectedSlotIndex가 유효하지 않습니다."));
         return;
     }
 
@@ -136,7 +145,7 @@ void UItemManagerWidget::RefreshItemDetailPanel_(int32 InSlotIndex) const
         return;
     }
 
-    const FInventorySlot* TargetSlot = TargetInventory__->GetSlot(InSlotIndex);
+    const FInventorySlot* TargetSlot = TargetInventory__->GetSlot(SelectedSlotIndex__);
 
     if (!TargetSlot->IsEmpty())
     {
@@ -153,10 +162,30 @@ void UItemManagerWidget::RefreshItemDetailPanel_(int32 InSlotIndex) const
 
 void UItemManagerWidget::OnItemUseButtonClicked__()
 {
-    UE_LOG(LogTemp, Log, TEXT("[UItemManagerWidget::OnItemUseButtonClicked__()] : Hello ItemUseButton"));
+    if (!IsValidIndex__(SelectedSlotIndex__))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::OnItemUseButtonClicked__()] : SelectedSlotIndex가 유효하지 않습니다."));
+        return;
+    }
+
+    FInventoryCommandResult Result;
+    TargetInventory__->ExecuteCommand(
+        FInventoryCommand::MakeUseCommand(SelectedSlotIndex__),
+        Result
+    );
 }
 
 void UItemManagerWidget::OnItemDropButtonClicked__()
 {
-    UE_LOG(LogTemp, Log, TEXT("[UItemManagerWidget::OnItemDropButtonClicked__()] : Hello ItemDropButton"));
+    if (!IsValidIndex__(SelectedSlotIndex__))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::OnItemDropButtonClicked__()] : SelectedSlotIndex가 유효하지 않습니다."));
+        return;
+    }
+
+    FInventoryCommandResult Result;
+    TargetInventory__->ExecuteCommand(
+        FInventoryCommand::MakeDropCommand(SelectedSlotIndex__, GetOwningPlayerPawn()->GetActorLocation()),
+        Result
+    );
 }

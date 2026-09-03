@@ -19,6 +19,7 @@ void UInventoryWindowWidget::OpenInventoryWidget()
 
     CapacityText->SetText(FText::FromString("Hello Capacity"));
     WeightText->SetText(FText::FromString("Hello Weight"));
+    ItemManagerWidget->RefreshInventoryWidget();
 
     SetVisibility(ESlateVisibility::Visible);
 
