@@ -16,10 +16,10 @@ class PROJECTSR_API UPlayerAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 	
 public:
-	// BeginPlay 역할
-	virtual void NativeInitializeAnimation() override;
-	// Tick 역할
-	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	//// BeginPlay 역할
+	//virtual void NativeInitializeAnimation() override;
+	//// Tick 역할
+	//virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 protected:
 	// 소유 캐릭터 참조 (캐스팅 비용 절감)
