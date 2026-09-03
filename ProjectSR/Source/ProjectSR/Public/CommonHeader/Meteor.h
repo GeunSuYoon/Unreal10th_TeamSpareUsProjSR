@@ -34,9 +34,6 @@ struct FMeteor
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
 	FVector	EndPos = FVector::Zero();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
-	FVector	ClosestApproachPos = FVector::Zero();
-
 	void	Clear()
 	{
 		MeteorRemainTime = 0.0f;
@@ -47,7 +44,6 @@ struct FMeteor
 		MoveDir = FVector::Zero();
 		StartPos = FVector::Zero();
 		EndPos = FVector::Zero();
-		ClosestApproachPos = FVector::Zero();
 	}
 };
 
