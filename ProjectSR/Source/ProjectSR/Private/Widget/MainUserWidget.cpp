@@ -19,3 +19,7 @@ void UMainUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShipActor)
 	this->MeteoWarningWidget->SetVisibility(ESlateVisibility::Collapsed);
 	this->MeteoWarningWidget->BindToMeteorAvoidanceComponent(InSpaceShipActor->GetMeteorAvoidance());
 }
+
+void UMainUserWidget::BindToCharacter(ACharacter* InCharacter)
+{
+}
