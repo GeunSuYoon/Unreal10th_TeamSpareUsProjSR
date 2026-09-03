@@ -7,10 +7,11 @@
 #include "InventorySlotWidget.generated.h"
 
 class UInventoryComponent;
-class UButton;
+class UImage;
 class UTextBlock;
 
 DECLARE_DELEGATE_OneParam(FOnSlotClicked, int32);
+DECLARE_DELEGATE(FOnDragStarted)
 
 UCLASS()
 class PROJECTSR_API UInventorySlotWidget : public UUserWidget
@@ -34,10 +35,14 @@ private:
 
 public:
     FOnSlotClicked OnSlotClicked;
+    FOnDragStarted OnDragStarted;
 
 protected:
+    //UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
+    //TObjectPtr<UButton> Item_GridButton;
+
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UButton> Item_GridButton;
+    TObjectPtr<UImage> Item_Grid_Icon;
 
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UTextBlock> Item_Grid_Count;

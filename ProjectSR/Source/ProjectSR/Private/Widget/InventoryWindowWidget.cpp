@@ -28,7 +28,7 @@ void UInventoryWindowWidget::OpenInventoryWidget()
         FInputModeUIOnly InputModeUI;
         InputModeUI.SetWidgetToFocus(TakeWidget());
 
-        PC->SetInputMode(InputModeUI);
+        //PC->SetInputMode(InputModeUI);
         PC->SetShowMouseCursor(true);
     }
 }
@@ -40,7 +40,7 @@ void UInventoryWindowWidget::CloseInventoryWidget()
     if (APlayerController* PC = Cast<APlayerController>(GetOwningPlayer()))
     {
         FInputModeGameOnly InputModeGame;
-        PC->SetInputMode(InputModeGame);
+        //PC->SetInputMode(InputModeGame);
         PC->SetShowMouseCursor(false);
     }
 }
@@ -57,10 +57,23 @@ void UInventoryWindowWidget::ToggleInventoryWidget()
     }
 }
 
+void UInventoryWindowWidget::InitializeInventoryWindowWidget(UInventoryComponent* InInventoryComponent)
+{
+    if (!InInventoryComponent)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryWindowWidget::InitializeInventoryWindowWidget()] : InventoryComponent가 nullptr입니다."));
+        return;
+    }
+
+    TargetInventory__ = InInventoryComponent;
+    ItemManagerWidget->InitializeItemManagerWidget(TargetInventory__.Get());
+}
+
 void UInventoryWindowWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
+    /*
     if (APawn* Player = GetOwningPlayerPawn())
     {
         if (IInventoryComponentInterface* InventoryPlayer = Cast<IInventoryComponentInterface>(Player))
@@ -72,6 +85,7 @@ void UInventoryWindowWidget::NativeConstruct()
             }
         }
     }
+    */
 
     if (!Inventory_CloseButton)
     {

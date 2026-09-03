@@ -23,6 +23,9 @@ public:
     UFUNCTION(BlueprintCallable)
     void ToggleInventoryWidget();
 
+    UFUNCTION(BlueprintCallable)
+    void InitializeInventoryWindowWidget(UInventoryComponent* InInventoryComponent);
+
     inline bool IsInventoryOpen() const { return GetVisibility() == ESlateVisibility::Visible; }
 
 protected:
