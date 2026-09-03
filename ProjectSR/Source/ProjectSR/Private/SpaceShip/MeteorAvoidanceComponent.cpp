@@ -4,6 +4,7 @@
 #include "SpaceShip/MeteorAvoidanceComponent.h"
 #include "Data/SpaceMap/SpaceMapDataAsset.h"
 #include "SpaceShip/SpaceShipActor.h"
+#include "Utility/UtilFunction.h"
 
 // Sets default values for this component's properties
 UMeteorAvoidanceComponent::UMeteorAvoidanceComponent()
@@ -115,13 +116,13 @@ void UMeteorAvoidanceComponent::EvaluateMeteorAvoidance()
 	FVector&	MeteorEnd = TargetMeteor_.EndPos;
 	// 운석의 궤도와 방향
 	FVector		MeteorSegment = MeteorEnd - MeteorStart;
-	// 운석 궤도의 길이(제곱)
-	float		SegmentLengthSquared = MeteorSegment.SizeSquared();
-	// 운석과 우주선이 가장 가까운 거리 비율 (내적)
-	float		ClosetT = FVector::DotProduct(-MeteorStart, MeteorSegment) / SegmentLengthSquared;
-	// 가장 가까울 때 위치 업데이트
-	this->TargetMeteor_.ClosestApproachPos = MeteorStart + MeteorSegment * ClosetT;
-	float		ClosetDistSquared = this->TargetMeteor_.ClosestApproachPos.SizeSquared();
+	//// 운석 궤도의 길이(제곱)
+	//float		SegmentLengthSquared = MeteorSegment.SizeSquared();
+	//// 운석과 우주선이 가장 가까운 거리 비율 (내적)
+	//float		ClosetT = FVector::DotProduct(-MeteorStart, MeteorSegment) / SegmentLengthSquared;
+	//// 가장 가까울 때 위치 업데이트
+	//this->TargetMeteor_.ClosestApproachPos = MeteorStart + MeteorSegment * ClosetT;
+	float		ClosetDistSquared = FUtilFunction::GetPointToLineDistanceSquared(FVector::ZeroVector, MeteorStart, MeteorSegment);
 
 	UE_LOG(
 		LogTemp,
