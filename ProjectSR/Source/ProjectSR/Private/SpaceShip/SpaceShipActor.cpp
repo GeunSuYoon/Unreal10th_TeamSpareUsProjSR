@@ -10,8 +10,9 @@
 #include "Component/InventoryComponent.h"
 #include "Component/CraftingComponent.h"
 #include "MainPanel/MainPanelActor.h"
-#include "Components/SphereComponent.h"
 #include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
+
+#include "Components/SphereComponent.h"
 
 // Sets default values
 ASpaceShipActor::ASpaceShipActor()
