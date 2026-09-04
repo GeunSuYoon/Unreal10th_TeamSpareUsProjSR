@@ -19,8 +19,8 @@ public class ProjectSR : ModuleRules
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate",
-            "Niagara"
-        });
+			"SlateCore"
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
