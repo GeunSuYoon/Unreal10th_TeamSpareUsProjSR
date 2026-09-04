@@ -13,6 +13,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Data/Item/EquipmentDataAsset.h"
 #include "Command/StatCommand.h"
+#include "Widget/SRMainHUD.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -84,6 +85,14 @@ void APlayerCharacter::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerCharacter::BeginPlay - StatComponent is NULL!"));
 	}
+
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        if (ASRMainHUD* HUD = Cast<ASRMainHUD>(PC->GetHUD()))
+        {
+            HUD->RegisterPlayerCharacter(this);
+        }
+    }
 }
 
 // Called every frame
@@ -114,6 +123,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(IA_Boost, ETriggerEvent::Completed, this, &APlayerCharacter::Player_BoostStop);
 		// 메인 상호작용 (F)
 		EnhancedInputComponent->BindAction(IA_Interact, ETriggerEvent::Started, this, &APlayerCharacter::Player_Interact);
+
+        EnhancedInputComponent->BindAction(IA_Inventory, ETriggerEvent::Started, this, &APlayerCharacter::Player_Inventory);
 	}
 }
 
@@ -243,6 +254,11 @@ void APlayerCharacter::Player_BoostStop(const FInputActionValue& Value)
 void APlayerCharacter::Player_Interact(const FInputActionValue& Value)
 {
 	InteractionComponent->PlayerInteract();
+}
+
+void APlayerCharacter::Player_Inventory(const FInputActionValue& Value)
+{
+    OnToggleInventory.ExecuteIfBound();
 }
 
 void APlayerCharacter::Player_Move_Gravity(const FInputActionValue& Value)
