@@ -49,11 +49,12 @@ public:
 	// 블루프린트 테스트용 함수
 	UFUNCTION(BlueprintCallable)
 	void	SetSafeArea(float InArea);
+
 	UFUNCTION(BlueprintCallable)
 	void	SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData);
+
 	void	RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip);
 	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
-	//void	RotateSpaceRoot(const FVector2D& InRotationInput);
 	void	MeteorDetect();
 	void	EndOfDay();
 
@@ -63,26 +64,26 @@ public:
 	UFUNCTION(BlueprintCallable)
 	ASpaceRootActor*	GetSpaceRootActor() { return (this->SpaceRootActor__); }
 
+	UFUNCTION(BlueprintCallable)
+	ASpaceShipActor*	GetSpaceShipActor() const { return (this->SpaceShipActor__); }
+
 protected:
 	// 테스트용 코드에용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Area")
 	TObjectPtr<USphereComponent> SafeAreaVisualizer_;
 
 private:
+	UFUNCTION()
+	void	SpawnMeteor__(const FMeteor& InMeteor);
+
 	void	TryStartItemSpawn__();
 	void	SpawnSpaceRoot__();
 	void	SpawnItemLevelStart__(int32 InitItemCount);
 	void	SpawnItemActor__();
 	void	SpawnItemActor__(FVector InLocation);
 	void	DespawnItemActor__();
-	void	SpawnMeteor__();
-	//void	UpdateVirtualMeteors__(float CurrentWorldTime);
-	void	ResolveMeteor__(FMeteor& Meteor);
 
 	UItemDataAsset*	SelectSpawnItemData__();
-	//void	ReturnMeteor(AMeteorActor* Meteor);
-
-	//AMeteorActor*	AcquireMeteor();
 
 	UPROPERTY()
 	TObjectPtr<ASpaceRootActor>		SpaceRootActor__ = nullptr;
