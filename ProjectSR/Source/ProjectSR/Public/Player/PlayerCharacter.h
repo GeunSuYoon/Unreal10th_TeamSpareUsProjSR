@@ -68,6 +68,18 @@ protected:
 	void Player_BoostStop(const FInputActionValue& Value);
 	void Player_Interact(const FInputActionValue& Value);
 
+	// 중력 상태에 따른 실제 이동 로직
+	void Player_Move_Gravity(const FInputActionValue& Value);
+	void Player_Move_ZeroGravity(const FInputActionValue& Value);
+
+	void Player_Jump_Gravity(const FInputActionValue& Value);
+	void Player_Jump_ZeroGravity(const FInputActionValue& Value);
+
+	void Player_CrouchStart_Gravity(const FInputActionValue& Value);
+	void Player_CrouchStop_Gravity(const FInputActionValue& Value);
+	void Player_CrouchHold_ZeroGravity(const FInputActionValue& Value);
+
+
 protected:
 	// 컴포넌트 목록
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
