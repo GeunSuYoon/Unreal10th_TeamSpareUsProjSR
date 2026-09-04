@@ -20,7 +20,7 @@ public class ProjectSR : ModuleRules
 			"UMG",
 			"Slate",
 			"SlateCore",
-			"Niagara"
+            "Niagara"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
