@@ -112,6 +112,7 @@ void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMap
 		TEXT("[USpaceSalvageWorldSubsystem::SetSpaceMapData] MapData %s가 할당됐습니다."),
 		*this->SpaceMapData__->MapName.ToString()
 	);
+	this->OnSpaceMapUpdate.ExecuteIfBound(this->ItemDespawnDist__);
 	this->TryStartItemSpawn__();
 }
 
@@ -122,7 +123,7 @@ void USpaceSalvageWorldSubsystem::RegisterSpaceShipActor(ASpaceShipActor* InSpac
 		return;
 	}
 	InSpaceShip->OnSpaceShipRotate.BindUFunction(this, TEXT("SpaceShipRotateDetect"));
-	InSpaceShip->GetMeteorAvoidance()->OnMeteorCollision.BindUFunction(this, TEXT("SpawnMeteor__"));
+	InSpaceShip->GetMeteorAvoidance()->OnMeteorCollision.AddDynamic(this, &USpaceSalvageWorldSubsystem::SpawnMeteor__);
 	this->SpaceShipActor__ = InSpaceShip;
 	this->TryStartItemSpawn__();
 }
