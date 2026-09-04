@@ -2,7 +2,7 @@
 
 
 #include "SpaceShip/MachineArmComponent.h"
-#include "Data/SpaceShip/MachineArmDataAsset.h"
+#include "DataAsset/MachineArmDataAsset.h"
 
 // Sets default values for this component's properties
 UMachineArmComponent::UMachineArmComponent()
@@ -40,13 +40,13 @@ void UMachineArmComponent::SetMachineArmData(UMachineArmDataAsset* InMachineArmD
 	{
 		this->ItemCollectTime__ = InMachineArmData->ItemCollectTime;
 		this->ItemCollectWeight__ = InMachineArmData->ItemCollectWeight;
-		this->OperationalEnergy__ = InMachineArmData->OperationalEnergy;
+		this->ReactiveEnergy__ = InMachineArmData->ReactiveEnergy;
 	}
 	else
 	{
 		this->ItemCollectTime__ = 0.0f;
 		this->ItemCollectWeight__ = 0.0f;
-		this->OperationalEnergy__ = 0.0f;
+		this->ReactiveEnergy__ = 0.0f;
 	}
 }
 
