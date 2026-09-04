@@ -10,6 +10,8 @@
 #include "SpaceSalvageWorldSubsystem.generated.h"
 //#include "Components/SphereComponent.h"
 
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceMapUpdate, const float, InDist);
+
 class ASpaceShipActor;
 class ASpaceRootActor;
 class UMeteorAvoidanceComponent;
@@ -66,6 +68,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	ASpaceShipActor*	GetSpaceShipActor() const { return (this->SpaceShipActor__); }
+
+	float	GetItemSpawnDist() const { return (this->ItemSpawnDist__); }
+
+	FOnSpaceMapUpdate	OnSpaceMapUpdate;
 
 protected:
 	// 테스트용 코드에용

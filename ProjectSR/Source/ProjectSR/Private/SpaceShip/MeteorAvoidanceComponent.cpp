@@ -86,7 +86,7 @@ void UMeteorAvoidanceComponent::MeteorDetect(const USpaceMapDataAsset* InSpaceMa
 		true,
 		0.0f
 	);
-	OnMeteorDetect.ExecuteIfBound(this->TargetMeteor_);
+	OnMeteorDetect.Broadcast(this->TargetMeteor_);
 }
 
 void UMeteorAvoidanceComponent::SpaceShipMoveInput(const FVector2D& InMoveInput, const float InSpaceShipSpeed)
@@ -102,7 +102,7 @@ void UMeteorAvoidanceComponent::SpaceShipMoveInput(const FVector2D& InMoveInput,
 	MeteorMoveDir *= InSpaceShipSpeed;
 	this->TargetMeteor_.StartPos += MeteorMoveDir;
 	this->TargetMeteor_.EndPos += MeteorMoveDir;
-	OnMeteorMove.ExecuteIfBound(this->TargetMeteor_);
+	OnMeteorMove.Broadcast(this->TargetMeteor_);
 	this->EvaluateMeteorAvoidance();
 }
 
@@ -168,7 +168,7 @@ void UMeteorAvoidanceComponent::SpawnMeteor()
 		TEXT("[UMeteorAvoidanceComponent::SpawnMeteor] 운석 회피 실패")
 	);
 	// 운석 spawn
-	OnMeteorCollision.ExecuteIfBound(this->TargetMeteor_);
+	OnMeteorCollision.Broadcast(this->TargetMeteor_);
 	this->ClearMeteor();
 }
 
@@ -176,7 +176,7 @@ void UMeteorAvoidanceComponent::ClearMeteor()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
-	OnMeteorClear.ExecuteIfBound();
+	OnMeteorClear.Broadcast();
 	TimerManager.ClearTimer(this->MeteorAlarmTimer__);
 	this->TargetMeteor_.Clear();
 	this->bIsMeteor__ = false;
