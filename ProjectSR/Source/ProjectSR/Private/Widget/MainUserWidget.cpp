@@ -5,6 +5,8 @@
 #include "Widget/MeteorWarningUserWidget.h"
 #include "SpaceShip/SpaceShipActor.h"
 
+#include "Widget/MeteorEventUserWidget.h"
+
 void UMainUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShipActor)
 {
 	if (!InSpaceShipActor)
@@ -18,6 +20,7 @@ void UMainUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShipActor)
 	}
 	this->MeteoWarningWidget->SetVisibility(ESlateVisibility::Collapsed);
 	this->MeteoWarningWidget->BindToMeteorAvoidanceComponent(InSpaceShipActor->GetMeteorAvoidance());
+	this->MeteoEventTest->BindToSpaceShip(InSpaceShipActor);
 }
 
 void UMainUserWidget::BindToCharacter(ACharacter* InCharacter)

@@ -9,6 +9,8 @@
 class UMeteorWarningUserWidget;
 class ASpaceShipActor;
 
+// 테스트용
+class UMeteorEventUserWidget;
 /**
  * 
  */
@@ -24,5 +26,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMeteorWarningUserWidget>	MeteoWarningWidget;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UMeteorEventUserWidget>		MeteoEventTest;
 
 };
