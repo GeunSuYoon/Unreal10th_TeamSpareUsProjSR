@@ -67,6 +67,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	ASpaceRootActor*	GetSpaceRootActor() { return (this->SpaceRootActor__); }
 
+	// 테스트용 함수
+	USpaceMapDataAsset*	GetSpaceMapData() const { return (this->SpaceMapData__); }
+
 	UFUNCTION(BlueprintCallable)
 	ASpaceShipActor*	GetSpaceShipActor() const { return (this->SpaceShipActor__); }
 
@@ -108,7 +111,7 @@ private:
 	TArray<TWeakObjectPtr<AItemActor>>	SpawnedItem__;
 
 	float	ItemSpawnDist__ = 0.0f;
-	float	ItemDespawnDist__ = 0.0f;
+	float	ItemDespawnDistSquared__ = 0.0f;
 	float	ItemMoveSpeed__ = 0.0f;
 
 	int32	ItemSpawnMaxRetryCount__ = 30;
