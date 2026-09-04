@@ -129,6 +129,11 @@ void ASpaceShipActor::BeginPlay()
 	}
 	SpaceSubsystem->RegisterSpaceShipActor(this);
 	SpaceSubsystem->SetSafeArea(this->SafeAreaRadius_);
+	if (this->LazerComponent_)
+	{
+		this->LazerComponent_->BindToSubsystem(SpaceSubsystem);
+	}
+	//SpaceSubsystem->OnMeteorSpawn.BindUFunction();
 }
 
 // Called every frame
