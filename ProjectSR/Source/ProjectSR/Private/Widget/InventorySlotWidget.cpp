@@ -140,7 +140,7 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
         FInventoryCommand::MakeMoveCommand(DragOp->SourceInventory.Get(), DragOp->SourceInventory->GetTempSlotIndex(), Index__),
         Result);
 
-    TargetInventory__->ExecuteCommand(
+    DragOp->SourceInventory->ExecuteCommand(
         FInventoryCommand::MakeMoveCommand(DragOp->SourceInventory.Get(), DragOp->SourceInventory->GetTempSlotIndex(), DragOp->SourceIndex),
         Result);
 
