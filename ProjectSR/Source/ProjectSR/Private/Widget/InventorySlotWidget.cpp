@@ -6,7 +6,6 @@
 #include "Component/InventoryComponent.h"
 #include "CommonHeader/InventoryDragDropOperation.h"
 
-//#include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Styling/SlateBrush.h" 
@@ -21,8 +20,6 @@ void UInventorySlotWidget::InitializeSlot(UInventoryComponent* InInventoryCompon
 
     TargetInventory__ = InInventoryComponent;
     Index__ = InSlotIndex;
-
-    //Item_GridButton->OnClicked.AddDynamic(this, &UInventorySlotWidget::OnSlotButtonClicked__);
 
     RefreshSlot();
 }
@@ -42,25 +39,14 @@ void UInventorySlotWidget::RefreshSlot() const
         return;
     }
 
-    //FButtonStyle NewStyle = Item_GridButton->GetStyle();
-    //FSlateBrush NewBrush;
-
     if (TargetSlot->IsEmpty())
     {
-        //NewBrush.SetResourceObject(nullptr);
-        //NewStyle.SetNormal(NewBrush);
-
-        //Item_GridButton->SetStyle(NewStyle);
         Item_Grid_Icon->SetBrushFromTexture(nullptr);
         Item_Grid_Icon->SetBrushTintColor(FLinearColor::Transparent);
         Item_Grid_Count->SetVisibility(ESlateVisibility::Hidden);
     }
     else
     {
-        //NewBrush.SetResourceObject(TargetSlot->ItemData->Icon.Get());
-        //NewStyle.SetNormal(NewBrush);
-
-        //Item_GridButton->SetStyle(NewStyle);
         Item_Grid_Icon->SetBrushFromTexture(TargetSlot->ItemData->Icon.Get());
         Item_Grid_Icon->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
         Item_Grid_Count->SetText(FText::AsNumber(TargetSlot->GetCount()));
@@ -88,14 +74,14 @@ FReply UInventorySlotWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, 
 {
     OnSlotClicked.ExecuteIfBound(Index__);
 
-    return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);;
+    return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
 }
 
 void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
 {
     if (!TargetInventory__.IsValid())
     {
-        UE_LOG(LogTemp, Warning, TEXT("[InventorySlotWidget] : InventoryComponent nullptr"));
+        UE_LOG(LogTemp, Warning, TEXT("[UInventorySlotWidget::NativeOnDragDetected()] : TargetInventory가 nullptr입니다."));
         return;
     }
 
@@ -103,6 +89,7 @@ void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 
     if (!SourceSlot || SourceSlot->IsEmpty())
     {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventorySlotWidget::NativeOnDragDetected()] : 빈 슬롯입니다."));
         return;
     }
 
@@ -124,6 +111,7 @@ void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
     OutOperation = DragOp; // NativeOnDrop과 NariveOnDragCancelled를 발동시키기 위해 필수
 
     FInventoryCommandResult Result;
+
     TargetInventory__->ExecuteCommand(
         FInventoryCommand::MakeMoveCommand(TargetInventory__.Get(), Index__, TargetInventory__->GetTempSlotIndex()),
         Result);
@@ -152,7 +140,7 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
         FInventoryCommand::MakeMoveCommand(DragOp->SourceInventory.Get(), DragOp->SourceInventory->GetTempSlotIndex(), Index__),
         Result);
 
-    TargetInventory__->ExecuteCommand(
+    DragOp->SourceInventory->ExecuteCommand(
         FInventoryCommand::MakeMoveCommand(DragOp->SourceInventory.Get(), DragOp->SourceInventory->GetTempSlotIndex(), DragOp->SourceIndex),
         Result);
 
@@ -161,9 +149,17 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 
 void UInventorySlotWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
-}
+    UInventoryDragDropOperation* DragOp = Cast<UInventoryDragDropOperation>(InOperation);
 
-void UInventorySlotWidget::OnSlotButtonClicked__()
-{
-    OnSlotClicked.ExecuteIfBound(Index__);
+    if (DragOp->SourceInventory->GetTempSlot()->IsEmpty())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventorySlotWidget::NativeOnDragCancelled()] : DragOp->SourceInventory의 TempSlot이 비어있습니다."));
+        return;
+    }
+
+    FInventoryCommandResult Result;
+
+    TargetInventory__->ExecuteCommand(
+        FInventoryCommand::MakeMoveCommand(DragOp->SourceInventory.Get(), DragOp->SourceInventory->GetTempSlotIndex(), DragOp->SourceIndex),
+        Result);
 }

@@ -69,8 +69,8 @@ void UInventoryComponent::ShowInventory()
 
 FInventorySlot* UInventoryComponent::GetSlot(int InSlotIndex)
 {
-    //if (!IsValidIndex(InSlotIndex)) return nullptr;
-    check(IsValidIndex(InSlotIndex));
+    if (!IsValidIndex(InSlotIndex)) return nullptr;
+    //check(IsValidIndex(InSlotIndex));
 
     // check(bool)	: bool이 거짓이면 프로그램 종료. shipping 빌드에 포함이 안됨
     // verify(bool)	: bool이 거짓이면 프로그램 종료. shipping 빌드에 포함이 됨
@@ -154,12 +154,6 @@ bool UInventoryComponent::HandleMoveCommand_(const FInventoryCommand& Command, F
 
     if (!IsValidIndex(Command.SourceIndex) || !IsValidIndex(Command.TargetIndex))
     {
-        return OutResult.bSuccess;
-    }
-
-    if (Command.SourceIndex == Command.TargetIndex)
-    {
-        OutResult.bSuccess = true;
         return OutResult.bSuccess;
     }
 
