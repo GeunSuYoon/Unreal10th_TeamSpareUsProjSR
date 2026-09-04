@@ -6,7 +6,6 @@
 #include "Component/InventoryComponent.h"
 #include "CommonHeader/InventoryDragDropOperation.h"
 
-//#include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Styling/SlateBrush.h" 
@@ -21,8 +20,6 @@ void UInventorySlotWidget::InitializeSlot(UInventoryComponent* InInventoryCompon
 
     TargetInventory__ = InInventoryComponent;
     Index__ = InSlotIndex;
-
-    //Item_GridButton->OnClicked.AddDynamic(this, &UInventorySlotWidget::OnSlotButtonClicked__);
 
     RefreshSlot();
 }
@@ -42,25 +39,14 @@ void UInventorySlotWidget::RefreshSlot() const
         return;
     }
 
-    //FButtonStyle NewStyle = Item_GridButton->GetStyle();
-    //FSlateBrush NewBrush;
-
     if (TargetSlot->IsEmpty())
     {
-        //NewBrush.SetResourceObject(nullptr);
-        //NewStyle.SetNormal(NewBrush);
-
-        //Item_GridButton->SetStyle(NewStyle);
         Item_Grid_Icon->SetBrushFromTexture(nullptr);
         Item_Grid_Icon->SetBrushTintColor(FLinearColor::Transparent);
         Item_Grid_Count->SetVisibility(ESlateVisibility::Hidden);
     }
     else
     {
-        //NewBrush.SetResourceObject(TargetSlot->ItemData->Icon.Get());
-        //NewStyle.SetNormal(NewBrush);
-
-        //Item_GridButton->SetStyle(NewStyle);
         Item_Grid_Icon->SetBrushFromTexture(TargetSlot->ItemData->Icon.Get());
         Item_Grid_Icon->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
         Item_Grid_Count->SetText(FText::AsNumber(TargetSlot->GetCount()));
@@ -88,7 +74,7 @@ FReply UInventorySlotWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, 
 {
     OnSlotClicked.ExecuteIfBound(Index__);
 
-    return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);;
+    return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
 }
 
 void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
