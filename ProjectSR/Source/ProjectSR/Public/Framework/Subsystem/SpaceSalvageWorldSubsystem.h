@@ -10,16 +10,17 @@
 #include "SpaceSalvageWorldSubsystem.generated.h"
 //#include "Components/SphereComponent.h"
 
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceMapUpdate, const float, InDist);
-
 class ASpaceShipActor;
 class ASpaceRootActor;
 class UMeteorAvoidanceComponent;
 class UItemDataAsset;
 class USpaceMapDataAsset;
 class USphereComponent;
+class AMeteorItemActor;
 //class AItemActor;
-//class AMeteorActor;
+
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceMapUpdate, const float, InDist);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMeteorSpawn, AMeteorItemActor*, InMeteor);
 
 /**
  *
@@ -72,6 +73,7 @@ public:
 	float	GetItemSpawnDist() const { return (this->ItemSpawnDist__); }
 
 	FOnSpaceMapUpdate	OnSpaceMapUpdate;
+	FOnMeteorSpawn		OnMeteorSpawn;
 
 protected:
 	// 테스트용 코드에용

@@ -585,6 +585,7 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 					*ItemActor->GetName(),
 					*ItemActor->GetActorLocation().ToString()
 				);
+				this->OnMeteorSpawn.ExecuteIfBound(MeteorActor);
 			})
 	);
 }
