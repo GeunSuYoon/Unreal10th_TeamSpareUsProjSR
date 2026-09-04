@@ -32,12 +32,3 @@ void UCraftComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// ...
 }
 
-// InSourceInventory에 InCraftBlueprint의 재료 아이템 탐색 성공 시 재료 아이템을 지우고 OutTargetInventory에 최종 아이템을 반환
-void UCraftComponent::CraftItem(UItemCraftDataAsset* InItemCraftDataAsset, UInventoryComponent* InSourceInventory, UInventoryComponent* OutTargetInventory)
-{
-	// SourceInventory에 재료 아이템 찾는 코드
-	// 재료 아이템 있으면 TargetInventory에 빈 자리 있는지 찾는 코드
-	// 빈 자리까지 있으면 SourceInventory에서 재료 아이템 삭제
-	// TargetInventory에 목표 아이템 추가
-}
-
