@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Data/Item/EquipmentDataAsset.h"
+#include "Command/StatCommand.h"
 #include "StatComponent.generated.h"
 
 
@@ -38,6 +39,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Stat")
 	void ModifyOxygen(float Amount);
+
+	// 외부(캐릭터, 장비 등)에서 알아야 할 커맨드 함수
+	UFUNCTION(BlueprintCallable, Category = "Stat")
+	void ExecuteStatCommand(const FStatChangeCommand& Command);
 
 	// 중력 상태 변화에 따라 캐릭터가 호출
 	UFUNCTION(BlueprintCallable, Category = "Stat")
@@ -133,4 +138,8 @@ private:
 	// 매 프레임 캐스팅 방지용 캐시
 	UPROPERTY()
 	TObjectPtr<class APlayerCharacter> OwnerCharacter;
+
+	// 최근 스탯 변경 이력 (추적용)
+	TArray<FStatChangeCommand> CommandHistory;
+	static constexpr int32 MaxHistorySize = 50;
 };
