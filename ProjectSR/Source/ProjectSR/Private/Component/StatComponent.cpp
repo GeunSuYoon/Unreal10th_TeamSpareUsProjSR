@@ -52,26 +52,26 @@ void UStatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	{
 		ActualHungerDrain *= BoostHungerDrainMultiplier;	// 캐릭터 부스트 상태시 허기 감소 추가 배율 적용
 	}
-	ModifyHunger(-ActualHungerDrain * DeltaTime);
+	ExecuteStatCommand({ EPlayerStatType::Hunger, -ActualHungerDrain * DeltaTime, TEXT("HungerDrain") });
 
 	// --- Oxygen 소모 로직 --- 무중력 상태시
 	if (bIsOxygenConsume)
 	{
-		ModifyOxygen(-OxygenDrainRate * DeltaTime);
+		ExecuteStatCommand({ EPlayerStatType::Oxygen, -OxygenDrainRate * DeltaTime, TEXT("ZeroGravityOxygenDrain") });
 	}
 	else
 	{
-		ModifyOxygen(OxygenRecoverRate * DeltaTime);
+		ExecuteStatCommand({ EPlayerStatType::Oxygen, OxygenRecoverRate * DeltaTime, TEXT("OxygenRecover") });
 	}
 
 	// --- 체력 패널티 --- 허기, 산소 고갈시
 	if (CurrentHunger <= 0.0f)
 	{
-		ModifyHealth(-StarvationDamageRate * DeltaTime);
+		ExecuteStatCommand({ EPlayerStatType::Health, -StarvationDamageRate * DeltaTime, TEXT("Starvation") });
 	}
 	if (CurrentOxygen <= 0.0f)
 	{
-		ModifyHealth(-NoOxygenDamageRate * DeltaTime);
+		ExecuteStatCommand({ EPlayerStatType::Health, -NoOxygenDamageRate * DeltaTime, TEXT("Suffocation") });
 	}
 }
 
@@ -99,6 +99,34 @@ void UStatComponent::ModifyOxygen(float Amount)
 {
 	CurrentOxygen = FMath::Clamp(CurrentOxygen + Amount, 0.0f, MaxOxygen);
 	OnOxygenChanged.Broadcast(CurrentOxygen, MaxOxygen);
+}
+
+// 커맨드 함수
+void UStatComponent::ExecuteStatCommand(const FStatChangeCommand& Command)
+{
+	switch (Command.StatType)
+	{
+	case EPlayerStatType::Health:
+		ModifyHealth(Command.Amount);
+		break;
+	case EPlayerStatType::Hunger:
+		ModifyHunger(Command.Amount);
+		break;
+	case EPlayerStatType::Oxygen:
+		ModifyOxygen(Command.Amount);
+		break;
+	}
+
+	CommandHistory.Add(Command);
+	if (CommandHistory.Num() > MaxHistorySize)
+	{
+		CommandHistory.RemoveAt(0);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("[StatCommand] Source: %s | Type: %s | Amount: %.2f"),
+		*Command.Source,
+		*UEnum::GetValueAsString(Command.StatType),
+		Command.Amount);
 }
 
 // 장비 착용시 보너스 스탯값 더해서 UI 갱신
