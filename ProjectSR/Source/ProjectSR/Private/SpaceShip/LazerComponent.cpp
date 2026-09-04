@@ -3,6 +3,8 @@
 
 #include "SpaceShip/LazerComponent.h"
 #include "Data/SpaceShip/LazerDataAsset.h"
+#include "Item/MeteorItemActor.h"
+#include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
 
 // Sets default values for this component's properties
 ULazerComponent::ULazerComponent()
@@ -33,6 +35,11 @@ void ULazerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// ...
 }
 
+void ULazerComponent::BindToSubsystem(USpaceSalvageWorldSubsystem* InSubsystem)
+{
+	InSubsystem->OnMeteorSpawn.BindUFunction(this, TEXT("AttackMeteo__"));
+}
+
 void ULazerComponent::SetLazerData(ULazerDataAsset* InLazerData)
 {
 	this->LazerData__ = InLazerData;
@@ -52,8 +59,8 @@ void ULazerComponent::SetLazerData(ULazerDataAsset* InLazerData)
 
 // 우주선에 에너지 요청해서 에너지 비율만큼 메테오에 데미지 주기.
 // this->LazerPower__ * (우주선에서 가져온 에너지) / this->ReactiveEnergy__;
-void ULazerComponent::AttackMeteo(UMeteo* InMeteo)
+void ULazerComponent::AttackMeteo__(AMeteorItemActor* InMeteor)
 {
+	InMeteor->LazerDamage(this->LazerDamage__);
 	// 운석에 데미지 주기 (운석 자체 데미지에서 Lazer의 Damage만큼 빼기)
 }
-

@@ -8,6 +8,8 @@
 
 class ULazerDataAsset;
 class UMeteo;
+class AMeteorItemActor;
+class USpaceSalvageWorldSubsystem;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTSR_API ULazerComponent : public UActorComponent
@@ -22,12 +24,13 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	void	BindToSubsystem(USpaceSalvageWorldSubsystem* InSubsystem);
+
 	// 레이저 데이터를 세팅하는 함수 다른 값도 해당 데이터의 값으로 변경된다.
 	void	SetLazerData(ULazerDataAsset* InLazerData);
 
@@ -38,13 +41,14 @@ public:
 	inline float	GetOperationalEnergy() const { return (this->OperationalEnergy__); }
 
 	// 운석 날라올 때 격추하려 불러오는 함수. TODO: 다른 팀원의 구현에 따라 선언 타입 및 내부 로직 변경 필요.
-	void	AttackMeteo(UMeteo* InMeteo);
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int32	Level_ = 0;
 
 private:
+	void	AttackMeteo__(AMeteorItemActor* InMeteor);
+
 	TObjectPtr<ULazerDataAsset>	LazerData__ = nullptr;
 
 	float	LazerDamage__ = 0.0f;
