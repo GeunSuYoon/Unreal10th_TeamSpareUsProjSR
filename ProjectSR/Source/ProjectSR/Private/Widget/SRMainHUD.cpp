@@ -26,7 +26,7 @@ void ASRMainHUD::BeginPlay()
 		);
 		return ;
 	}
-	this->MainUserWidgetInstance_->AddToViewport();
+	//this->MainUserWidgetInstance_->AddToViewport();
 
 	USpaceSalvageWorldSubsystem* SpaceSubsystem = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
 	if (IsValid(SpaceSubsystem))
