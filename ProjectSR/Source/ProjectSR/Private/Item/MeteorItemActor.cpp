@@ -17,6 +17,15 @@ void AMeteorItemActor::InitMeteor(const FMeteor& InMeteor, const FVector& ShipCe
 	this->DespawnDist__ = InDespawnDist;
 }
 
+void AMeteorItemActor::LazerDamage(float InDamage)
+{
+	this->Damage__ -= InDamage;
+	if (this->Damage__ <= 0.0f)
+	{
+		OnReturnToPool();
+	}
+}
+
 void AMeteorItemActor::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);

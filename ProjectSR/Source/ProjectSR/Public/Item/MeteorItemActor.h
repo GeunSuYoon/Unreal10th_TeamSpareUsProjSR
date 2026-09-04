@@ -26,7 +26,7 @@ public:
 	void	InitMeteor(const FMeteor& InMeteor, const FVector& ShipCenter, float InDespawnDistance);
 
 	void	SetDamage(float InDamage) { this->Damage__ = InDamage; }
-	void	LazerDamage(float InDamage) { this->Damage__ -= InDamage; }
+	void	LazerDamage(float InDamage);
 
 	virtual void	Tick(float DeltaSeconds) override;
 
