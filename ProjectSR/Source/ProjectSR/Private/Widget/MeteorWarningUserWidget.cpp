@@ -16,9 +16,9 @@ void UMeteorWarningUserWidget::BindToMeteorAvoidanceComponent(UMeteorAvoidanceCo
 		);
 		return ;
 	}
-	InMeteorAvoidanceComponent->OnMeteorDetect.BindUFunction(this, TEXT("MeteorWarningStart__"));
+	InMeteorAvoidanceComponent->OnMeteorDetect.AddDynamic(this, &UMeteorWarningUserWidget::MeteorWarningStart__);
 	InMeteorAvoidanceComponent->OnMeteorTimer.BindUFunction(this, TEXT("MeteorWarningTimer__"));
-	InMeteorAvoidanceComponent->OnMeteorClear.BindUFunction(this, TEXT("MeteorWarningEnd__"));
+	InMeteorAvoidanceComponent->OnMeteorClear.AddDynamic(this, &UMeteorWarningUserWidget::MeteorWarningEnd__);
 }
 
 void UMeteorWarningUserWidget::MeteorWarningStart__(const FMeteor& InMeteor)
