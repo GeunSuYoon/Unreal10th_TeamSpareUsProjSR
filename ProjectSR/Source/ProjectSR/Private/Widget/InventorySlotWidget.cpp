@@ -81,7 +81,7 @@ void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 {
     if (!TargetInventory__.IsValid())
     {
-        UE_LOG(LogTemp, Warning, TEXT("[InventorySlotWidget] : InventoryComponent nullptr"));
+        UE_LOG(LogTemp, Warning, TEXT("[UInventorySlotWidget::NativeOnDragDetected()] : TargetInventory가 nullptr입니다."));
         return;
     }
 
@@ -89,6 +89,7 @@ void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 
     if (!SourceSlot || SourceSlot->IsEmpty())
     {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventorySlotWidget::NativeOnDragDetected()] : 빈 슬롯입니다."));
         return;
     }
 
@@ -110,6 +111,7 @@ void UInventorySlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
     OutOperation = DragOp; // NativeOnDrop과 NariveOnDragCancelled를 발동시키기 위해 필수
 
     FInventoryCommandResult Result;
+
     TargetInventory__->ExecuteCommand(
         FInventoryCommand::MakeMoveCommand(TargetInventory__.Get(), Index__, TargetInventory__->GetTempSlotIndex()),
         Result);
@@ -147,9 +149,17 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 
 void UInventorySlotWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
-}
+    UInventoryDragDropOperation* DragOp = Cast<UInventoryDragDropOperation>(InOperation);
 
-void UInventorySlotWidget::OnSlotButtonClicked__()
-{
-    OnSlotClicked.ExecuteIfBound(Index__);
+    if (DragOp->SourceInventory->GetTempSlot()->IsEmpty())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventorySlotWidget::NativeOnDragCancelled()] : DragOp->SourceInventory의 TempSlot이 비어있습니다."));
+        return;
+    }
+
+    FInventoryCommandResult Result;
+
+    TargetInventory__->ExecuteCommand(
+        FInventoryCommand::MakeMoveCommand(DragOp->SourceInventory.Get(), DragOp->SourceInventory->GetTempSlotIndex(), DragOp->SourceIndex),
+        Result);
 }
