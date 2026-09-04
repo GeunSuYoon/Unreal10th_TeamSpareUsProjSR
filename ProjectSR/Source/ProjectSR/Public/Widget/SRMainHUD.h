@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "SRMainHUD.generated.h"
 
+class APlayerCharacter;
 class UMainUserWidget;
 class ASpaceShipActor;
 /**
@@ -20,7 +21,7 @@ public:
 	virtual void	BeginPlay() override;
 
 	void	RegisterSpaceShip(ASpaceShipActor* InSpaceShipActor);
-	void	RegisterPlayerCharacter();
+    void	RegisterPlayerCharacter(APlayerCharacter* InPlayerCharacter);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UUserWidget>	MainUserWidgetClass_ = nullptr;
