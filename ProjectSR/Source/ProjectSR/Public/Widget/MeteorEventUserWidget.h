@@ -22,6 +22,8 @@ class PROJECTSR_API UMeteorEventUserWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+	// 블루프린트 테스트용으로 달아둠. 나중에 없애도 됨.
+	UFUNCTION(BlueprintCallable)
 	void	BindToSpaceShip(ASpaceShipActor* InSpaceShip);
 
 	UFUNCTION()
