@@ -71,11 +71,17 @@ public:
 	// CurrentEnergy에서 에너지를 요청하는 함수
 	float	RequestEnergy(float InEnergy);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void	RepairDurability_Implementation(float InDurability) override;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void	ConsumDurability_Implementation(float InDurability) override;
+
+	UFUNCTION(BlueprintCallable)
+	void	GainEnergy(float InEnergy);
+
+	UFUNCTION(BlueprintCallable)
+	void	UseEnergy(float InEnergy);
 
 	FOnSpaceShipRotate	OnSpaceShipRotate;
 
