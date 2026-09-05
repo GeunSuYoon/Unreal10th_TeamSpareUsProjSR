@@ -49,17 +49,19 @@ void ASRMainHUD::RegisterSpaceShip(ASpaceShipActor* InSpaceShipActor)
 	this->MainUserWidgetInstance_->BindToSpaceShip(InSpaceShipActor);
 }
 
-void ASRMainHUD::RegisterPlayerCharacter()
+void ASRMainHUD::RegisterPlayerCharacter(APlayerCharacter* InPlayerCharacter)
 {
-	APlayerController* PC = GetOwningPlayerController();
+    APlayerController* PC = GetOwningPlayerController();
 
-	if (!PC)
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("[ASRMainHUD::BeginPlay] PlayerController가 nullptr입니다.")
-		);
-		return;
-	}
+    if (!PC)
+    {
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("[ASRMainHUD::BeginPlay] PlayerController가 nullptr입니다.")
+        );
+        return;
+    }
+
+    this->MainUserWidgetInstance_->BindToPlayer(InPlayerCharacter);
 }

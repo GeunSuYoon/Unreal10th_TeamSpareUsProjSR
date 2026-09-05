@@ -21,6 +21,8 @@ class UInteractionComponent;
 class UInputMappingContext;
 class UInputAction;
 
+DECLARE_DYNAMIC_DELEGATE(FOnToggleInventory);
+
 UCLASS()
 class PROJECTSR_API APlayerCharacter : public ACharacter,
 	public IStatComponentInterface,
@@ -67,6 +69,19 @@ protected:
 	void Player_BoostStart(const FInputActionValue& Value);
 	void Player_BoostStop(const FInputActionValue& Value);
 	void Player_Interact(const FInputActionValue& Value);
+    void Player_Inventory(const FInputActionValue& Value);
+
+	// 중력 상태에 따른 실제 이동 로직
+	void Player_Move_Gravity(const FInputActionValue& Value);
+	void Player_Move_ZeroGravity(const FInputActionValue& Value);
+
+	void Player_Jump_Gravity(const FInputActionValue& Value);
+	void Player_Jump_ZeroGravity(const FInputActionValue& Value);
+
+	void Player_CrouchStart_Gravity(const FInputActionValue& Value);
+	void Player_CrouchStop_Gravity(const FInputActionValue& Value);
+	void Player_CrouchHold_ZeroGravity(const FInputActionValue& Value);
+
 
 protected:
 	// 컴포넌트 목록
@@ -111,6 +126,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Interact;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_Inventory;
+
 private:
 	bool bIsBoosting = false;
 
@@ -130,5 +148,8 @@ public:
 	virtual UInventoryComponent* GetInventoryComponent_Implementation() override { return InventoryComponent; }
 
 	virtual UEquipComponent* GetEquipComponent_Implementation() override { return EquipComponent; }
+
+public:
+    FOnToggleInventory OnToggleInventory;
 };
  
