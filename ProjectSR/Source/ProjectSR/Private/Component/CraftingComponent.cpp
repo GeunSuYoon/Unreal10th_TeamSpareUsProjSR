@@ -129,7 +129,7 @@ bool UCraftingComponent::HasEnoughEmptySlots(FName InRecipeId, const TArray<UInv
                 return false;
             }
 
-            int32 FoundIndex = FindFewestSlot__(*InventoryIter, ItemData, StartIndex);
+            int32 FoundIndex = FindSlotWithFewestCount__(*InventoryIter, ItemData, StartIndex);
 
             // 같은 종류의 아이템이 들어있는 슬롯을 찾았다
             if (FoundIndex >= 0)
@@ -313,12 +313,12 @@ void UCraftingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-int32 UCraftingComponent::FindFewestSlot__(const TArray<FInventorySlot>& InSlots, const UItemDataAsset* InItemData, int32 StartIndex) const
+int32 UCraftingComponent::FindSlotWithFewestCount__(const TArray<FInventorySlot>& InSlots, const UItemDataAsset* InItemData, int32 StartIndex) const
 {
     int32 FoundIndex = -1;
     int32 MinStackCount = TNumericLimits<int32>::Max();
 
-    int32 SlotSize = InSlots.Num();
+    int32 SlotSize = InSlots.Num() - 1;
     for (int i = StartIndex; i < SlotSize; i++)
     {
         if (InSlots[i].ItemData == InItemData
@@ -334,7 +334,7 @@ int32 UCraftingComponent::FindFewestSlot__(const TArray<FInventorySlot>& InSlots
 
 int32 UCraftingComponent::FindSlotWithItem__(const TArray<FInventorySlot>& InSlots, const UItemDataAsset* InItemData, int32 StartIndex) const
 {
-    int32 SlotSize = InSlots.Num();
+    int32 SlotSize = InSlots.Num() - 1;
     for (int i = StartIndex; i < SlotSize; i++)
     {
         if (InSlots[i].ItemData == InItemData
@@ -350,7 +350,7 @@ int32 UCraftingComponent::FindSlotWithItem__(const TArray<FInventorySlot>& InSlo
 // 빈 슬롯의 인덱스를 반환하는 함수
 int32 UCraftingComponent::FindEmptySlot__(const TArray<FInventorySlot>& InSlots) const
 {
-    int32 SlotSize = InSlots.Num();
+    int32 SlotSize = InSlots.Num() - 1;
     for (int i = 0; i < SlotSize; i++)
     {
         if (InSlots[i].IsEmpty())
