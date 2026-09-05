@@ -12,6 +12,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Data/Item/EquipmentDataAsset.h"
+#include "Command/StatCommand.h"
+#include "Widget/SRMainHUD.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -83,6 +85,14 @@ void APlayerCharacter::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerCharacter::BeginPlay - StatComponent is NULL!"));
 	}
+
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        if (ASRMainHUD* HUD = Cast<ASRMainHUD>(PC->GetHUD()))
+        {
+            HUD->RegisterPlayerCharacter(this);
+        }
+    }
 }
 
 // Called every frame
@@ -113,6 +123,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(IA_Boost, ETriggerEvent::Completed, this, &APlayerCharacter::Player_BoostStop);
 		// 메인 상호작용 (F)
 		EnhancedInputComponent->BindAction(IA_Interact, ETriggerEvent::Started, this, &APlayerCharacter::Player_Interact);
+
+        EnhancedInputComponent->BindAction(IA_Inventory, ETriggerEvent::Started, this, &APlayerCharacter::Player_Inventory);
 	}
 }
 
@@ -149,20 +161,19 @@ void APlayerCharacter::ToggleGravityMode()
 	}
 }
 
+// 현재 중력 상태 판별해서 호출만
 void APlayerCharacter::Player_Move(const FInputActionValue& Value)
 {
-	FVector2D MovementVector = Value.Get<FVector2D>();
+	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
+	if (!MoveComp) return;
 
-	if (Controller != nullptr)
+	if (MoveComp->GetGravityState() == EGravityState::GravityMode)
 	{
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		Player_Move_Gravity(Value);
+	}
+	else
+	{
+		Player_Move_ZeroGravity(Value);
 	}
 }
 
@@ -177,20 +188,19 @@ void APlayerCharacter::Player_Look(const FInputActionValue& Value)
 	}
 }
 
+// 현재 중력 상태 판별해서 호출만
 void APlayerCharacter::Player_Jump(const FInputActionValue& Value)
 {
 	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
 	if (!MoveComp) return;
 
-	// 중력 상태
 	if (MoveComp->GetGravityState() == EGravityState::GravityMode)
 	{
-		Jump();
+		Player_Jump_Gravity(Value);
 	}
-	// 무중력 상태 : 위로 부유
 	else
 	{
-		AddMovementInput(FVector::UpVector, 1.0f);
+		Player_Jump_ZeroGravity(Value);
 	}
 }
 
@@ -201,8 +211,9 @@ void APlayerCharacter::Player_CrouchStart(const FInputActionValue& Value)
 
 	if (MoveComp->GetGravityState() == EGravityState::GravityMode)
 	{
-		Crouch();
+		Player_CrouchStart_Gravity(Value);
 	}
+	// 무중력 상태에선 키를 눌러도 별도 처리 X (Hold에서 매프레임 처리)
 }
 
 void APlayerCharacter::Player_CrouchStop(const FInputActionValue& Value)
@@ -212,7 +223,7 @@ void APlayerCharacter::Player_CrouchStop(const FInputActionValue& Value)
 
 	if (MoveComp->GetGravityState() == EGravityState::GravityMode)
 	{
-		UnCrouch();
+		Player_CrouchStop_Gravity(Value);
 	}
 }
 
@@ -224,7 +235,7 @@ void APlayerCharacter::Player_CrouchHold(const FInputActionValue& Value)
 
 	if (MoveComp->GetGravityState() == EGravityState::ZeroGravityMode)
 	{
-		AddMovementInput(FVector::DownVector, 1.0f);
+		Player_CrouchHold_ZeroGravity(Value);
 	}
 }
 
@@ -243,6 +254,60 @@ void APlayerCharacter::Player_BoostStop(const FInputActionValue& Value)
 void APlayerCharacter::Player_Interact(const FInputActionValue& Value)
 {
 	InteractionComponent->PlayerInteract();
+}
+
+void APlayerCharacter::Player_Inventory(const FInputActionValue& Value)
+{
+    OnToggleInventory.ExecuteIfBound();
+}
+
+void APlayerCharacter::Player_Move_Gravity(const FInputActionValue& Value)
+{
+	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	if (Controller != nullptr)
+	{
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		AddMovementInput(ForwardDirection, MovementVector.Y);
+		AddMovementInput(RightDirection, MovementVector.X);
+	}
+}
+
+void APlayerCharacter::Player_Move_ZeroGravity(const FInputActionValue& Value)
+{
+	// 현재는 중력 모드와 동일하게 수평이동 처리
+	// 추후 3축 자유비행 구현시 이 함수 수정 
+	Player_Move_Gravity(Value);
+}
+
+void APlayerCharacter::Player_Jump_Gravity(const FInputActionValue& Value)
+{
+	Jump();
+}
+
+void APlayerCharacter::Player_Jump_ZeroGravity(const FInputActionValue& Value)
+{
+	AddMovementInput(FVector::UpVector, 1.0f);
+}
+
+void APlayerCharacter::Player_CrouchStart_Gravity(const FInputActionValue& Value)
+{
+	Crouch();
+}
+
+void APlayerCharacter::Player_CrouchStop_Gravity(const FInputActionValue& Value)
+{
+	UnCrouch();
+}
+
+void APlayerCharacter::Player_CrouchHold_ZeroGravity(const FInputActionValue& Value)
+{
+	AddMovementInput(FVector::DownVector, 1.0f);
 }
 
 void APlayerCharacter::RefreshMovementSpeed()
@@ -264,7 +329,7 @@ void APlayerCharacter::IncreaseHP_Implementation(float InHP)
 {
 	if (StatComponent)
 	{
-		StatComponent->ModifyHealth(InHP);
+		StatComponent->ExecuteStatCommand({ EPlayerStatType::Health, InHP, TEXT("ExternalHeal") });
 	}
 }
 
@@ -272,7 +337,7 @@ void APlayerCharacter::DecreaseHP_Implementation(float InHP)
 {
 	if (StatComponent)
 	{
-		StatComponent->ModifyHealth(-InHP);
+		StatComponent->ExecuteStatCommand({ EPlayerStatType::Health, -InHP, TEXT("ExternalDamage") });
 	}
 }
 
@@ -280,7 +345,7 @@ void APlayerCharacter::ConsumOxigen_Implementation(float InOxigen)
 {
 	if (StatComponent)
 	{
-		StatComponent->ModifyOxygen(-InOxigen);
+		StatComponent->ExecuteStatCommand({ EPlayerStatType::Oxygen, -InOxigen, TEXT("ExternalOxygenConsume") });
 	}
 }
 
@@ -288,7 +353,7 @@ void APlayerCharacter::RecoverOxigen_Implementation(float InOxigen)
 {
 	if (StatComponent)
 	{
-		StatComponent->ModifyOxygen(InOxigen);
+		StatComponent->ExecuteStatCommand({ EPlayerStatType::Oxygen, InOxigen, TEXT("ExternalOxygenRecover") });
 	}
 }
 
