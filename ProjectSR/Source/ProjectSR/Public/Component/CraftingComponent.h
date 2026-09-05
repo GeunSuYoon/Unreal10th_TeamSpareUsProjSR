@@ -38,7 +38,7 @@ protected:
 
 private:
     // InItemData 아이템의 개수가 가장 적은 슬롯의 인덱스를 반환하는 함수
-    int32 FindFewestSlot__(const TArray<FInventorySlot>& InSlots, const UItemDataAsset* InItemData, int32 StartIndex) const;
+    int32 FindSlotWithFewestCount__(const TArray<FInventorySlot>& InSlots, const UItemDataAsset* InItemData, int32 StartIndex) const;
 
     // InItemData 아이템을 가진 슬롯의 인덱스를 반환하는 함수
     int32 FindSlotWithItem__(const TArray<FInventorySlot>& InSlots, const UItemDataAsset* InItemData, int32 StartIndex) const;

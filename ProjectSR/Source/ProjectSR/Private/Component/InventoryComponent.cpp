@@ -421,7 +421,7 @@ int32 UInventoryComponent::SubtractItem_(const UItemDataAsset* InItemData, int32
     while (RemainingCount > 0) // 남는게 있으면 계속 반복
     {
         // 같은 종류의 아이템이 들어있는 슬롯을 찾아 비우기
-        int32 FoundIndex = FindSlotWithItem__(InItemData, false, StartIndex);
+        int32 FoundIndex = FindSlotWithFewestCount__(InItemData, StartIndex);
 
         // 같은 종류의 아이템이 들어있는 슬롯이 없으면 종료
         if (FoundIndex == InventoryFail)
@@ -582,7 +582,25 @@ int32 UInventoryComponent::FindSlotWithItem__(const UItemDataAsset* InItemData, 
     return Result;
 }
 
-int32 UInventoryComponent::FindEmptySlot__()
+int32 UInventoryComponent::FindSlotWithFewestCount__(const UItemDataAsset* InItemData, int32 InStartIndex) const
+{
+    int32 FoundIndex = -1;
+    int32 MinStackCount = TNumericLimits<int32>::Max();
+
+    for (int i = InStartIndex; i < InventorySize; i++)
+    {
+        if (Slots_[i].ItemData == InItemData
+            && Slots_[i].GetCount() < MinStackCount)
+        {
+            FoundIndex = i;
+            MinStackCount = Slots_[i].GetCount();
+        }
+    }
+
+    return FoundIndex;
+}
+
+int32 UInventoryComponent::FindEmptySlot__() const
 {
     int32 Result = InventoryFail;
     for (int32 i = 0; i < InventorySize; i++)

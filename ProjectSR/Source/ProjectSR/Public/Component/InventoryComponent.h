@@ -166,6 +166,9 @@ private:
     // 같은 종류의 아이템이 있는 슬롯을 찾는 함수
     int32 FindSlotWithItem__(const UItemDataAsset* InItemData, int32 InStartIndex = 0) const;
 
+    // 같은 종류의 아이템이 가장 적게 있는 슬롯을 찾는 함수
+    int32 FindSlotWithFewestCount__(const UItemDataAsset* InItemData, int32 InStartIndex = 0) const;
+
     // 비어있는 슬롯을 찾는 함수
     int32 FindEmptySlot__() const;
 
