@@ -6,3 +6,6 @@
 
 /** Main log category used across the project */
 DECLARE_LOG_CATEGORY_EXTERN(LogProjectSR, Log, All);
+
+#define ECC_MeteorActor		ECC_GameTraceChannel2
+#define ECC_SpaceShipActor	ECC_GameTraceChannel3
