@@ -546,7 +546,7 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 	FVector		ShipCenter = SpaceRootActor__->GetActorLocation();
 	FVector		SpawnPosition = ShipCenter + InMeteor.StartPos - InMeteor.MoveDir * this->ItemSpawnDist__ * 2;
 	FRotator	SpawnRotation = InMeteor.MoveDir.Rotation();
-	FVector		SpawnScale(InMeteor.MeteorSize, InMeteor.MeteorSize, InMeteor.MeteorSize);
+	FVector		SpawnScale(InMeteor.MeteorSize);
 	FVector		Velocity = InMeteor.MoveDir * InMeteor.MeteorSpeed;
 	FTransform	WorldSpawnTransform;
 
