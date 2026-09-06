@@ -123,10 +123,10 @@ void UStatComponent::ExecuteStatCommand(const FStatChangeCommand& Command)
 		CommandHistory.RemoveAt(0);
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("[StatCommand] Source: %s | Type: %s | Amount: %.2f"),
-		*Command.Source,
-		*UEnum::GetValueAsString(Command.StatType),
-		Command.Amount);
+	//UE_LOG(LogTemp, Log, TEXT("[StatCommand] Source: %s | Type: %s | Amount: %.2f"),
+	//	*Command.Source,
+	//	*UEnum::GetValueAsString(Command.StatType),
+	//	Command.Amount);
 }
 
 // 장비 착용시 보너스 스탯값 더해서 UI 갱신
