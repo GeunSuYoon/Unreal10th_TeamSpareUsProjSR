@@ -11,6 +11,7 @@
 /**
  * 
  */
+class ASpaceShipActor;
 
 class UNiagaraComponent;
 class UNiagaraSystem;
@@ -23,6 +24,8 @@ class PROJECTSR_API AMeteorItemActor : public AItemActor
 	GENERATED_BODY()
 	
 public:
+	AMeteorItemActor();
+
 	void	InitMeteor(const FMeteor& InMeteor, const FVector& ShipCenter, float InDespawnDistance);
 
 	void	SetDamage(float InDamage) { this->Damage__ = InDamage; }
@@ -30,7 +33,7 @@ public:
 
 	virtual void	Tick(float DeltaSeconds) override;
 
-	void	HandleImpact();
+	void	HandleImpact(ASpaceShipActor* InSpaceShipActor);
 
 protected:
 	virtual void	NotifyActorBeginOverlap(AActor* OtherActor) override;
@@ -38,6 +41,16 @@ protected:
 	virtual void	OnSpawnFromPool_Implementation() override;
 
 	virtual void	OnReturnToPool_Implementation() override;
+
+	UFUNCTION()
+	void OnSphereBeginOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComponent,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult
+	);
 
 private:
 	float	Damage__ = 0.0f;

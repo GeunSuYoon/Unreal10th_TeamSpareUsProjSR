@@ -2,19 +2,37 @@
 
 
 #include "Item/MeteorItemActor.h"
+#include "SpaceShip/SpaceShipActor.h"
+
+#include "Components/SphereComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Camera/CameraShakeBase.h"
-#include "SpaceShip/SpaceShipActor.h"
+#include "ProjectSR.h"
+
+AMeteorItemActor::AMeteorItemActor()
+{
+	this->SphereCollision_->SetCollisionObjectType(ECC_MeteorActor);
+	this->SphereCollision_->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	this->SphereCollision_->SetCollisionResponseToAllChannels(ECR_Ignore);
+	this->SphereCollision_->SetCollisionResponseToChannel(ECC_SpaceShipActor, ECR_Overlap);
+	this->SphereCollision_->SetGenerateOverlapEvents(true);
+	this->SphereCollision_->OnComponentBeginOverlap.AddUniqueDynamic(
+		this,
+		&AMeteorItemActor::OnSphereBeginOverlap
+	);
+}
 
 void AMeteorItemActor::InitMeteor(const FMeteor& InMeteor, const FVector& ShipCenter, float InDespawnDist)
 {
 	//this->ClosestApproachWorldPos__ = ShipCenter + InMeteor.ClosestApproachPos;
 	this->MoveDir__ = InMeteor.MoveDir;
 	this->DespawnDist__ = InDespawnDist;
+	this->Damage__ = InMeteor.MeteorDamage;
+	this->SphereCollision_->SetSphereRadius(InMeteor.MeteorSize);
 }
 
 void AMeteorItemActor::Tick(float DeltaSeconds)
@@ -30,7 +48,7 @@ void AMeteorItemActor::Tick(float DeltaSeconds)
 	//}
 }
 
-void AMeteorItemActor::HandleImpact()
+void AMeteorItemActor::HandleImpact(ASpaceShipActor* InSpaceShipActor)
 {
 	if (this->bImpactResolved__)
 	{
@@ -71,6 +89,13 @@ void AMeteorItemActor::HandleImpact()
 		}
 	}
 	// 우주선에 Damage__ 적용
+	UGameplayStatics::ApplyDamage(
+		InSpaceShipActor,
+		this->Damage__,
+		nullptr,
+		this,
+		nullptr
+	);
 	FinishUsingPoolable();
 }
 
@@ -83,9 +108,9 @@ void AMeteorItemActor::NotifyActorBeginOverlap(AActor* OtherActor)
 		return;
 	}
 	// 실제 우주선 또는 SafeArea Actor인지 검사
-	if (OtherActor->IsA<ASpaceShipActor>())
+	if (ASpaceShipActor* SpaceShipActor = Cast<ASpaceShipActor>(OtherActor))
 	{
-		this->HandleImpact();
+		this->HandleImpact(SpaceShipActor);
 	}
 }
 
@@ -102,5 +127,30 @@ void AMeteorItemActor::OnReturnToPool_Implementation()
 	this->bImpactResolved__ = false;
 
 	Super::OnReturnToPool_Implementation();
+}
+
+void AMeteorItemActor::OnSphereBeginOverlap(
+	UPrimitiveComponent* OverlappedComponent, 
+	AActor* OtherActor, 
+	UPrimitiveComponent* OtherComponent, 
+	int32 OtherBodyIndex, 
+	bool bFromSweep, 
+	const FHitResult& SweepResult)
+{
+	if (bImpactResolved__ ||
+		!IsValid(OtherActor) ||
+		!IsValid(OtherComponent))
+	{
+		return;
+	}
+	if (OtherComponent &&
+		OtherComponent->GetCollisionObjectType() == ECC_SpaceShipActor)
+	{
+		if (ASpaceShipActor* SpaceShip =
+			Cast<ASpaceShipActor>(OtherActor))
+		{
+			HandleImpact(SpaceShip);
+		}
+	}
 }
 
