@@ -92,7 +92,7 @@ void AMainPanelActor::CloseSubPanelWidget()
 	this->OpenHomePanelWidget();
 }
 
-void AMainPanelActor::SpaceShipRotateInput(const FVector2D& InInput)
+void AMainPanelActor::SpaceShipInput(const FVector2D& InInput)
 {
 	OnSpaceShipRotateInput.ExecuteIfBound(InInput);
 }
