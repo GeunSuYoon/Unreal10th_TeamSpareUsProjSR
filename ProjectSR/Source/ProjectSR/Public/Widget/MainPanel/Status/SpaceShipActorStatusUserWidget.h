@@ -21,6 +21,7 @@ class PROJECTSR_API USpaceShipActorStatusUserWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintCallable)
 	void	BindToSpaceShip(ASpaceShipActor* InSpaceShip);
 
 protected:
