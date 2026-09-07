@@ -151,6 +151,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UMeteorAvoidanceComponent>	MeteorAvoidanceComponent_ = nullptr;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Component")
+	TObjectPtr<UCraftingComponent>			CraftingComponent_ = nullptr;
+
 	// 우주선 내구도 관련 변수
 	UPROPERTY(BlueprintReadOnly, Category = "Durability")
 	float	MaxDurability_ = 0.0f;

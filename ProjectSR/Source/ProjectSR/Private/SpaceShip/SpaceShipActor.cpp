@@ -49,6 +49,7 @@ ASpaceShipActor::ASpaceShipActor()
 	this->MainArmComponent_ = CreateDefaultSubobject<UMachineArmComponent>(TEXT("MainArmComponent"));
 	this->WarehouseComponent_ = CreateDefaultSubobject<UInventoryComponent>(TEXT("WarehouseComponent"));
 	this->MeteorAvoidanceComponent_ = CreateDefaultSubobject<UMeteorAvoidanceComponent>(TEXT("MeteorAvoidanceComponent"));
+	this->CraftingComponent_ = CreateDefaultSubobject<UCraftingComponent>(TEXT("CraftingComponent"));
 }
 
 // Called when the game starts or when spawned
