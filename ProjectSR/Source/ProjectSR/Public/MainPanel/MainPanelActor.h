@@ -45,7 +45,7 @@ public:
 	void	OpenSpaceShipUpgradePanelWidget();
 	void	OpenItemCraftingPanelWidget();
 	void	CloseSubPanelWidget();
-	void	SpaceShipRotateInput(const FVector2D& InInput);
+	void	SpaceShipInput(const FVector2D& InInput);
 
 	FOnMainPanelInteract	OnMainPanelInteract;
 	FOnMainPanelClose		OnMainPanelClose;
