@@ -47,16 +47,13 @@ void UMeteorEventUserWidget::SetMeteorRoute(const FMeteor& InMeteor)
 	{
 		return;
 	}
-	FVector	RouteCenter3D = (InMeteor.StartPos + InMeteor.EndPos) * 0.5f;
-	FVector	RouteDirection3D = InMeteor.MoveDir;
-
+	FVector		RouteCenter3D = (InMeteor.StartPos + InMeteor.EndPos) * 0.5f;
 	FVector2D	RouteCenter2D = this->MapCenter2D__ + FVector2D(-RouteCenter3D.Y, RouteCenter3D.Z) * this->PixelPerUnit;
-	FVector2D	RouteDirection2D = FVector2D(-RouteDirection3D.Y, RouteDirection3D.Z);
 	float		RouteAngle = FMath::RadiansToDegrees(
 		FMath::Atan2(
-			RouteDirection2D.Y,
-			RouteDirection2D.X
-		)) + 90.0f;
+			InMeteor.MoveDir.Z,
+			InMeteor.MoveDir.Y
+		)) + 180;
 
 	this->MeteorRouteSize->SetWidthOverride(this->PixelPerUnit * InMeteor.MeteorSize);
 	this->MeteorRouteSize->SetRenderTransformPivot(FVector2D(0.5f, 0.5f));
