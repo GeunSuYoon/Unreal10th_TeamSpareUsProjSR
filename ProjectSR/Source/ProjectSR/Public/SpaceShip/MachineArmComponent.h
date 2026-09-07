@@ -3,10 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CommonHeader/SpaceShipStruct.h"
+
 #include "Components/ActorComponent.h"
 #include "MachineArmComponent.generated.h"
 
 class UMachineArmDataAsset;
+
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMachineArmLevelChange, const FMachineArmStat&, InMachineArmStat);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTSR_API UMachineArmComponent : public UActorComponent
@@ -16,6 +20,8 @@ class PROJECTSR_API UMachineArmComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UMachineArmComponent();
+
+	FOnMachineArmLevelChange	OnMachineArmLevelChange;
 
 protected:
 	// Called when the game starts
@@ -29,22 +35,16 @@ public:
 	void	SetMachineArmData(UMachineArmDataAsset* InMachineArmData);
 
 	// Getter 함수
-	inline int32	GetLevel() const { return (this->Level_); }
-	inline float	GetItemCollectTime() const { return (this->ItemCollectTime__); }
-	inline float	GetItemCollectWeight() const { return (this->ItemCollectWeight__); }
-	inline float	GetOperationalEnergy() const { return (this->OperationalEnergy__); }
+	inline int32	GetLevel() const { return (this->MachineArmStat__.Level); }
+	inline float	GetItemCollectTime() const { return (this->MachineArmStat__.ItemCollectTime); }
+	inline float	GetItemCollectWeight() const { return (this->MachineArmStat__.ItemCollectWeight); }
+	inline float	GetOperationalEnergy() const { return (this->MachineArmStat__.OperationalEnergy); }
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int32	Level_ = 0;
 
 private:
 
 	TObjectPtr<UMachineArmDataAsset>	MachineArmData__ = nullptr;
 
-	// 초당 아이템 획득량 [sec], 실제 보일 때는 min으로 변환 필요함
-	float	ItemCollectTime__ = 0.0f;
-	// 획득 가능한 아이템 무게 [kg]
-	float	ItemCollectWeight__ = 0.0f;
-	float	OperationalEnergy__ = 0.0f;
+	FMachineArmStat	MachineArmStat__;
 };
