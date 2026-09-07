@@ -49,7 +49,6 @@ ASpaceShipActor::ASpaceShipActor()
 	this->MainArmComponent_ = CreateDefaultSubobject<UMachineArmComponent>(TEXT("MainArmComponent"));
 	this->WarehouseComponent_ = CreateDefaultSubobject<UInventoryComponent>(TEXT("WarehouseComponent"));
 	this->MeteorAvoidanceComponent_ = CreateDefaultSubobject<UMeteorAvoidanceComponent>(TEXT("MeteorAvoidanceComponent"));
-	this->CraftingComponent_ = CreateDefaultSubobject<UCraftingComponent>(TEXT("CraftingComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -136,11 +135,6 @@ void ASpaceShipActor::BeginPlay()
 	}
 	SpaceSubsystem->RegisterSpaceShipActor(this);
 	SpaceSubsystem->SetSafeArea(this->SafeAreaRadius_);
-	if (this->LazerComponent_)
-	{
-		this->LazerComponent_->BindToSubsystem(SpaceSubsystem);
-	}
-	//SpaceSubsystem->OnMeteorSpawn.BindUFunction();
 }
 
 // Called every frame
@@ -196,7 +190,31 @@ void ASpaceShipActor::ConsumDurability_Implementation(float InDurability)
 		Log,
 		TEXT("[ASpaceShipActor::ConsumDurability_Implementation] 들어온 내구도 데미지 : [%.1f], 현재 내구도 : [%.1f]"),
 		InDurability,
-		this->CurrentDurability_ + InDurability
+		this->CurrentDurability_ - InDurability
+	);
+}
+
+void ASpaceShipActor::GainEnergy(float InEnergy)
+{
+	this->CurrentEnergy_ = FMath::Min(this->CurrentEnergy_ + InEnergy, this->MaxEnergy_);
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("[ASpaceShipActor::GainEnergy] 들어온 추가 에너지 : [%.1f], 현재 에너지 : [%.1f]"),
+		InEnergy,
+		this->CurrentEnergy_ + InEnergy
+	);
+}
+
+void ASpaceShipActor::UseEnergy(float InEnergy)
+{
+	this->CurrentEnergy_ = FMath::Max(this->CurrentEnergy_ - InEnergy, 0.0f);
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("[ASpaceShipActor::UseEnergy] 들어온 소모 에너지 : [%.1f], 현재 에너지 : [%.1f]"),
+		InEnergy,
+		this->CurrentEnergy_ - InEnergy
 	);
 }
 
