@@ -6,7 +6,7 @@
 #include "CommonHeader/SpaceShipStruct.h"
 
 #include "Engine/DataTable.h"
-#include "SpaceShipUpgradeDataTable.generated.h"
+#include "SpaceShipDataAsset.generated.h"
 
 class UItemDataAsset;
 

@@ -6,7 +6,7 @@
 #include "Interface/DurabilityInterface.h"
 #include "Interface/InventoryComponentInterface.h"
 #include "CommonHeader/SpaceShipStruct.h"
-#include "Data/SpaceShip/SpaceShipUpgradeDataTable.h"
+#include "Data/SpaceShip/SpaceShipDataAsset.h"
 
 #include "GameFramework/Actor.h"
 #include "SpaceShipActor.generated.h"
