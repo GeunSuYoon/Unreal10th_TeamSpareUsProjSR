@@ -32,7 +32,26 @@ void AMeteorItemActor::InitMeteor(const FMeteor& InMeteor, const FVector& ShipCe
 	this->MoveDir__ = InMeteor.MoveDir;
 	this->DespawnDist__ = InDespawnDist;
 	this->Damage__ = InMeteor.MeteorDamage;
-	this->SphereCollision_->SetSphereRadius(InMeteor.MeteorSize);
+	this->SphereCollision_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	this->SetActorScale3D(FVector::OneVector);
+	this->SphereCollision_->SetSphereRadius(InMeteor.MeteorSize, true);
+	if (this->Mesh && this->Mesh->GetStaticMesh())
+	{
+		const float	MeshBaseRadius = this->Mesh->GetStaticMesh()->GetBounds().SphereRadius;
+
+		if (MeshBaseRadius > UE_SMALL_NUMBER)
+		{
+			const float MeshScale = InMeteor.MeteorSize / MeshBaseRadius;
+
+			this->Mesh->SetRelativeScale3D(FVector(MeshScale));
+		}
+	}
+	this->SphereCollision_->SetCollisionObjectType(ECC_MeteorActor);
+	this->SphereCollision_->SetCollisionResponseToAllChannels(ECR_Ignore);
+	this->SphereCollision_->SetCollisionResponseToChannel(ECC_SpaceShipActor, ECR_Overlap);
+	this->SphereCollision_->SetGenerateOverlapEvents(true);
+	this->SphereCollision_->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	this->SphereCollision_->UpdateOverlaps();
 }
 
 void AMeteorItemActor::Tick(float DeltaSeconds)
