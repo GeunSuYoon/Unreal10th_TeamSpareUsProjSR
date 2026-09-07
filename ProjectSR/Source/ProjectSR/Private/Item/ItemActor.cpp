@@ -82,7 +82,7 @@ void AItemActor::Interact_Implementation(AActor* InTarget)
         Result
     );
 
-    if (Result.bSuccess)
+    if (Result.bSuccess && Result.RemainingCount == 0)
     {
         FinishUsingPoolable();
     }
