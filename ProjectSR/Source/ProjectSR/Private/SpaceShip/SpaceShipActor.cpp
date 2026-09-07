@@ -134,6 +134,7 @@ void ASpaceShipActor::BeginPlay()
 	}
 	SpaceSubsystem->RegisterSpaceShipActor(this);
 	SpaceSubsystem->SetSafeArea(this->SafeAreaRadius_);
+	OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
 }
 
 // Called every frame
