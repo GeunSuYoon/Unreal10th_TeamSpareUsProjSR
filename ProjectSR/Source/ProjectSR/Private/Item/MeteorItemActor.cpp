@@ -54,6 +54,20 @@ void AMeteorItemActor::InitMeteor(const FMeteor& InMeteor, const FVector& ShipCe
 	this->SphereCollision_->UpdateOverlaps();
 }
 
+void AMeteorItemActor::LazerDamage(float InDamage)
+{
+	this->Damage__ = FMath::Max(0.0f, this->Damage__ - FMath::Max(0.0f, InDamage));
+	if (this->Damage__ <= 0.0f)
+	{
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("[AMeteorItemActor::LazerDamage] 운석이 파괴됐습니다.")
+		);
+		this->OnReturnToPool();
+	}
+}
+
 void AMeteorItemActor::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
