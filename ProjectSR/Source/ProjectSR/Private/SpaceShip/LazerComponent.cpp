@@ -21,7 +21,7 @@ void ULazerComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
+	OnLazerLevelChange.ExecuteIfBound(this->LazerStat__);
 }
 
 

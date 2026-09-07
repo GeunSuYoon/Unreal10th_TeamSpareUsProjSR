@@ -21,7 +21,7 @@ void UMachineArmComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
+	OnMachineArmLevelChange.ExecuteIfBound(this->MachineArmStat__);
 }
 
 
