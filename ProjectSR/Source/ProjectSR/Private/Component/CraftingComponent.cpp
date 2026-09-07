@@ -303,6 +303,44 @@ bool UCraftingComponent::Craft(FName InRecipeId, const TArray<UInventoryComponen
     return true;
 }
 
+FRecipeEntry UCraftingComponent::GetRecipeEntry(FName InRecipeId) const
+{
+    FRecipeEntry Entry;
+
+    const FRecipeTableRow* Recipe = RecipeTable_->FindRow<FRecipeTableRow>(InRecipeId, TEXT("UCraftingComponent::GetRecipeEntry()"));
+    if (!Recipe)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UCraftingComponent::GetRecipeEntry()] : 존재하지 않는 제작법입니다 (%s)"),
+               *InRecipeId.ToString());
+        return Entry;
+    }
+
+    Entry.RecipeId = InRecipeId;
+    Entry.RecipeData = *Recipe;
+
+    return Entry;
+}
+
+TArray<FRecipeEntry> UCraftingComponent::GetUnlockedRecipeEntries() const
+{
+    TArray<FRecipeEntry> UnlockedRecipeEntries;
+
+    for (const FName& RowName : RecipeTable_->GetRowNames())
+    {
+        const FRecipeTableRow* Recipe = RecipeTable_->FindRow<FRecipeTableRow>(RowName, TEXT("UCraftingComponent::GetUnlockedRecipeEntries()"));
+
+        if (IsUnlockedRecipe(RowName, Recipe->bLockedByDefault))
+        {
+            FRecipeEntry Entry;
+            Entry.RecipeId = RowName;
+            Entry.RecipeData = *Recipe;
+            UnlockedRecipeEntries.Add(Entry);
+        }
+    }
+
+    return UnlockedRecipeEntries;
+}
+
 void UCraftingComponent::BeginPlay()
 {
     Super::BeginPlay();

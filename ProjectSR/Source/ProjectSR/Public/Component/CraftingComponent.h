@@ -4,11 +4,25 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "CommonHeader/RecipeTable.h"
 #include "CraftingComponent.generated.h"
 
 class UInventoryComponent;
 class UItemDataAsset;
 struct FInventorySlot;
+
+USTRUCT(BlueprintType)
+struct FRecipeEntry
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly)
+    FName RecipeId;
+
+    UPROPERTY(BlueprintReadOnly)
+    FRecipeTableRow RecipeData;
+
+};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECTSR_API UCraftingComponent : public UActorComponent
@@ -31,6 +45,10 @@ public:
     bool HasEnoughEmptySlots(FName InRecipeId, const TArray<UInventoryComponent*>& InInventories) const;
 
     bool Craft(FName InRecipeId, const TArray<UInventoryComponent*>& InInventories);
+
+    FRecipeEntry GetRecipeEntry(FName InRecipeId) const;
+
+    TArray<FRecipeEntry> GetUnlockedRecipeEntries() const;
 
 protected:
     virtual void BeginPlay() override;
