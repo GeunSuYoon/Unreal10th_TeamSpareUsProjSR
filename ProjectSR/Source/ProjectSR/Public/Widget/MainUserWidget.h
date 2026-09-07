@@ -10,6 +10,8 @@ class UMeteorWarningUserWidget;
 class ASpaceShipActor;
 class APlayerCharacter;
 class UInventoryWindowWidget;
+class URecipeListWidget;
+class UManufactureWidget;
 
 /**
  * 
@@ -29,5 +31,11 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMeteorWarningUserWidget>	MeteoWarningWidget;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+    TObjectPtr<URecipeListWidget>	RecipeListWidget;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+    TObjectPtr<UManufactureWidget>	ManufactureWidget;
 
 };
