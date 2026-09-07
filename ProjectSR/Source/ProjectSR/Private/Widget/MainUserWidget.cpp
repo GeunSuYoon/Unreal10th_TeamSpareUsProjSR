@@ -19,8 +19,8 @@ void UMainUserWidget::BindToPlayer(APlayerCharacter* InPlayerCharacter)
         );
         return;
     }
-    this->InventoryWindow->BindToInventoryComponent(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
-    InPlayerCharacter->OnToggleInventory.BindUFunction(InventoryWindow, TEXT("ToggleInventoryWidget"));
+    //this->InventoryWindow->BindToInventoryComponent(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
+    //InPlayerCharacter->OnToggleInventory.BindUFunction(InventoryWindow, TEXT("ToggleInventoryWidget"));
 }
 
 void UMainUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShipActor)

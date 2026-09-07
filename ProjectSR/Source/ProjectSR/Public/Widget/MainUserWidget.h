@@ -24,8 +24,8 @@ public:
     void	BindToSpaceShip(ASpaceShipActor* InSpaceShipActor);
     void	BindToCharacter(ACharacter* InCharacter);
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UInventoryWindowWidget>	InventoryWindow;
+    //UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+    //TObjectPtr<UInventoryWindowWidget>	InventoryWindow;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMeteorWarningUserWidget>	MeteoWarningWidget;

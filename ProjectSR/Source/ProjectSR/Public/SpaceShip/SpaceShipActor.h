@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "Interface/DurabilityInterface.h"
 #include "Interface/InventoryComponentInterface.h"
+
+#include "GameFramework/Actor.h"
 #include "SpaceShipActor.generated.h"
 
 class USpaceMapDataAsset;
@@ -41,6 +42,13 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual float TakeDamage(
+		float DamageAmount, 
+		struct FDamageEvent const& DamageEvent, 
+		class AController* EventInstigator, 
+		AActor* DamageCauser) 
+		override;
+
 	// Getter 함수
 	inline int32	GetLevel() const { return (this->Level_); }
 	inline float	GetMaxDurability() const { return (this->MaxDurability_); }
@@ -63,7 +71,10 @@ public:
 	// CurrentEnergy에서 에너지를 요청하는 함수
 	float	RequestEnergy(float InEnergy);
 
+	UFUNCTION()
 	virtual void	RepairDurability_Implementation(float InDurability) override;
+
+	UFUNCTION()
 	virtual void	ConsumDurability_Implementation(float InDurability) override;
 
 	FOnSpaceShipRotate	OnSpaceShipRotate;

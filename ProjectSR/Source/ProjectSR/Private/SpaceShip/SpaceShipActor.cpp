@@ -13,6 +13,7 @@
 #include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
 
 #include "Components/SphereComponent.h"
+#include "ProjectSR.h"
 
 // Sets default values
 ASpaceShipActor::ASpaceShipActor()
@@ -26,6 +27,11 @@ ASpaceShipActor::ASpaceShipActor()
 	this->SafeArea_ = CreateDefaultSubobject<USphereComponent>(TEXT("SafeArea"));
 	this->SafeArea_->SetSphereRadius(this->SafeAreaRadius_);
 	this->SafeArea_->SetupAttachment(GetRootComponent());
+	this->SafeArea_->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	this->SafeArea_->SetCollisionObjectType(ECC_SpaceShipActor);
+	this->SafeArea_->SetCollisionResponseToAllChannels(ECR_Ignore);
+	this->SafeArea_->SetCollisionResponseToChannel(ECC_MeteorActor, ECR_Overlap);
+	this->SafeArea_->SetGenerateOverlapEvents(true);
 
 	this->SpaceShipVisualActor_ = CreateDefaultSubobject<UChildActorComponent>(TEXT("SpaceShipVisual"));
 	this->SpaceShipVisualActor_->SetupAttachment(GetRootComponent());
@@ -143,6 +149,18 @@ void ASpaceShipActor::Tick(float DeltaTime)
 
 }
 
+float ASpaceShipActor::TakeDamage(
+	float DamageAmount, 
+	FDamageEvent const& DamageEvent, 
+	AController* EventInstigator, 
+	AActor* DamageCauser)
+{
+	float	Damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	IDurabilityInterface::Execute_ConsumDurability(this, Damage);
+	return (Damage);
+}
+
 UInventoryComponent* ASpaceShipActor::GetInventoryComponent_Implementation()
 {
 	return (this->WarehouseComponent_);
@@ -158,12 +176,27 @@ float ASpaceShipActor::RequestEnergy(float InEnergy)
 
 void ASpaceShipActor::RepairDurability_Implementation(float InDurability)
 {
-	this->CurrentDurability_ = FMath::Max(this->CurrentDurability_ + InDurability, this->MaxDurability_);
+	this->CurrentDurability_ = FMath::Min(this->CurrentDurability_ + InDurability, this->MaxDurability_);
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("[ASpaceShipActor::RepairDurability_Implementation] 들어온 내구도 수리 : [%.1f], 현재 내구도 : [%.1f]"),
+		InDurability,
+		this->CurrentDurability_ + InDurability
+	);
+	// 우주선 내구도가 0이 되면 터지는 로직 추가 필요
 }
 
 void ASpaceShipActor::ConsumDurability_Implementation(float InDurability)
 {
-	this->CurrentDurability_ = FMath::Min(this->CurrentDurability_ - InDurability, 0.0f);
+	this->CurrentDurability_ = FMath::Max(this->CurrentDurability_ - InDurability, 0.0f);
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("[ASpaceShipActor::ConsumDurability_Implementation] 들어온 내구도 데미지 : [%.1f], 현재 내구도 : [%.1f]"),
+		InDurability,
+		this->CurrentDurability_ + InDurability
+	);
 }
 
 void ASpaceShipActor::SpaceShipMoveInput(const FVector2D& InInput)
