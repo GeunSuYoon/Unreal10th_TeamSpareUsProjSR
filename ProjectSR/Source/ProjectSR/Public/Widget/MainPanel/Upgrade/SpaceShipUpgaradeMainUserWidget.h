@@ -41,9 +41,9 @@ protected:
 	TObjectPtr<USpaceShipUpgradeUserWidget>			SpaceShipUpgrade = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UMachineArmUpgradeUserWidget>		LazerUpgrade = nullptr;
+	TObjectPtr<ULazerUpgradeUserWidget>				LazerUpgrade = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<ULazerUpgradeUserWidget>				MachineArmUpgrade = nullptr;
-
+	TObjectPtr<UMachineArmUpgradeUserWidget>		MachineArmUpgrade = nullptr;
+	
 };
