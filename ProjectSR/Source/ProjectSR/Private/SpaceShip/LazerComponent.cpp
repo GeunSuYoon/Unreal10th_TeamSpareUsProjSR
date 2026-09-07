@@ -35,25 +35,29 @@ void ULazerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 void ULazerComponent::SetLazerData(ULazerDataAsset* InLazerData)
 {
-	this->LazerData__ = InLazerData;
+	//this->LazerData__ = InLazerData;
 	if (InLazerData)
 	{
-		this->LazerDamage__ = InLazerData->Damage;
-		this->ReactiveEnergy__ = InLazerData->ReactiveEnergy;
-		this->OperationalEnergy__ = InLazerData->OperationalEnergy;
+		this->LazerStat__.Level = InLazerData->LazerStat.Level;
+		this->LazerStat__.Damage = InLazerData->LazerStat.Damage;
+		this->LazerStat__.ReactiveEnergy = InLazerData->LazerStat.ReactiveEnergy;
+		this->LazerStat__.OperationalEnergy = InLazerData->LazerStat.OperationalEnergy;
 	}
 	else
 	{
-		this->LazerDamage__ = 0.0f;
-		this->ReactiveEnergy__ = 0.0f;
-		this->OperationalEnergy__ = 0.0f;
+		this->LazerStat__.Level = 0;
+		this->LazerStat__.Damage = 0.0f;
+		this->LazerStat__.ReactiveEnergy = 0.0f;
+		this->LazerStat__.OperationalEnergy = 0.0f;
 	}
+	OnLazerLevelChange.ExecuteIfBound(this->LazerStat__);
 }
 
 // 우주선에 에너지 요청해서 에너지 비율만큼 메테오에 데미지 주기.
 // this->LazerPower__ * (우주선에서 가져온 에너지) / this->ReactiveEnergy__;
 void ULazerComponent::AttackMeteo(UMeteo* InMeteo)
 {
+	InMeteor->LazerDamage(this->LazerStat__.Damage);
 	// 운석에 데미지 주기 (운석 자체 데미지에서 Lazer의 Damage만큼 빼기)
 }
 
