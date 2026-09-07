@@ -3,7 +3,7 @@
 
 #include "MainPanel/MainPanelActor.h"
 #include "SpaceShip/SpaceShipActor.h"
-#include "Data/SpaceShip/SpaceShipUpgradeDataTable.h"
+#include "Data/SpaceShip/SpaceShipDataAsset.h"
 #include "Data/Item/ItemDataAsset.h"
 #include "Components/SphereComponent.h"
 
