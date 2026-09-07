@@ -25,13 +25,13 @@ public:
 
 protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<USpaceShipStatusUserWidget>	SpaceShipStatusUserWidget = nullptr;
+	TObjectPtr<USpaceShipStatusUserWidget>	SpaceShipStatus = nullptr;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<ULazerStatusUserWidget>		LazerStatusUserWidget = nullptr;
+	TObjectPtr<ULazerStatusUserWidget>		LazerStatus = nullptr;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UMachineArmStatusUserWidget>	MachineArmStatusUserWidget = nullptr;
+	TObjectPtr<UMachineArmStatusUserWidget>	MachineArmStatus = nullptr;
 
 private:
 	//void	UpdateStat()

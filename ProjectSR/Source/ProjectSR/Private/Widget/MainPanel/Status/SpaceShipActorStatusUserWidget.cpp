@@ -13,10 +13,10 @@ void	USpaceShipActorStatusUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceSh
 {
 	if (InSpaceShip)
 	{
-		this->SpaceShipStatusUserWidget->BindToSpaceShip(InSpaceShip);
+		this->SpaceShipStatus->BindToSpaceShip(InSpaceShip);
 		if (ULazerComponent* LazerComponent = InSpaceShip->GetLazerComponent())
 		{
-			this->LazerStatusUserWidget->BindToLazerComponent(LazerComponent);
+			this->LazerStatus->BindToLazerComponent(LazerComponent);
 		}
 		else
 		{
@@ -28,7 +28,7 @@ void	USpaceShipActorStatusUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceSh
 		}
 		if (UMachineArmComponent* MachineArmComponent = InSpaceShip->GetMachineArmComponent())
 		{
-			this->MachineArmStatusUserWidget->BindToMachineArmComponent(MachineArmComponent);
+			this->MachineArmStatus->BindToMachineArmComponent(MachineArmComponent);
 		}
 		else
 		{
