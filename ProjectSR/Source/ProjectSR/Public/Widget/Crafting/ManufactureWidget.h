@@ -7,12 +7,14 @@
 #include "Widget/Crafting/RecipeListWidget.h"
 #include "ManufactureWidget.generated.h"
 
-struct FRecipeEntry;
+class UCraftingComponent;
 class UManufactureResultItemWidget;
 class UManufactureIngredientItemWidget;
 class UTextBlock;
 class UUniformGridPanel;
 class UButton;
+
+DECLARE_DELEGATE_OneParam(FOnCraftRequested, FName)
 
 UCLASS()
 class PROJECTSR_API UManufactureWidget : public UUserWidget
@@ -20,7 +22,20 @@ class PROJECTSR_API UManufactureWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
-    void RefreshManufactureWidget(const FRecipeEntry& InRecipeEntry, FIngredientStatusMap InItemStatusMap);
+    void BindToCraftingComponent(UCraftingComponent* InCraftingComponent);
+
+    UFUNCTION()
+    void RefreshManufactureWidget(const FManufactureWidgetDisplayData& InManufactureWidgetRefreshData);
+
+protected:
+    virtual void NativeConstruct() override;
+
+private:
+    UFUNCTION()
+    void OnCraftButtonClicked__();
+
+public:
+    FOnCraftRequested OnCraftRequested;
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -40,5 +55,8 @@ protected:
 
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UButton> CraftButton;
+
+private:
+    FName CurrentRecipeId__;
 
 };

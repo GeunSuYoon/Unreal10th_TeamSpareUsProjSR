@@ -5,6 +5,8 @@
 #include "Widget/MeteorWarningUserWidget.h"
 #include "SpaceShip/SpaceShipActor.h"
 #include "Widget/InventoryWindowWidget.h"
+#include "Widget/Crafting/RecipeListWidget.h"
+#include "Widget/Crafting/ManufactureWidget.h"
 #include "Interface/InventoryComponentInterface.h"
 #include "Player/PlayerCharacter.h"
 

@@ -12,16 +12,23 @@
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
 
-void UManufactureWidget::RefreshManufactureWidget(const FRecipeEntry& InRecipeEntry, FIngredientStatusMap InItemStatusMap)
+void UManufactureWidget::BindToCraftingComponent(UCraftingComponent* InCraftingComponent)
 {
-    /*
-    TODO: 널 체크 하쇼
-    */
+    OnCraftRequested.BindUObject(InCraftingComponent, &UCraftingComponent::HandleCraftRequested__);
+    InCraftingComponent->OnManufactureWidgetOpened.AddDynamic(this, &UManufactureWidget::RefreshManufactureWidget);
+}
 
-    RecipeName->SetText(FText::FromName(InRecipeEntry.RecipeId));
+void UManufactureWidget::RefreshManufactureWidget(const FManufactureWidgetDisplayData& InManufactureWidgetRefreshData)
+{
+    CurrentRecipeId__ = InManufactureWidgetRefreshData.RecipeEntry.RecipeId;
+    FRecipeTableRow RecipeData = InManufactureWidgetRefreshData.RecipeEntry.RecipeData;
+    TMap<FName, int32> IngredientStatusMap = InManufactureWidgetRefreshData.IngredientStatusMap;
+
+
+    RecipeName->SetText(FText::FromName(CurrentRecipeId__));
 
     ResultItemGridPanel->ClearChildren();
-    for (int i = 0; i < InRecipeEntry.RecipeData.Results.Num(); i++)
+    for (int i = 0; i < RecipeData.Results.Num(); i++)
     {
         UManufactureResultItemWidget* ManufactureResultItemWidget = CreateWidget<UManufactureResultItemWidget>(GetOwningPlayer(), ManufactureResultItemWidgetClass);
         if (ManufactureResultItemWidget)
@@ -33,13 +40,13 @@ void UManufactureWidget::RefreshManufactureWidget(const FRecipeEntry& InRecipeEn
                 GridSlot->SetVerticalAlignment(VAlign_Fill);
             }
 
-            ManufactureResultItemWidget->RefreshManufactureResultItemWidget(InRecipeEntry.RecipeData.Results[i]);
+            ManufactureResultItemWidget->RefreshManufactureResultItemWidget(RecipeData.Results[i]);
         }
     }
 
     const int32 MaxColumnCount = 5;
     IngredientItemGridPanel->ClearChildren();
-    for (int i = 0; i < InRecipeEntry.RecipeData.Ingredients.Num(); i++)
+    for (int i = 0; i < RecipeData.Ingredients.Num(); i++)
     {
         UManufactureIngredientItemWidget* ManufactureIngredientItemWidget = CreateWidget<UManufactureIngredientItemWidget>(GetOwningPlayer(), ManufactureIngredientItemWidgetClass);
         if (ManufactureIngredientItemWidget)
@@ -52,10 +59,25 @@ void UManufactureWidget::RefreshManufactureWidget(const FRecipeEntry& InRecipeEn
             }
 
             ManufactureIngredientItemWidget->RefreshManufactureIngredientItemWidget(
-                InRecipeEntry.RecipeData.Ingredients[i],
-                InItemStatusMap[InRecipeEntry.RecipeData.Ingredients[i].ItemData->ItemId]);
+                RecipeData.Ingredients[i],
+                IngredientStatusMap[RecipeData.Ingredients[i].ItemData->ItemId]);
         }
     }
 
+    // 제작 가능 여부로 제작 버튼 활성화or비활성화
+    CraftButton->SetIsEnabled(InManufactureWidgetRefreshData.bHasEnoughIngredients);
+
     SetVisibility(ESlateVisibility::Visible);
+}
+
+void UManufactureWidget::NativeConstruct()
+{
+    Super::NativeConstruct();
+
+    CraftButton->OnClicked.AddDynamic(this, &UManufactureWidget::OnCraftButtonClicked__);
+}
+
+void UManufactureWidget::OnCraftButtonClicked__()
+{
+    OnCraftRequested.ExecuteIfBound(CurrentRecipeId__);
 }

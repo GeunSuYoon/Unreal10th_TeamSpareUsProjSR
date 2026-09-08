@@ -111,19 +111,7 @@ void URecipeListWidget::CloseRecipeListWidget()
 
 void URecipeListWidget::OpenManufactureWidget(FName InRecipeId)
 {
-    UE_LOG(LogTemp, Warning, TEXT("HELL"));
-    // InRecipeId받아서 이 제작법에 대한 정보와, 이거에 필요한 아이템 재료들 현황을 불러와야됨.
-    // 인벤토리 컴포넌트 있으니까 이거 사용해서.
-
-    FRecipeEntry Entry = CraftingComponent__->GetRecipeEntry(InRecipeId);
-    TMap<FName, int32> InItemStatusMap;
-
-    for (int i = 0; i < Entry.RecipeData.Ingredients.Num(); i++)
-    {
-        InItemStatusMap.Add(Entry.RecipeData.Ingredients[i].ItemData->ItemId, InventoryComponent__->GetTotalItemCount(Entry.RecipeData.Ingredients[i].ItemData));
-    }
-
-    OnManufactureWidgetOpened.ExecuteIfBound(Entry, InItemStatusMap);
+    OnRecipeSelected.ExecuteIfBound(InRecipeId);
 }
 
 void URecipeListWidget::NativeConstruct()
