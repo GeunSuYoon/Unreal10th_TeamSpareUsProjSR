@@ -22,6 +22,7 @@ struct FMeteor
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
 	float	MeteorSpeed = 0.0f;
 
+	// 운석 지름 (월드 단위)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Meteor")
 	float	MeteorSize = 0.0f;
 

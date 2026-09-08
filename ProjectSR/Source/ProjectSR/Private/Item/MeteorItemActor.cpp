@@ -34,14 +34,16 @@ void AMeteorItemActor::InitMeteor(const FMeteor& InMeteor, const FVector& ShipCe
 	this->Damage__ = InMeteor.MeteorDamage;
 	this->SphereCollision_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	this->SetActorScale3D(FVector::OneVector);
-	this->SphereCollision_->SetSphereRadius(InMeteor.MeteorSize, true);
+	// MeteorSize는 지름이므로 반지름을 요구하는 API에서만 절반으로 변환한다.
+	const float MeteorRadius = InMeteor.MeteorSize * 0.5f;
+	this->SphereCollision_->SetSphereRadius(MeteorRadius, true);
 	if (this->Mesh && this->Mesh->GetStaticMesh())
 	{
 		const float	MeshBaseRadius = this->Mesh->GetStaticMesh()->GetBounds().SphereRadius;
 
 		if (MeshBaseRadius > UE_SMALL_NUMBER)
 		{
-			const float MeshScale = InMeteor.MeteorSize / MeshBaseRadius;
+			const float MeshScale = MeteorRadius / MeshBaseRadius;
 
 			this->Mesh->SetRelativeScale3D(FVector(MeshScale));
 		}

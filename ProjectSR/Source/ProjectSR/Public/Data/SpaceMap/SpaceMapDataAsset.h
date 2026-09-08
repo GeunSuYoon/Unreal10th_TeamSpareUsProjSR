@@ -67,7 +67,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
 	float	MeteorSpeed = 0.0f;
 
-	// 운석 크기
+	// 운석 지름 (월드 단위)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceMapData|Meteor")
 	float	MeteorSize = 0.0f;
 
