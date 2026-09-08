@@ -4,11 +4,47 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "CommonHeader/RecipeTable.h"
 #include "CraftingComponent.generated.h"
 
 class UInventoryComponent;
 class UItemDataAsset;
 struct FInventorySlot;
+
+USTRUCT(BlueprintType)
+struct FRecipeEntry
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly)
+    FName RecipeId;
+
+    UPROPERTY(BlueprintReadOnly)
+    FRecipeTableRow RecipeData;
+
+};
+
+USTRUCT(BlueprintType)
+struct FManufactureWidgetDisplayData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly)
+    FRecipeEntry RecipeEntry;
+
+    UPROPERTY(BlueprintReadOnly)
+    TMap<FName, int32> IngredientStatusMap;
+
+    UPROPERTY(BlueprintReadOnly)
+    bool bHasEnoughIngredients;
+
+    UPROPERTY(BlueprintReadOnly)
+    bool bHasEnoughEmptySlots;
+
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManufactureWidgetOpened, const FManufactureWidgetDisplayData&, InData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCraftFailed);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECTSR_API UCraftingComponent : public UActorComponent
@@ -32,6 +68,12 @@ public:
 
     bool Craft(FName InRecipeId, const TArray<UInventoryComponent*>& InInventories);
 
+    FRecipeEntry GetRecipeEntry(FName InRecipeId) const;
+
+    TArray<FRecipeEntry> GetUnlockedRecipeEntries() const;
+
+    FManufactureWidgetDisplayData BuildManufactureWidgetDisplayData(FName InRecipeId) const;
+
 protected:
     virtual void BeginPlay() override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -45,6 +87,14 @@ private:
 
     // 빈 슬롯의 인덱스를 반환하는 함수
     int32 FindEmptySlot__(const TArray<FInventorySlot>& InSlots) const;
+
+public:
+    void HandleRecipeSelected(FName InRecipeId);
+    void HandleCraftRequested(FName InRecipeId);
+
+public:
+    FOnManufactureWidgetOpened OnManufactureWidgetOpened;
+    FOnCraftFailed OnCraftFailed;
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crafting|RecipeTable")
