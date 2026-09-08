@@ -9,9 +9,7 @@
 #include "LazerComponent.generated.h"
 
 class ULazerDataAsset;
-class UMeteo;
-
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnLazerLevelChange, const FLazerStat&, InLazerStat);
+class AMeteorItemActor;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnLazerLevelChange, const FLazerStat&, InLazerStat);
 
