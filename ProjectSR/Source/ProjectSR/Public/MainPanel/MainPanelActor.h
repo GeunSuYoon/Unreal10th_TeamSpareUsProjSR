@@ -9,8 +9,7 @@
 #include "MainPanelActor.generated.h"
 
 
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMainPanelInteract, EMainPanelType, InMainPanelType);
-DECLARE_DYNAMIC_DELEGATE(FOnMainPanelClose);
+DECLARE_DYNAMIC_DELEGATE(FOnMainPanelActorInteract);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipRotateInput, const FVector2D&, InInput);
 
 class ASpaceShipActor;
@@ -37,19 +36,8 @@ public:
 
 	virtual void	Interact_Implementation(AActor* InTarget) override;
 
-	void	ClosePanelWidget();
-	void	OpenHomePanelWidget();
-	void	OpenSpaceShipStatusPanelWidget();
-	void	OpenWarehousePanelWidget();
-	void	OpenSpaceShipControlPanelWidget();
-	void	OpenSpaceShipUpgradePanelWidget();
-	void	OpenItemCraftingPanelWidget();
-	void	CloseSubPanelWidget();
-	void	SpaceShipRotateInput(const FVector2D& InInput);
-
-	FOnMainPanelInteract	OnMainPanelInteract;
-	FOnMainPanelClose		OnMainPanelClose;
-	FOnSpaceShipRotateInput	OnSpaceShipRotateInput;
+	FOnMainPanelActorInteract	OnMainPanelActorInteract;
+	FOnSpaceShipRotateInput		OnSpaceShipRotateInput;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

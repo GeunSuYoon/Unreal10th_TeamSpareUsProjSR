@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Interface/DurabilityInterface.h"
 #include "Interface/InventoryComponentInterface.h"
+#include "CommonHeader/SpaceShipStruct.h"
+#include "Data/SpaceShip/SpaceShipDataAsset.h"
 
 #include "GameFramework/Actor.h"
 #include "SpaceShipActor.generated.h"
@@ -24,6 +26,7 @@ class ADoorButtonActor;
 class USphereComponent;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipRotate, const FRotator&, InSpaceShipRotate);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipLevelChange, const FSpaceShipStat&, InSpaceShipStat);
 
 UCLASS()
 class PROJECTSR_API ASpaceShipActor : public AActor, public IDurabilityInterface, public IInventoryComponentInterface
@@ -51,14 +54,17 @@ public:
 
 	// Getter 함수
 	inline int32	GetLevel() const { return (this->Level_); }
-	inline float	GetMaxDurability() const { return (this->MaxDurability_); }
+	inline float	GetMaxDurability() const { return (this->SpaceShipStat_.MaxDurability);	}
 	inline float	GetCurrentDurability() const { return (this->CurrentDurability_); }
-	inline float	GetMaxEnergy() const { return (this->MaxEnergy_); }
+	inline float	GetMaxEnergy() const { return (this->SpaceShipStat_.MaxEnergy); }
 	inline float	GetCurrentEnergy() const { return (this->CurrentEnergy_); }
-	inline float	GetMoveSpeed() const { return (this->MoveSpeed_); }
+	inline float	GetMoveSpeed() const { return (this->SpaceShipStat_.MoveSpeed); }
 	inline float	GetSafeAreaRadius() const { return (this->SafeAreaRadius_); }
 
-	UMeteorAvoidanceComponent*	GetMeteorAvoidance() const { return (this->MeteorAvoidanceComponent_); }
+	inline ULazerComponent*				GetLazerComponent() const { return (this->LazerComponent_); }
+	inline UMachineArmComponent*		GetMachineArmComponent() const { return (this->MachineArmComponent_); }
+	inline UMeteorAvoidanceComponent*	GetMeteorAvoidance() const { return (this->MeteorAvoidanceComponent_); }
+	inline AMainPanelActor*				GetMainPanelActor() const { return (this->MainPanelActor_); }
 	//inline UInventoryComponent*	GetWarehouse() const { return (this->Warehouse_); }
 
 	virtual UInventoryComponent*	GetInventoryComponent_Implementation() override;
@@ -95,6 +101,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void	SpaceShipMoveInput(const FVector2D& InInput);
 
+	void	SetSpaceShipData(USpaceShipDataAsset* InSpaceShipData);
+
+	void	UpdateSpaceShipLevel();
+
+	FOnSpaceShipLevelChange	OnSpaceShipLevelChange;
+
 protected:
 	void	SpaceShipRotateInput_(const FVector2D& InInput);
 
@@ -109,11 +121,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Level")
 	int32	Level_ = 0;
 
-	UPROPERTY(BlueprintReadOnly, Category = "MainPanel")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MainPanel")
 	TObjectPtr<UChildActorComponent>		MainPanel_ = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, Category = "MainPanel")
-	TObjectPtr<AMainPanelActor>	MainPanelActor_ = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MainPanel")
+	TObjectPtr<AMainPanelActor>				MainPanelActor_ = nullptr;
 
 	// 문 여닫기 관련 변수들
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DoorButton")
@@ -149,7 +161,7 @@ protected:
 	TObjectPtr<ULazerComponent>				LazerComponent_ = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
-	TObjectPtr<UMachineArmComponent>		MainArmComponent_ = nullptr;
+	TObjectPtr<UMachineArmComponent>		MachineArmComponent_ = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UInventoryComponent>			WarehouseComponent_ = nullptr;
@@ -157,29 +169,17 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UMeteorAvoidanceComponent>	MeteorAvoidanceComponent_ = nullptr;
 
-	// 우주선 내구도 관련 변수
-	UPROPERTY(BlueprintReadOnly, Category = "Durability")
-	float	MaxDurability_ = 0.0f;
-	UPROPERTY(BlueprintReadOnly, Category = "Durability")
-	float	CurrentDurability_ = 0.0f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stat")
+	FSpaceShipStat	SpaceShipStat_;
 
-	// 우주선 내부 에너지 관련 변수
-	UPROPERTY(BlueprintReadOnly, Category = "Energy")
-	float	MaxEnergy_ = 0.0f;
-	UPROPERTY(BlueprintReadOnly, Category = "Energy")
-	float	CurrentEnergy_ = 0.0f;
-	UPROPERTY(BlueprintReadOnly, Category = "Energy")
-	float	OperationalEnergy_ = 0.0f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stat|Durability")
+	float			CurrentDurability_ = 0.0f;
 
-	// 가상의 우주선 이동 속도
-	UPROPERTY(BlueprintReadOnly, Category = "MoveSpeed")
-	float	MoveSpeed_ = 100.0f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stat|Energy")
+	float			CurrentEnergy_ = 0.0f;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Rotate")
-	float	RotateSpeed_ = 0.0f;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Rotate")
-	FRotator	SpaceShipRotateState_;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stat|Warehouse")
+	float			CurrentCapacity_ = 0.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SafeArea")
 	TObjectPtr<USphereComponent>	SafeArea_ = nullptr;
