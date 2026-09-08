@@ -441,20 +441,25 @@ int32 UCraftingComponent::FindEmptySlot__(const TArray<FInventorySlot>& InSlots)
     return -1;
 }
 
-void UCraftingComponent::HandleRecipeSelected__(FName InRecipeId)
+void UCraftingComponent::HandleRecipeSelected(FName InRecipeId)
 {
     FManufactureWidgetDisplayData Data = BuildManufactureWidgetDisplayData(InRecipeId);
     OnManufactureWidgetOpened.Broadcast(Data);
 }
 
-void UCraftingComponent::HandleCraftRequested__(FName InRecipeId)
+void UCraftingComponent::HandleCraftRequested(FName InRecipeId)
 {
     UInventoryComponent* InventoryComponent__ = IInventoryComponentInterface::Execute_GetInventoryComponent(GetWorld()->GetFirstPlayerController()->GetPawn());
     TArray<UInventoryComponent*> Inventories;
     Inventories.Add(InventoryComponent__);
 
     bool bSuccess = Craft(InRecipeId, Inventories);
-    if (!bSuccess)
+    if (bSuccess)
+    {
+        FManufactureWidgetDisplayData Data = BuildManufactureWidgetDisplayData(InRecipeId);
+        OnManufactureWidgetOpened.Broadcast(Data);
+    }
+    else
     {
         OnCraftFailed.Broadcast();
     }
