@@ -11,16 +11,18 @@
 UENUM(BlueprintType)
 enum class EMainPanelMenuPage : uint8
 {
-	Select,
-	SpaceShip,
-	Lazer,
-	MachineArm,
+	Home,
+	SpaceShipStatus,
+	Warehouse,
+	MeteorEvent,
+	Upgrade,
+	ItemCraft,
 };
 
 UENUM(BlueprintType)
 enum class EUpgradeMenuPage : uint8
 {
-	Select,
+	Home,
 	SpaceShip,
 	Lazer,
 	MachineArm,
