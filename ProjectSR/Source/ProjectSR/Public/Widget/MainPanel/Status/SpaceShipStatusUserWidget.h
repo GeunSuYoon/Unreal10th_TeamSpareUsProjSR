@@ -24,16 +24,25 @@ public:
 	bool	bIsLevelup(int32 InLevel);
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	Level = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	CurrentDurability = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	MaxDurability = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	CurrentEnergy = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	MaxEnergy = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	OperationalEnergy = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	CurrentCapacity = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	MaxCapacity = nullptr;
 
 private:
+	UFUNCTION()
 	void	UpdateStat__(const FSpaceShipStat& InSpaceShipStat);
 	void	UpdateCurrentDurability__(float InDurability);
 	void	UpdateCurrentEnergy__(float InEnergy);
