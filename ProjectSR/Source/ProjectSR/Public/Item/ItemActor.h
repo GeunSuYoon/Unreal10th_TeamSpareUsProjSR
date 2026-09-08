@@ -10,6 +10,7 @@
 
 class UItemDataAsset;
 class USphereComponent;
+class UWidgetComponent;
 
 UCLASS()
 class PROJECTSR_API AItemActor : public AActor, public IPoolableInterface, public IInteractInterface
@@ -25,6 +26,8 @@ public:
 
     virtual void InitializeItemActor(const UItemDataAsset* InItemData);
     virtual void Interact_Implementation(AActor* InTarget) override;
+    virtual void OnFocused_Implementation(AActor* InTarget) override;
+    virtual void OnUnfocused_Implementation(AActor* InTarget) override;
 
 	void	SetRelativeVelocity(const FVector& InVelocity);
 
@@ -36,6 +39,9 @@ protected:
     UFUNCTION()
     void OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor);
 
+private:
+    void UpdateInteractionWidgetFacing__();
+
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TObjectPtr<USphereComponent> SphereCollision_ = nullptr;
@@ -46,7 +52,11 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TObjectPtr<UWidgetComponent> InteractionWidgetComponent = nullptr;
+
 private:
 	FVector RelativeVelocity__;
+    float WidgetOffsetDistance__ = 100.0f;
 
 };
