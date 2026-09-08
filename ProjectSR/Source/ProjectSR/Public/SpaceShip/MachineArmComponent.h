@@ -21,6 +21,8 @@ public:
 	// Sets default values for this component's properties
 	UMachineArmComponent();
 
+	void	UpdateMachineArmLevel() { OnMachineArmLevelChange.ExecuteIfBound(this->MachineArmStat__); }
+
 	FOnMachineArmLevelChange	OnMachineArmLevelChange;
 
 protected:
