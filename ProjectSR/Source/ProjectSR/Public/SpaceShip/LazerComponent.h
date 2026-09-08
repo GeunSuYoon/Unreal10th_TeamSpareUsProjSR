@@ -11,6 +11,8 @@
 class ULazerDataAsset;
 class AMeteorItemActor;
 
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnLazerLevelChange, const FLazerStat&, InLazerStat);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTSR_API ULazerComponent : public UActorComponent
 {
