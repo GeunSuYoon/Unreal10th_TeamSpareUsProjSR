@@ -50,7 +50,7 @@ void UInventorySlotWidget::RefreshSlot() const
         Item_Grid_Icon->SetBrushFromTexture(TargetSlot->ItemData->Icon.Get());
         Item_Grid_Icon->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
         Item_Grid_Count->SetText(FText::AsNumber(TargetSlot->GetCount()));
-        Item_Grid_Count->SetVisibility(ESlateVisibility::Hidden);
+        Item_Grid_Count->SetVisibility(ESlateVisibility::Visible);
     }
 }
 

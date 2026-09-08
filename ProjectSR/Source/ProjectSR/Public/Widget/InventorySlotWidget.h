@@ -10,7 +10,7 @@ class UInventoryComponent;
 class UImage;
 class UTextBlock;
 
-DECLARE_DELEGATE_OneParam(FOnSlotClicked, int32);
+DECLARE_DELEGATE_OneParam(FOnSlotClicked, int32)
 DECLARE_DELEGATE(FOnDragStarted)
 
 UCLASS()
