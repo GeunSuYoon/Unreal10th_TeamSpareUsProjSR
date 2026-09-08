@@ -3,13 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CommonHeader/SpaceShipStruct.h"
+
 #include "Components/ActorComponent.h"
 #include "LazerComponent.generated.h"
 
 class ULazerDataAsset;
 class UMeteo;
-class AMeteorItemActor;
-class USpaceSalvageWorldSubsystem;
+
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnLazerLevelChange, const FLazerStat&, InLazerStat);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTSR_API ULazerComponent : public UActorComponent
@@ -24,34 +26,29 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	void	BindToSubsystem(USpaceSalvageWorldSubsystem* InSubsystem);
-
 	// 레이저 데이터를 세팅하는 함수 다른 값도 해당 데이터의 값으로 변경된다.
 	void	SetLazerData(ULazerDataAsset* InLazerData);
 
 	// private 멤버 변수 getter 함수.
-	inline int32	GetLevel() const { return (this->Level_); }
-	inline float	GetLazerPower() const { return (this->LazerDamage__); }
-	inline float	GetReactiveEnergy() const { return (this->ReactiveEnergy__); }
-	inline float	GetOperationalEnergy() const { return (this->OperationalEnergy__); }
+	inline int32	GetLevel() const { return (this->LazerStat__.Level); }
+	inline float	GetLazerPower() const { return (this->LazerStat__.Damage); }
+	inline float	GetReactiveEnergy() const { return (this->LazerStat__.ReactiveEnergy); }
+	inline float	GetOperationalEnergy() const { return (this->LazerStat__.OperationalEnergy); }
 
-	// 운석 날라올 때 격추하려 불러오는 함수. TODO: 다른 팀원의 구현에 따라 선언 타입 및 내부 로직 변경 필요.
+	void	UpdateLazerLevel() { OnLazerLevelChange.ExecuteIfBound(this->LazerStat__); }
+
+	FOnLazerLevelChange	OnLazerLevelChange;
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int32	Level_ = 0;
 
 private:
 	void	AttackMeteo__(AMeteorItemActor* InMeteor);
 
-	TObjectPtr<ULazerDataAsset>	LazerData__ = nullptr;
-
-	float	LazerDamage__ = 0.0f;
-	float	ReactiveEnergy__ = 0.0f;
-	float	OperationalEnergy__ = 0.0f;
+	FLazerStat	LazerStat__;
 };

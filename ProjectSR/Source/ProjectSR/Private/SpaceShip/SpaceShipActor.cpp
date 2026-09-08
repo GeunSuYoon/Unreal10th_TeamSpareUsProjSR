@@ -46,7 +46,7 @@ ASpaceShipActor::ASpaceShipActor()
 	this->DoorMesh_->SetupAttachment(GetRootComponent());
 
 	this->LazerComponent_ = CreateDefaultSubobject<ULazerComponent>(TEXT("LazerComponent"));
-	this->MainArmComponent_ = CreateDefaultSubobject<UMachineArmComponent>(TEXT("MainArmComponent"));
+	this->MachineArmComponent_ = CreateDefaultSubobject<UMachineArmComponent>(TEXT("MainArmComponent"));
 	this->WarehouseComponent_ = CreateDefaultSubobject<UInventoryComponent>(TEXT("WarehouseComponent"));
 	this->MeteorAvoidanceComponent_ = CreateDefaultSubobject<UMeteorAvoidanceComponent>(TEXT("MeteorAvoidanceComponent"));
 }
@@ -56,7 +56,6 @@ void ASpaceShipActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	this->SpaceShipRotateState_ = FRotator::ZeroRotator;
 	if (this->MainPanel_)
 	{
 		this->MainPanelActor_ = Cast<AMainPanelActor>(this->MainPanel_->GetChildActor());
@@ -171,7 +170,7 @@ float ASpaceShipActor::RequestEnergy(float InEnergy)
 
 void ASpaceShipActor::RepairDurability_Implementation(float InDurability)
 {
-	this->CurrentDurability_ = FMath::Min(this->CurrentDurability_ + InDurability, this->MaxDurability_);
+	this->CurrentDurability_ = FMath::Min(this->CurrentDurability_ + InDurability, this->SpaceShipStat_.MaxDurability);
 	UE_LOG(
 		LogTemp,
 		Log,
@@ -196,7 +195,7 @@ void ASpaceShipActor::ConsumDurability_Implementation(float InDurability)
 
 void ASpaceShipActor::GainEnergy(float InEnergy)
 {
-	this->CurrentEnergy_ = FMath::Min(this->CurrentEnergy_ + InEnergy, this->MaxEnergy_);
+	this->CurrentEnergy_ = FMath::Min(this->CurrentEnergy_ + InEnergy, this->SpaceShipStat_.MaxEnergy);
 	UE_LOG(
 		LogTemp,
 		Log,
@@ -220,7 +219,39 @@ void ASpaceShipActor::UseEnergy(float InEnergy)
 
 void ASpaceShipActor::SpaceShipMoveInput(const FVector2D& InInput)
 {
-	this->MeteorAvoidanceComponent_->SpaceShipMoveInput(InInput, this->MoveSpeed_);
+	this->MeteorAvoidanceComponent_->SpaceShipMoveInput(InInput, this->SpaceShipStat_.MoveSpeed);
+}
+
+void ASpaceShipActor::SetSpaceShipData(USpaceShipDataAsset* InSpaceShipData)
+{
+	if (InSpaceShipData)
+	{
+		this->SpaceShipStat_.Level = InSpaceShipData->SpaceShipStat.Level;
+		this->SpaceShipStat_.MaxDurability = InSpaceShipData->SpaceShipStat.MaxDurability;
+		this->CurrentDurability_ = InSpaceShipData->SpaceShipStat.MaxDurability;
+		this->SpaceShipStat_.MaxEnergy = InSpaceShipData->SpaceShipStat.MaxEnergy;
+		this->CurrentEnergy_ = InSpaceShipData->SpaceShipStat.MaxEnergy;
+		this->SpaceShipStat_.MoveSpeed = InSpaceShipData->SpaceShipStat.MoveSpeed;
+		this->SpaceShipStat_.OperationalEnergy = InSpaceShipData->SpaceShipStat.OperationalEnergy;
+	}
+	else
+	{
+		this->SpaceShipStat_.Level = 0;
+		this->SpaceShipStat_.MaxDurability = 0.0f;
+		this->CurrentDurability_ = 0.0f;
+		this->SpaceShipStat_.MaxEnergy = 0.0f;
+		this->CurrentEnergy_ = 0.0f;
+		this->SpaceShipStat_.MoveSpeed = 0.0f;
+		this->SpaceShipStat_.OperationalEnergy = 0.0f;
+	}
+	OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
+}
+
+void ASpaceShipActor::UpdateSpaceShipLevel()
+{
+	OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
+	this->LazerComponent_->UpdateLazerLevel();
+	this->MachineArmComponent_->UpdateMachineArmLevel();
 }
 
 void ASpaceShipActor::DetectDoorButtonClick_()

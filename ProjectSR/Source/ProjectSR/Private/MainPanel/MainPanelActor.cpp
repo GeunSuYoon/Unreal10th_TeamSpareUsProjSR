@@ -3,7 +3,7 @@
 
 #include "MainPanel/MainPanelActor.h"
 #include "SpaceShip/SpaceShipActor.h"
-#include "Data/SpaceShip/SpaceShipUpgradeDataTable.h"
+#include "Data/SpaceShip/SpaceShipDataAsset.h"
 #include "Data/Item/ItemDataAsset.h"
 #include "Components/SphereComponent.h"
 
@@ -92,7 +92,7 @@ void AMainPanelActor::CloseSubPanelWidget()
 	this->OpenHomePanelWidget();
 }
 
-void AMainPanelActor::SpaceShipRotateInput(const FVector2D& InInput)
+void AMainPanelActor::SpaceShipInput(const FVector2D& InInput)
 {
 	OnSpaceShipRotateInput.ExecuteIfBound(InInput);
 }

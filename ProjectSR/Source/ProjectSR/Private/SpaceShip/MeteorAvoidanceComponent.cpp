@@ -72,7 +72,8 @@ void UMeteorAvoidanceComponent::MeteorDetect(const USpaceMapDataAsset* InSpaceMa
 	this->TargetMeteor_.MoveDir.Normalize();
 	this->TargetMeteor_.StartPos = -1.0f * this->TargetMeteor_.MoveDir * InSpaceMapData->ItemSpawnDist;
 	this->TargetMeteor_.EndPos = this->TargetMeteor_.MoveDir * InSpaceMapData->ItemSpawnDist;
-	this->CollisionRadiusSquared__ = FMath::Square(this->TargetMeteor_.MeteorSize + this->SpaceShipSafeArea__);
+	// MeteorSize는 지름이고 SpaceShipSafeArea__는 반지름이다.
+	this->CollisionRadiusSquared__ = FMath::Square(this->TargetMeteor_.MeteorSize * 0.5f + this->SpaceShipSafeArea__);
 	this->bIsAvoid__ = false;
 	this->bIsMeteor__ = true;
 	// 1초마다 운석 충돌 관련 알람 울리기
@@ -96,7 +97,7 @@ void UMeteorAvoidanceComponent::SpaceShipMoveInput(const FVector2D& InMoveInput,
 		return ;
 	}
 	// 우주선 입력과 반대로 운석 위치 조정
-	FVector	MeteorMoveDir = FVector(0.0f, -InMoveInput.Y, -InMoveInput.X);
+	FVector	MeteorMoveDir = FVector(0.0f, -InMoveInput.X, -InMoveInput.Y);
 
 	MeteorMoveDir.Normalize();
 	MeteorMoveDir *= InSpaceShipSpeed;

@@ -21,7 +21,7 @@ void UMachineArmComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
+	OnMachineArmLevelChange.ExecuteIfBound(this->MachineArmStat__);
 }
 
 
@@ -38,15 +38,18 @@ void UMachineArmComponent::SetMachineArmData(UMachineArmDataAsset* InMachineArmD
 	this->MachineArmData__ = InMachineArmData;
 	if (InMachineArmData)
 	{
-		this->ItemCollectTime__ = InMachineArmData->ItemCollectTime;
-		this->ItemCollectWeight__ = InMachineArmData->ItemCollectWeight;
-		this->OperationalEnergy__ = InMachineArmData->OperationalEnergy;
+		this->MachineArmStat__.Level = InMachineArmData->MachineArmStat.Level;
+		this->MachineArmStat__.ItemCollectTime = InMachineArmData->MachineArmStat.ItemCollectTime;
+		this->MachineArmStat__.ItemCollectWeight = InMachineArmData->MachineArmStat.ItemCollectWeight;
+		this->MachineArmStat__.OperationalEnergy = InMachineArmData->MachineArmStat.OperationalEnergy;
 	}
 	else
 	{
-		this->ItemCollectTime__ = 0.0f;
-		this->ItemCollectWeight__ = 0.0f;
-		this->OperationalEnergy__ = 0.0f;
+		this->MachineArmStat__.Level = 0;
+		this->MachineArmStat__.ItemCollectTime = 0.0f;
+		this->MachineArmStat__.ItemCollectWeight = 0.0f;
+		this->MachineArmStat__.OperationalEnergy = 0.0f;
 	}
+	OnMachineArmLevelChange.ExecuteIfBound(this->MachineArmStat__);
 }
 

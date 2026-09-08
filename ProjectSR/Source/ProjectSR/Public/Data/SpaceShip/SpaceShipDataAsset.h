@@ -3,8 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CommonHeader/SpaceShipStruct.h"
+
 #include "Engine/DataTable.h"
-#include "SpaceShipUpgradeDataTable.generated.h"
+#include "SpaceShipDataAsset.generated.h"
 
 class UItemDataAsset;
 
@@ -25,14 +27,11 @@ struct FShipUpgradeRow : public FTableRowBase
  */
 // SpaceShip 내부 컴포넌트들을 업그레이드할 때도 쓰는 데이터 에셋.
 UCLASS()
-class PROJECTSR_API USpaceShipUpgradeDataAsset : public UPrimaryDataAsset
+class PROJECTSR_API USpaceShipDataAsset : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceShipUpgrade")
-	int32	Level;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceShipUpgrade")
-	TMap<TObjectPtr<UItemDataAsset>, int32>	NeedItem;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceShip")
+	FSpaceShipStat	SpaceShipStat;
 };

@@ -6,6 +6,7 @@
 #include "CommonHeader/RecipeTable.h"
 #include "CommonHeader/InventoryCommandTypes.h"
 #include "Data/Item/ItemDataAsset.h"
+#include "Interface/InventoryComponentInterface.h"
 
 UCraftingComponent::UCraftingComponent()
 {
@@ -303,6 +304,84 @@ bool UCraftingComponent::Craft(FName InRecipeId, const TArray<UInventoryComponen
     return true;
 }
 
+FRecipeEntry UCraftingComponent::GetRecipeEntry(FName InRecipeId) const
+{
+    FRecipeEntry Entry;
+
+    const FRecipeTableRow* Recipe = RecipeTable_->FindRow<FRecipeTableRow>(InRecipeId, TEXT("UCraftingComponent::GetRecipeEntry()"));
+    if (!Recipe)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UCraftingComponent::GetRecipeEntry()] : 존재하지 않는 제작법입니다 (%s)"),
+               *InRecipeId.ToString());
+        return Entry;
+    }
+
+    Entry.RecipeId = InRecipeId;
+    Entry.RecipeData = *Recipe;
+
+    return Entry;
+}
+
+TArray<FRecipeEntry> UCraftingComponent::GetUnlockedRecipeEntries() const
+{
+    TArray<FRecipeEntry> UnlockedRecipeEntries;
+
+    for (const FName& RowName : RecipeTable_->GetRowNames())
+    {
+        const FRecipeTableRow* Recipe = RecipeTable_->FindRow<FRecipeTableRow>(RowName, TEXT("UCraftingComponent::GetUnlockedRecipeEntries()"));
+
+        if (IsUnlockedRecipe(RowName, Recipe->bLockedByDefault))
+        {
+            FRecipeEntry Entry;
+            Entry.RecipeId = RowName;
+            Entry.RecipeData = *Recipe;
+            UnlockedRecipeEntries.Add(Entry);
+        }
+    }
+
+    return UnlockedRecipeEntries;
+}
+
+FManufactureWidgetDisplayData UCraftingComponent::BuildManufactureWidgetDisplayData(FName InRecipeId) const
+{
+    FManufactureWidgetDisplayData Data;
+    FRecipeEntry RecipeEntry;
+
+    const FRecipeTableRow* Recipe = RecipeTable_->FindRow<FRecipeTableRow>(InRecipeId, TEXT("UCraftingComponent::BuildManufactureWidgetDisplayData()"));
+
+    if (!Recipe)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UCraftingComponent::BuildManufactureWidgetDisplayData()] : 존재하지 않는 제작법입니다 (%s)"),
+               *InRecipeId.ToString());
+        return Data;
+    }
+
+    RecipeEntry.RecipeId = InRecipeId;
+    RecipeEntry.RecipeData = *Recipe;
+
+    Data.RecipeEntry = RecipeEntry;
+
+    TMap<FName, int32> IngredientStatusMap;
+    // DELETE ME
+    UInventoryComponent* InventoryComponent__ = IInventoryComponentInterface::Execute_GetInventoryComponent(GetWorld()->GetFirstPlayerController()->GetPawn());
+    for (int i = 0; i < RecipeEntry.RecipeData.Ingredients.Num(); i++)
+    {
+        IngredientStatusMap.Add(
+            RecipeEntry.RecipeData.Ingredients[i].ItemData->ItemId,
+            InventoryComponent__->GetTotalItemCount(RecipeEntry.RecipeData.Ingredients[i].ItemData));
+    }
+
+    Data.IngredientStatusMap = IngredientStatusMap;
+
+    // DELETE ME
+    TArray<UInventoryComponent*> Inventories;
+    Inventories.Add(InventoryComponent__);
+    Data.bHasEnoughIngredients = HasEnoughIngredients(InRecipeId, Inventories);
+    Data.bHasEnoughEmptySlots = HasEnoughEmptySlots(InRecipeId, Inventories);
+
+    return Data;
+}
+
 void UCraftingComponent::BeginPlay()
 {
     Super::BeginPlay();
@@ -360,4 +439,28 @@ int32 UCraftingComponent::FindEmptySlot__(const TArray<FInventorySlot>& InSlots)
     }
 
     return -1;
+}
+
+void UCraftingComponent::HandleRecipeSelected(FName InRecipeId)
+{
+    FManufactureWidgetDisplayData Data = BuildManufactureWidgetDisplayData(InRecipeId);
+    OnManufactureWidgetOpened.Broadcast(Data);
+}
+
+void UCraftingComponent::HandleCraftRequested(FName InRecipeId)
+{
+    UInventoryComponent* InventoryComponent__ = IInventoryComponentInterface::Execute_GetInventoryComponent(GetWorld()->GetFirstPlayerController()->GetPawn());
+    TArray<UInventoryComponent*> Inventories;
+    Inventories.Add(InventoryComponent__);
+
+    bool bSuccess = Craft(InRecipeId, Inventories);
+    if (bSuccess)
+    {
+        FManufactureWidgetDisplayData Data = BuildManufactureWidgetDisplayData(InRecipeId);
+        OnManufactureWidgetOpened.Broadcast(Data);
+    }
+    else
+    {
+        OnCraftFailed.Broadcast();
+    }
 }
