@@ -11,8 +11,7 @@ class UInventoryComponent;
 class URecipeListElementWidget;
 class UUniformGridPanel;
 
-using FIngredientStatusMap = TMap<FName, int32>;
-DECLARE_DELEGATE_TwoParams(FOnManufactureWidgetOpened, const FRecipeEntry&, FIngredientStatusMap)
+DECLARE_DELEGATE_OneParam(FOnRecipeSelected, FName)
 
 UCLASS()
 class PROJECTSR_API URecipeListWidget : public UUserWidget
@@ -20,7 +19,7 @@ class PROJECTSR_API URecipeListWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
-    void BindToCraftingComponent(UCraftingComponent* InCraftingComponent);
+    void BindToCraftingComponent(UCraftingComponent* InCraftingComponent); // DELETE ME
     void BindToInventoryCompomnent(UInventoryComponent* InInventoryComponent); // DELETE ME
     void RefreshRecipeListWidget();
     UFUNCTION(BlueprintCallable)
@@ -34,7 +33,7 @@ protected:
     virtual void NativeConstruct() override;
 
 public:
-    FOnManufactureWidgetOpened OnManufactureWidgetOpened;
+    FOnRecipeSelected OnRecipeSelected;
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
