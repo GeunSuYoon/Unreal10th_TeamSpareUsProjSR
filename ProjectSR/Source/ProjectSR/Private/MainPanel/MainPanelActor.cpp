@@ -3,7 +3,7 @@
 
 #include "MainPanel/MainPanelActor.h"
 #include "SpaceShip/SpaceShipActor.h"
-#include "Data/SpaceShip/SpaceShipUpgradeDataTable.h"
+#include "Data/SpaceShip/SpaceShipDataAsset.h"
 #include "Data/Item/ItemDataAsset.h"
 #include "Components/SphereComponent.h"
 
@@ -48,52 +48,5 @@ void AMainPanelActor::Tick(float DeltaTime)
 
 void AMainPanelActor::Interact_Implementation(AActor* InTarget)
 {
-	this->OpenHomePanelWidget();
+	OnMainPanelActorInteract.ExecuteIfBound();
 }
-
-void AMainPanelActor::ClosePanelWidget()
-{
-	this->OpenHomePanelWidget();
-	this->OnMainPanelClose.ExecuteIfBound();
-}
-
-void AMainPanelActor::OpenHomePanelWidget()
-{
-	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::Home);
-}
-
-void AMainPanelActor::OpenSpaceShipStatusPanelWidget()
-{
-	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::SpaceShipStatus);
-}
-
-void AMainPanelActor::OpenWarehousePanelWidget()
-{
-	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::Warehouse);
-}
-
-void AMainPanelActor::OpenSpaceShipControlPanelWidget()
-{
-	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::SpaceShipControl);
-}
-
-void AMainPanelActor::OpenSpaceShipUpgradePanelWidget()
-{
-	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::SpaceShipUpgrade);
-}
-
-void AMainPanelActor::OpenItemCraftingPanelWidget()
-{
-	this->OnMainPanelInteract.ExecuteIfBound(EMainPanelType::ItemCrafting);
-}
-
-void AMainPanelActor::CloseSubPanelWidget()
-{
-	this->OpenHomePanelWidget();
-}
-
-void AMainPanelActor::SpaceShipRotateInput(const FVector2D& InInput)
-{
-	OnSpaceShipRotateInput.ExecuteIfBound(InInput);
-}
-
