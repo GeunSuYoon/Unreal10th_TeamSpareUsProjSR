@@ -10,7 +10,8 @@
 
 class UButton;
 
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnButtonClick, EUpgradeMenuPage, InPage);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMainPanelUpgradeHomeSelect, EUpgradeMenuPage, InPage);
+
 /**
  * 
  */
@@ -21,13 +22,16 @@ class PROJECTSR_API USpaceShipUpgradeSelectUserWidget : public UUserWidget
 	
 public:
 
-	FOnButtonClick	OnButtonClick;
+	FOnMainPanelUpgradeHomeSelect	OnMainPanelUpgradeHomeSelect;
 
 protected:
 	virtual void NativeOnInitialized() override;
 
+	UFUNCTION()
 	void	OnSpaceShipButtonClick();
+	UFUNCTION()
 	void	OnLazerButtonClick();
+	UFUNCTION()
 	void	OnMachineArmButtonClick();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
@@ -38,4 +42,7 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UButton>	MachineArmButton = nullptr;
+
+private:
+	EUpgradeMenuPage	MyPage__ = EUpgradeMenuPage::Home;
 };
