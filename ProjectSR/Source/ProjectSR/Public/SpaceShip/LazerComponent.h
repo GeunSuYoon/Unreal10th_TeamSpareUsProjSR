@@ -9,9 +9,7 @@
 #include "LazerComponent.generated.h"
 
 class ULazerDataAsset;
-class UMeteo;
-
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnLazerLevelChange, const FLazerStat&, InLazerStat);
+class AMeteorItemActor;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTSR_API ULazerComponent : public UActorComponent
