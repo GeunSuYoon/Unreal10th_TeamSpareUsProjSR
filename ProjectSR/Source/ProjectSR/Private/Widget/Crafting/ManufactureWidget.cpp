@@ -14,7 +14,7 @@
 
 void UManufactureWidget::BindToCraftingComponent(UCraftingComponent* InCraftingComponent)
 {
-    OnCraftRequested.BindUObject(InCraftingComponent, &UCraftingComponent::HandleCraftRequested__);
+    OnCraftRequested.BindUObject(InCraftingComponent, &UCraftingComponent::HandleCraftRequested);
     InCraftingComponent->OnManufactureWidgetOpened.AddDynamic(this, &UManufactureWidget::RefreshManufactureWidget);
 }
 
