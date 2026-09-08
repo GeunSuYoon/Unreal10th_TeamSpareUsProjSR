@@ -35,11 +35,11 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UMeteorWarningUserWidget>	MeteoWarningWidget;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<URecipeListWidget>	RecipeListWidget;
+    //UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+    //TObjectPtr<URecipeListWidget>	RecipeListWidget;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UManufactureWidget>	ManufactureWidget;
+    //UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+    //TObjectPtr<UManufactureWidget>	ManufactureWidget;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UMainPanelUserWidget>	MainPanelWidget = nullptr;
