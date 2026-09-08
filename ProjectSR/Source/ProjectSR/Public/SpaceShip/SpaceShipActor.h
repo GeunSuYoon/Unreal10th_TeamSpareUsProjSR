@@ -102,6 +102,8 @@ public:
 
 	void	SetSpaceShipData(USpaceShipDataAsset* InSpaceShipData);
 
+	void	UpdateSpaceShipLevel();
+
 	FOnSpaceShipLevelChange	OnSpaceShipLevelChange;
 
 protected:

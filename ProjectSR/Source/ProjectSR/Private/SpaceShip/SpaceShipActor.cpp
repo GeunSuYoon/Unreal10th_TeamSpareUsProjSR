@@ -134,7 +134,6 @@ void ASpaceShipActor::BeginPlay()
 	}
 	SpaceSubsystem->RegisterSpaceShipActor(this);
 	SpaceSubsystem->SetSafeArea(this->SafeAreaRadius_);
-	OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
 }
 
 // Called every frame
@@ -246,6 +245,13 @@ void ASpaceShipActor::SetSpaceShipData(USpaceShipDataAsset* InSpaceShipData)
 		this->SpaceShipStat_.OperationalEnergy = 0.0f;
 	}
 	OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
+}
+
+void ASpaceShipActor::UpdateSpaceShipLevel()
+{
+	OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
+	this->LazerComponent_->UpdateLazerLevel();
+	this->MachineArmComponent_->UpdateMachineArmLevel();
 }
 
 void ASpaceShipActor::DetectDoorButtonClick_()

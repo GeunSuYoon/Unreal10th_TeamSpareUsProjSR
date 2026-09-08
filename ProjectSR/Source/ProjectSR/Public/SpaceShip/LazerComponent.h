@@ -44,6 +44,8 @@ public:
 	inline float	GetReactiveEnergy() const { return (this->LazerStat__.ReactiveEnergy); }
 	inline float	GetOperationalEnergy() const { return (this->LazerStat__.OperationalEnergy); }
 
+	void	UpdateLazerLevel() { OnLazerLevelChange.ExecuteIfBound(this->LazerStat__); }
+
 	FOnLazerLevelChange	OnLazerLevelChange;
 
 protected:
