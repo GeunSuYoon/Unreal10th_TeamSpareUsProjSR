@@ -64,6 +64,7 @@ public:
 	inline ULazerComponent*				GetLazerComponent() const { return (this->LazerComponent_); }
 	inline UMachineArmComponent*		GetMachineArmComponent() const { return (this->MachineArmComponent_); }
 	inline UMeteorAvoidanceComponent*	GetMeteorAvoidance() const { return (this->MeteorAvoidanceComponent_); }
+	inline AMainPanelActor*				GetMainPanelActor() const { return (this->MainPanelActor_); }
 	//inline UInventoryComponent*	GetWarehouse() const { return (this->Warehouse_); }
 
 	virtual UInventoryComponent*	GetInventoryComponent_Implementation() override;
@@ -120,11 +121,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Level")
 	int32	Level_ = 0;
 
-	UPROPERTY(BlueprintReadOnly, Category = "MainPanel")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MainPanel")
 	TObjectPtr<UChildActorComponent>		MainPanel_ = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, Category = "MainPanel")
-	TObjectPtr<AMainPanelActor>	MainPanelActor_ = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MainPanel")
+	TObjectPtr<AMainPanelActor>				MainPanelActor_ = nullptr;
 
 	// 문 여닫기 관련 변수들
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DoorButton")
