@@ -87,7 +87,8 @@ public:
     void ShowInventory();
 
     // 인덱스가 적절한 범위인지 확인하는 함수
-    inline bool IsValidIndex(int32 InSlotIndex) const {
+    inline bool IsValidIndex(int32 InSlotIndex) const
+    {
         return (InSlotIndex <= InventorySize) && (InSlotIndex >= 0);
     }; // 임시슬롯 때문에 접근 범위는 InventorySize까지
 
@@ -162,11 +163,14 @@ protected:
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
-    // 같은 종류의 아이템이 있는 슬롯을 찾는 함수(남은 스택이 있어야함)
-    int32 FindSlotWithItem__(const UItemDataAsset* InItemData, bool bCheckFull, int32 InStartIndex = 0);
+    // 같은 종류의 아이템이 있는 슬롯을 찾는 함수
+    int32 FindSlotWithItem__(const UItemDataAsset* InItemData, int32 InStartIndex = 0) const;
+
+    // 같은 종류의 아이템이 가장 적게 있는 슬롯을 찾는 함수
+    int32 FindSlotWithFewestCount__(const UItemDataAsset* InItemData, int32 InStartIndex = 0) const;
 
     // 비어있는 슬롯을 찾는 함수
-    int32 FindEmptySlot__();
+    int32 FindEmptySlot__() const;
 
 public:
     // 슬롯에 변화가 생겼을 때 발동할 델리게이트(싱글캐스트)

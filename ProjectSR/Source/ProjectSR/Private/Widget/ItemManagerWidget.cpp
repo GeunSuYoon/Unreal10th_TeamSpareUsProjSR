@@ -124,6 +124,12 @@ void UItemManagerWidget::RefreshInventoryWidget()
 
 void UItemManagerWidget::RefreshSlotWidget_(int32 InSlotIndex) const
 {
+    // 드래그 전용 슬롯은 갱신 무시
+    if (InSlotIndex == TargetInventory__->GetTempSlotIndex())
+    {
+        return;
+    }
+
     if (!IsValidIndex__(InSlotIndex) || !SlotWidgets__[InSlotIndex])
     {
         UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshSlotWidget_()] : InSlotIndex가 유효하지 않습니다."));

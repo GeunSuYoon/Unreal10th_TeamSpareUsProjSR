@@ -84,7 +84,7 @@ void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMap
 	this->SpaceMapData__ = InSpaceMapData;
 	this->ItemSpawnTimer__ = InSpaceMapData->ItemSpawnTime;
 	this->ItemSpawnDist__ = InSpaceMapData->ItemSpawnDist;
-	this->ItemDespawnDist__ = FMath::Square(InSpaceMapData->ItemSpawnDist * 1.5);
+	this->ItemDespawnDistSquared__ = FMath::Square(InSpaceMapData->ItemSpawnDist * 1.5);
 	this->ItemMoveSpeed__ = InSpaceMapData->ItemMoveSpeed;
 	this->MeteorSpawnDelayTime__ = InSpaceMapData->MeteorSpawnDelayTime;
 	this->MeteorSpawnTime__ = InSpaceMapData->MeteorSpawnTime;
@@ -112,7 +112,7 @@ void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMap
 		TEXT("[USpaceSalvageWorldSubsystem::SetSpaceMapData] MapData %s가 할당됐습니다."),
 		*this->SpaceMapData__->MapName.ToString()
 	);
-	this->OnSpaceMapUpdate.ExecuteIfBound(this->ItemDespawnDist__);
+	this->OnSpaceMapUpdate.ExecuteIfBound(this->ItemSpawnDist__);
 	this->TryStartItemSpawn__();
 }
 
@@ -505,7 +505,7 @@ void USpaceSalvageWorldSubsystem::DespawnItemActor__()
 		}
 		float	ItemDistance = FVector::DistSquared(TargetItem->GetActorLocation(), this->SpaceRootActor__->GetActorLocation());
 
-		if (ItemDistance > this->ItemDespawnDist__)
+		if (ItemDistance > this->ItemDespawnDistSquared__)
 		{
 			SpawnedItem__.RemoveAtSwap(Index);
 			TargetItem->FinishUsingPoolable();
@@ -546,13 +546,13 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 	FVector		ShipCenter = SpaceRootActor__->GetActorLocation();
 	FVector		SpawnPosition = ShipCenter + InMeteor.StartPos - InMeteor.MoveDir * this->ItemSpawnDist__ * 2;
 	FRotator	SpawnRotation = InMeteor.MoveDir.Rotation();
-	FVector		SpawnScale(InMeteor.MeteorSize, InMeteor.MeteorSize, InMeteor.MeteorSize);
+	//FVector		SpawnScale(InMeteor.MeteorSize);
 	FVector		Velocity = InMeteor.MoveDir * InMeteor.MeteorSpeed;
 	FTransform	WorldSpawnTransform;
 
 	WorldSpawnTransform.SetLocation(SpawnPosition);
 	WorldSpawnTransform.SetRotation(SpawnRotation.Quaternion());
-	WorldSpawnTransform.SetScale3D(SpawnScale);
+	//WorldSpawnTransform.SetScale3D(SpawnScale);
 
 	ItemFactory->SpawnItemActorAsync(
 		this->SpaceMapData__->MeteorData,

@@ -9,6 +9,7 @@
 
 #include "Components/SizeBox.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/OverlaySlot.h"
 
 void UMeteorEventUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 {
@@ -18,16 +19,26 @@ void UMeteorEventUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 	Component->OnMeteorDetect.AddDynamic(this, &UMeteorEventUserWidget::OnMeteorDetect__);
 	Component->OnMeteorMove.AddDynamic(this, &UMeteorEventUserWidget::SetMeteorRoute);
 	Component->OnMeteorClear.AddDynamic(this, &UMeteorEventUserWidget::OnMeteorClear__);
+	USpaceSalvageWorldSubsystem* SpaceSubsystem = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+
+	if (IsValid(SpaceSubsystem))
+	{
+		SpaceSubsystem->OnSpaceMapUpdate.BindUFunction(this, TEXT("SetWidgetSize"));
+		if (SpaceSubsystem->GetSpaceMapData())
+		{
+			this->SetWidgetSize(SpaceSubsystem->GetItemSpawnDist());
+
+		}
+	}
 }
 
 void UMeteorEventUserWidget::SetWidgetSize(const float InSapwnDist)
 {
 	this->PixelPerUnit = this->MapSidePx__ / (2.0f * InSapwnDist);
 	this->SpaceMapSpawnDist__ = InSapwnDist;
-	float	SpaceShipWidgetSize = PixelPerUnit * 2.0f * this->SpaceShipSize__;
+	float	SpaceShipWidgetScale = PixelPerUnit * 2.0f * this->SpaceShipSize__ / 100.0f;
 
-	this->SpaceShipImageSize->SetWidthOverride(SpaceShipWidgetSize);
-	this->SpaceShipImageSize->SetHeightOverride(SpaceShipWidgetSize);
+	this->SpaceShipImageSize->SetRenderScale(FVector2D(SpaceShipWidgetScale));
 }
 
 void UMeteorEventUserWidget::SetMeteorRoute(const FMeteor& InMeteor)
@@ -36,18 +47,15 @@ void UMeteorEventUserWidget::SetMeteorRoute(const FMeteor& InMeteor)
 	{
 		return;
 	}
-	FVector	RouteCenter3D = (InMeteor.StartPos + InMeteor.EndPos) * 0.5f;
-	FVector	RouteDirection3D = InMeteor.MoveDir;
-
+	FVector		RouteCenter3D = (InMeteor.StartPos + InMeteor.EndPos) * 0.5f;
 	FVector2D	RouteCenter2D = this->MapCenter2D__ + FVector2D(-RouteCenter3D.Y, RouteCenter3D.Z) * this->PixelPerUnit;
-	FVector2D	RouteDirection2D = FVector2D(-RouteDirection3D.Y, RouteDirection3D.Z);
 	float		RouteAngle = FMath::RadiansToDegrees(
 		FMath::Atan2(
-			RouteDirection2D.Y,
-			RouteDirection2D.X
-		)) + 90.0f;
+			InMeteor.MoveDir.Z,
+			InMeteor.MoveDir.Y
+		)) + 180;
 
-	this->MeteorRouteSize->SetWidthOverride(this->PixelPerUnit * 2.0f * InMeteor.MeteorSize);
+	this->MeteorRouteSize->SetWidthOverride(this->PixelPerUnit * InMeteor.MeteorSize);
 	this->MeteorRouteSize->SetRenderTransformPivot(FVector2D(0.5f, 0.5f));
 	this->MeteorRouteSize->SetRenderTransformAngle(RouteAngle);
 	this->MeteorRouteCanvasSlot->SetPosition(RouteCenter2D);
@@ -69,7 +77,6 @@ void UMeteorEventUserWidget::NativeConstruct()
 	}
 	this->MeteorRouteCanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
 	this->MeteorRouteCanvasSlot->SetAnchors(FAnchors(0.0f, 0.0f));
-	this->MeteorRouteCanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
 	if (this->MeteorWidgetSize)
 	{
 		this->MapSidePx__ = this->MeteorWidgetSize->GetWidthOverride();

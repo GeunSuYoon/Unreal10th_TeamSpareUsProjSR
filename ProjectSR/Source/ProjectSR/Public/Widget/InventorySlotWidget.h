@@ -10,7 +10,7 @@ class UInventoryComponent;
 class UImage;
 class UTextBlock;
 
-DECLARE_DELEGATE_OneParam(FOnSlotClicked, int32);
+DECLARE_DELEGATE_OneParam(FOnSlotClicked, int32)
 DECLARE_DELEGATE(FOnDragStarted)
 
 UCLASS()
@@ -29,18 +29,11 @@ protected:
     virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
     virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
-private:
-    UFUNCTION()
-    void OnSlotButtonClicked__();
-
 public:
     FOnSlotClicked OnSlotClicked;
     FOnDragStarted OnDragStarted;
 
 protected:
-    //UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-    //TObjectPtr<UButton> Item_GridButton;
-
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UImage> Item_Grid_Icon;
 
@@ -50,4 +43,5 @@ protected:
 private:
     TWeakObjectPtr<UInventoryComponent> TargetInventory__ = nullptr;
     int32 Index__ = -1;
+
 };

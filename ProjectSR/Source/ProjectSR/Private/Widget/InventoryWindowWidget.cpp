@@ -9,6 +9,18 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 
+void UInventoryWindowWidget::BindToInventoryComponent(UInventoryComponent* InInventoryComponent)
+{
+    if (!InInventoryComponent)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryWindowWidget::BindToInventoryComponent()] : InInventoryComponent가 nullptr입니다."));
+        return;
+    }
+
+    TargetInventory__ = InInventoryComponent;
+    ItemManagerWidget->InitializeItemManagerWidget(TargetInventory__.Get());
+}
+
 void UInventoryWindowWidget::OpenInventoryWidget()
 {
     if (!TargetInventory__.IsValid())
@@ -28,7 +40,7 @@ void UInventoryWindowWidget::OpenInventoryWidget()
         FInputModeUIOnly InputModeUI;
         InputModeUI.SetWidgetToFocus(TakeWidget());
 
-        //PC->SetInputMode(InputModeUI);
+        PC->SetInputMode(InputModeUI);
         PC->SetShowMouseCursor(true);
     }
 }
@@ -40,14 +52,14 @@ void UInventoryWindowWidget::CloseInventoryWidget()
     if (APlayerController* PC = Cast<APlayerController>(GetOwningPlayer()))
     {
         FInputModeGameOnly InputModeGame;
-        //PC->SetInputMode(InputModeGame);
+        PC->SetInputMode(InputModeGame);
         PC->SetShowMouseCursor(false);
     }
 }
 
 void UInventoryWindowWidget::ToggleInventoryWidget()
 {
-    if (IsInventoryOpen())
+    if (IsInventoryOpened())
     {
         CloseInventoryWidget();
     }
@@ -57,35 +69,9 @@ void UInventoryWindowWidget::ToggleInventoryWidget()
     }
 }
 
-void UInventoryWindowWidget::InitializeInventoryWindowWidget(UInventoryComponent* InInventoryComponent)
-{
-    if (!InInventoryComponent)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[UInventoryWindowWidget::InitializeInventoryWindowWidget()] : InventoryComponent가 nullptr입니다."));
-        return;
-    }
-
-    TargetInventory__ = InInventoryComponent;
-    ItemManagerWidget->InitializeItemManagerWidget(TargetInventory__.Get());
-}
-
 void UInventoryWindowWidget::NativeConstruct()
 {
     Super::NativeConstruct();
-
-    /*
-    if (APawn* Player = GetOwningPlayerPawn())
-    {
-        if (IInventoryComponentInterface* InventoryPlayer = Cast<IInventoryComponentInterface>(Player))
-        {
-            if (UInventoryComponent* InventoryComponent = IInventoryComponentInterface::Execute_GetInventoryComponent(Player))
-            {
-                TargetInventory__ = InventoryComponent;
-                ItemManagerWidget->InitializeItemManagerWidget(TargetInventory__.Get());
-            }
-        }
-    }
-    */
 
     if (!Inventory_CloseButton)
     {

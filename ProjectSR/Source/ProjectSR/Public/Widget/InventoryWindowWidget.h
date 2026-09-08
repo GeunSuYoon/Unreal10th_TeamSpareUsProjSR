@@ -17,16 +17,15 @@ class PROJECTSR_API UInventoryWindowWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
+    void BindToInventoryComponent(UInventoryComponent* InInventoryComponent);
+
     void OpenInventoryWidget();
     void CloseInventoryWidget();
 
     UFUNCTION(BlueprintCallable)
     void ToggleInventoryWidget();
 
-    UFUNCTION(BlueprintCallable)
-    void InitializeInventoryWindowWidget(UInventoryComponent* InInventoryComponent);
-
-    inline bool IsInventoryOpen() const { return GetVisibility() == ESlateVisibility::Visible; }
+    inline bool IsInventoryOpened() const { return GetVisibility() == ESlateVisibility::Visible; }
 
 protected:
     virtual void NativeConstruct() override;
