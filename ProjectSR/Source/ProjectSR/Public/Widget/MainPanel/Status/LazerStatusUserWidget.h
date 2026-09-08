@@ -22,12 +22,17 @@ public:
 	void	BindToLazerComponent(ULazerComponent* InLazer);
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	Level = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	Damage = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	ReactiveEnergy = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	OperationalEnergy = nullptr;
 
 private:
+	UFUNCTION()
 	void	UpdateStat__(const FLazerStat& InLazerStat);
 
 	int32	LevelValue__ = 0;
