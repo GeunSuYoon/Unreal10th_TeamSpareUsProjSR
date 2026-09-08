@@ -7,6 +7,9 @@
 //#include "Widget/MainPanel/Status/SpaceShipActorStatusUserWidget.h" // 창고 자리
 #include "Widget/MeteorEventUserWidget.h"
 #include "Widget/MainPanel/Upgrade/SpaceShipUpgaradeMainUserWidget.h"
+// 제작 자리
+#include "SpaceShip/SpaceShipActor.h"
+#include "MainPanel/MainPanelActor.h"
 
 #include "Components/WidgetSwitcher.h"
 #include "Components/Button.h"
@@ -14,12 +17,14 @@
 void	UMainPanelUserWidget::OpenSelfWidget_Implementation()
 {
 	this->SetVisibility(ESlateVisibility::Visible);
+	OnWidgetOpen.ExecuteIfBound();
 }
 
 void	UMainPanelUserWidget::CloseSelfWidget_Implementation()
 {
 	IWidgetStackHostInterface::Execute_ClearStackWidget(this);
 	this->SetVisibility(ESlateVisibility::Collapsed);
+	OnWidgetClose.ExecuteIfBound();
 }
 
 bool	UMainPanelUserWidget::CloseTopWidget_Implementation()
@@ -49,10 +54,27 @@ void UMainPanelUserWidget::ClearStackWidget_Implementation()
 	{	}
 }
 
+void UMainPanelUserWidget::OpenMainPanel()
+{
+	IOpenableWidgetInterface::Execute_OpenSelfWidget(this);
+}
+
 void	UMainPanelUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 {
 	this->SpaceShipStatus->BindToSpaceShip(InSpaceShip);
 	this->MeteoEvent->BindToSpaceShip(InSpaceShip);
+	if (AMainPanelActor* MainPanelActor = InSpaceShip->GetMainPanelActor())
+	{
+		MainPanelActor->OnMainPanelActorInteract.BindUFunction(this, TEXT("OpenMainPanel"));
+	}
+	else
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("[UMainPanelUserWidget::BindToSpaceShip] MainPanelActor가 nullptr입니다.")
+		);
+	}
 }
 
 void	UMainPanelUserWidget::SwitchWidget(EMainPanelMenuPage InPage)
