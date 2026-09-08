@@ -22,12 +22,17 @@ public:
 	void	BindToMachineArmComponent(UMachineArmComponent* InMachineArm);
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	Level = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	ItemCollectTime = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	ItemCollectWeight = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	OperationalEnergy = nullptr;
 
 private:
+	UFUNCTION()
 	void	UpdateStat__(const FMachineArmStat& InMachineArmStat);
 
 	int32	LevelValue__ = 0;
