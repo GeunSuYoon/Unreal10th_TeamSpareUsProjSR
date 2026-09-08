@@ -23,8 +23,8 @@ void UMainUserWidget::BindToPlayer(APlayerCharacter* InPlayerCharacter)
         );
         return;
     }
-    this->InventoryWindow->BindToInventoryComponent(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
-    InPlayerCharacter->OnToggleInventory.BindUFunction(InventoryWindow, TEXT("ToggleInventoryWidget"));
+    //this->InventoryWindow->BindToInventoryComponent(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
+    //InPlayerCharacter->OnToggleInventory.BindUFunction(InventoryWindow, TEXT("ToggleInventoryWidget"));
 }
 
 void UMainUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShipActor)
@@ -65,13 +65,13 @@ void UMainUserWidget::ClearStackWidget_Implementation()
 	{ }
 }
 
-void UMainUserWidget::BindToCraftingActor(ACraftingActor* InCraftingActor, APlayerCharacter* InPlayerCharacter)
-{
-    InPlayerCharacter->OnToggleInventory.BindUFunction(RecipeListWidget, TEXT("ToggleRecipeListWidget")); // DELETE ME
-
-    this->RecipeListWidget->BindToInventoryCompomnent(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
-    this->RecipeListWidget->BindToCraftingComponent(InCraftingActor->GetCraftingComponent());
-    this->RecipeListWidget->OnRecipeSelected.BindUObject(InCraftingActor->GetCraftingComponent(), &UCraftingComponent::HandleRecipeSelected__);
-
-    this->ManufactureWidget->BindToCraftingComponent(InCraftingActor->GetCraftingComponent());
-}
+//void UMainUserWidget::BindToCraftingActor(ACraftingActor* InCraftingActor, APlayerCharacter* InPlayerCharacter)
+//{
+//    InPlayerCharacter->OnToggleInventory.BindUFunction(RecipeListWidget, TEXT("ToggleRecipeListWidget")); // DELETE ME
+//
+//    this->RecipeListWidget->BindToInventoryCompomnent(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
+//    this->RecipeListWidget->BindToCraftingComponent(InCraftingActor->GetCraftingComponent());
+//    this->RecipeListWidget->OnRecipeSelected.BindUObject(InCraftingActor->GetCraftingComponent(), &UCraftingComponent::HandleRecipeSelected__);
+//
+//    this->ManufactureWidget->BindToCraftingComponent(InCraftingActor->GetCraftingComponent());
+//}
