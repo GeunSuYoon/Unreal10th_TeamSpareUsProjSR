@@ -21,6 +21,9 @@ class USpaceShipUpgaradeMainUserWidget;
 // 아이템 제작 위젯 클래스 가져와야해용
 class ASpaceShipActor;
 
+//DECLARE_DYNAMIC_DELEGATE(FOnOpenMainPanel);
+//DECLARE_DYNAMIC_DELEGATE(FOnCloseMainPanel);
+
 /**
  * 
  */
@@ -38,6 +41,9 @@ public:
 	virtual bool	CloseTopWidget_Implementation() override;
 	virtual void	ClearStackWidget_Implementation() override;
 
+	UFUNCTION()
+	void	OpenMainPanel();
+
 	UFUNCTION(BlueprintCallable)
 	void	SwitchWidget(EMainPanelMenuPage InPage);
 
@@ -51,6 +57,9 @@ public:
 	void	CloseDetect();
 	UFUNCTION()
 	void	BackspaceDetect();
+
+	FOnWidgetOpen	OnWidgetOpen;
+	FOnWidgetClose	OnWidgetClose;
 
 protected:
 	virtual void NativeOnInitialized() override;
@@ -67,13 +76,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<USpaceShipActorStatusUserWidget>	SpaceShipStatus = nullptr;
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-	// TObjectPtr<UMainPanelHomeUserWidget>	MainPanelSwitcher = nullptr; 창고자리
+	// TObjectPtr<UMainPanelHomeUserWidget>	MainPanelSwitcher = nullptr; // 창고자리
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMeteorEventUserWidget>			MeteoEvent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<USpaceShipUpgaradeMainUserWidget>SpaceShipUpgrade = nullptr;
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-	//TObjectPtr<UWidgetSwitcher>	MainPanelSwitcher = nullptr; 제작 자리
+	//TObjectPtr<UWidgetSwitcher>	MainPanelSwitcher = nullptr; // 제작 자리
 
 private:
 	TArray<TObjectPtr<UWidget>>	OpenWidgetStack__;
