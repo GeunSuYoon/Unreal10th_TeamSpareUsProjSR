@@ -64,28 +64,28 @@ public:
 protected:
 	virtual void NativeOnInitialized() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UButton>	BackSpaceButton = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UButton>	CloseButton = nullptr;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UWidgetSwitcher>					MainPanelSwitcher = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMainPanelHomeUserWidget>		MainPanelHome = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<USpaceShipActorStatusUserWidget>	SpaceShipStatus = nullptr;
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	//UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	// TObjectPtr<UMainPanelHomeUserWidget>	MainPanelSwitcher = nullptr; // 창고자리
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMeteorEventUserWidget>			MeteoEvent = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<USpaceShipUpgaradeMainUserWidget>SpaceShipUpgrade = nullptr;
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	//UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	//TObjectPtr<UWidgetSwitcher>	MainPanelSwitcher = nullptr; // 제작 자리
 
 private:
 	TArray<TObjectPtr<UWidget>>	OpenWidgetStack__;
-	int32						StackSize__;
+	//int32						StackSize__ = 0;
 
 };

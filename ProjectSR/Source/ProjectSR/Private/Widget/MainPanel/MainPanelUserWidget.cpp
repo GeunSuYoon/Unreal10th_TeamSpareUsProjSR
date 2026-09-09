@@ -33,7 +33,7 @@ bool	UMainPanelUserWidget::CloseTopWidget_Implementation()
 	{
 		return (true);
 	}
-	if (this->StackSize__ == 1)
+	if (this->OpenWidgetStack__.Num() <= 1)
 	{
 		return (true);
 	}
@@ -42,9 +42,9 @@ bool	UMainPanelUserWidget::CloseTopWidget_Implementation()
 		if (!IWidgetStackHostInterface::Execute_CloseTopWidget(this->OpenWidgetStack__.Last()))
 			return (false);
 	}
-	this->StackSize__--;
+	//this->StackSize__--;
 	this->OpenWidgetStack__.Pop();
-	this->SwitchWidget(this->StackSize__ - 1);
+	this->SwitchWidget(this->OpenWidgetStack__.Num() - 1);
 	return (false);
 }
 
@@ -128,7 +128,7 @@ void UMainPanelUserWidget::SwitchTargetWidget(EMainPanelMenuPage InPage)
 	}
 	this->MainPanelSwitcher->SetActiveWidgetIndex(InIndex);
 	this->OpenWidgetStack__.Add(MainPanelSwitcher->GetWidgetAtIndex(static_cast<int32>(InPage)));
-	this->StackSize__++;
+	//this->StackSize__++;
 }
 
 void UMainPanelUserWidget::CloseDetect()
