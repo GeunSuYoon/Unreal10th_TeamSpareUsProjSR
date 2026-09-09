@@ -287,6 +287,12 @@ void APlayerCharacter::Player_Move_ZeroGravity(const FInputActionValue& Value)
 
 void APlayerCharacter::Player_Jump_Gravity(const FInputActionValue& Value)
 {
+	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
+	if (MoveComp && MoveComp->IsFalling())
+	{
+		return; // 이미 공중에 있으면 재입력 무시
+	}
+
 	Jump();
 }
 
