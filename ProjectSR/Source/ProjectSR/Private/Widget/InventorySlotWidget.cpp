@@ -10,7 +10,7 @@
 #include "Components/TextBlock.h"
 #include "Styling/SlateBrush.h" 
 
-void UInventorySlotWidget::InitializeSlot(UInventoryComponent* InInventoryComponent, int32 InSlotIndex)
+void UInventorySlotWidget::BindToInventoryComponent(UInventoryComponent* InInventoryComponent)
 {
     if (!InInventoryComponent)
     {
@@ -19,6 +19,10 @@ void UInventorySlotWidget::InitializeSlot(UInventoryComponent* InInventoryCompon
     }
 
     TargetInventory__ = InInventoryComponent;
+}
+
+void UInventorySlotWidget::InitializeSlot(int32 InSlotIndex)
+{
     Index__ = InSlotIndex;
 
     RefreshSlot();
@@ -47,7 +51,7 @@ void UInventorySlotWidget::RefreshSlot() const
     }
     else
     {
-        Item_Grid_Icon->SetBrushFromTexture(TargetSlot->ItemData->Icon.Get());
+        Item_Grid_Icon->SetBrushFromTexture(TargetSlot->ItemData->Icon.LoadSynchronous());
         Item_Grid_Icon->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
         Item_Grid_Count->SetText(FText::AsNumber(TargetSlot->GetCount()));
         Item_Grid_Count->SetVisibility(ESlateVisibility::Visible);

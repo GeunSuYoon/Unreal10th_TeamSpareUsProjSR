@@ -19,7 +19,8 @@ class PROJECTSR_API UInventorySlotWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
-    void InitializeSlot(UInventoryComponent* InInventoryComponent, int32 InSlotIndex);
+    void BindToInventoryComponent(UInventoryComponent* InInventoryComponent);
+    void InitializeSlot(int32 InSlotIndex);
     void RefreshSlot() const;
 
 protected:
