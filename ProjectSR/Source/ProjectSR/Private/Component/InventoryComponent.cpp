@@ -488,13 +488,13 @@ void UInventoryComponent::SetSlot(int32 InSlotIndex, const UItemDataAsset* InIte
                 this,
                 [this, InSlotIndex]() {
                     // 리프레시용으로 변경 브로드 캐스트 날리기
-                    OnSlotChanged.ExecuteIfBound(InSlotIndex);
+                    OnSlotChanged.Broadcast(InSlotIndex);
                 })
         );
     }
 
     // 델리게이트 호출
-    OnSlotChanged.ExecuteIfBound(InSlotIndex);
+    OnSlotChanged.Broadcast(InSlotIndex);
 }
 
 void UInventoryComponent::UpdateSlotCount(int32 InSlotIndex, int32 InDeltaCount)
@@ -515,6 +515,21 @@ void UInventoryComponent::UpdateSlotCount(int32 InSlotIndex, int32 InDeltaCount)
 void UInventoryComponent::ClearSlot(int32 InSlotIndex)
 {
     SetSlot(InSlotIndex, nullptr, 0);
+}
+
+int32 UInventoryComponent::GetUsingSlotCount() const
+{
+    int32 Count = 0;
+
+    for (const FInventorySlot& Slot : Slots_)
+    {
+        if (!Slot.IsEmpty())
+        {
+            Count++;
+        }
+    }
+
+    return Count;
 }
 
 void UInventoryComponent::BeginPlay()

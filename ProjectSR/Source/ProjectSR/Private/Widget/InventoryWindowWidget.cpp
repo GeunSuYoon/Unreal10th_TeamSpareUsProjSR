@@ -18,7 +18,9 @@ void UInventoryWindowWidget::BindToInventoryComponent(UInventoryComponent* InInv
     }
 
     TargetInventory__ = InInventoryComponent;
-    ItemManagerWidget->InitializeItemManagerWidget(TargetInventory__.Get());
+    TargetInventory__->OnSlotChanged.AddDynamic(this, &UInventoryWindowWidget::RefreshCapacityText__);
+    ItemManagerWidget->BindToInventoryComponent(TargetInventory__.Get());
+    ItemManagerWidget->InitializeInventoryWidget();
 }
 
 void UInventoryWindowWidget::OpenInventoryWidget()
@@ -29,12 +31,12 @@ void UInventoryWindowWidget::OpenInventoryWidget()
         return;
     }
 
-    CapacityText->SetText(FText::FromString("Hello Capacity"));
-    WeightText->SetText(FText::FromString("Hello Weight"));
+    RefreshCapacityText__(0);
     ItemManagerWidget->RefreshInventoryWidget();
 
     SetVisibility(ESlateVisibility::Visible);
 
+    // DELETE ME?
     if (APlayerController* PC = Cast<APlayerController>(GetOwningPlayer()))
     {
         FInputModeUIOnly InputModeUI;
@@ -49,6 +51,7 @@ void UInventoryWindowWidget::CloseInventoryWidget()
 {
     SetVisibility(ESlateVisibility::Collapsed);
 
+    // DELETE ME?
     if (APlayerController* PC = Cast<APlayerController>(GetOwningPlayer()))
     {
         FInputModeGameOnly InputModeGame;
@@ -59,7 +62,7 @@ void UInventoryWindowWidget::CloseInventoryWidget()
 
 void UInventoryWindowWidget::ToggleInventoryWidget()
 {
-    if (IsInventoryOpened())
+    if (GetVisibility() == ESlateVisibility::Visible)
     {
         CloseInventoryWidget();
     }
@@ -67,6 +70,12 @@ void UInventoryWindowWidget::ToggleInventoryWidget()
     {
         OpenInventoryWidget();
     }
+}
+
+void UInventoryWindowWidget::RefreshCapacityText__(int32 InSlotIndex)
+{
+    CurrentCapacityText->SetText(FText::AsNumber(TargetInventory__->GetUsingSlotCount()));
+    MaxCapacityText->SetText(FText::AsNumber(TargetInventory__->GetSize()));
 }
 
 void UInventoryWindowWidget::NativeConstruct()

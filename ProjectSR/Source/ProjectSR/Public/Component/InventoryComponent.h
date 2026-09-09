@@ -66,7 +66,7 @@ public:
 
 };
 
-DECLARE_DELEGATE_OneParam(FOnInventorySlotChanged, int32);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventorySlotChanged, int32, InSlotIndex);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECTSR_API UInventoryComponent : public UActorComponent
@@ -101,6 +101,8 @@ public:
     // 특정 슬롯을 비우는 함수
     void ClearSlot(int32 InSlotIndex);
 
+    // 현재 사용 중인 인벤토리 슬롯 개수를 반환하는 함수
+    int32 GetUsingSlotCount() const;
 
     // Getter, Setter -----------------------------------------------------
     // 특정 슬롯을 리턴하는 함수
