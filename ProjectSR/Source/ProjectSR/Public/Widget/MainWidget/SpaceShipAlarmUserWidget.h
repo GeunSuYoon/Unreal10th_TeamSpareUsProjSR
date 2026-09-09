@@ -6,6 +6,11 @@
 #include "Blueprint/UserWidget.h"
 #include "SpaceShipAlarmUserWidget.generated.h"
 
+class ASpaceShipActor;
+
+class UHorizontalBox;
+class UTextBlock;
+
 /**
  * 
  */
@@ -14,4 +19,31 @@ class PROJECTSR_API USpaceShipAlarmUserWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
+public:
+	void	BindToSpaceShip(ASpaceShipActor* InSpaceShip);
+
+	void	SpaceShipEnergyChange(float InCurrentEnergy, float InOperationalEnergy);
+	void	SpaceShipDurabilityChange(float InCurrentDurability, float InRequiredDurability);
+
+	void	InitVisibility();
+	void	CheckChildVisibility();
+
+protected:
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UHorizontalBox>	EnergyAlarmHorizontalBox = nullptr;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UTextBlock>		CurrentEnergy = nullptr;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UTextBlock>		OperationalEnergy = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UHorizontalBox>	DurabilityAlarmHorizontalBox = nullptr;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UTextBlock>		CurrentDurability = nullptr;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UTextBlock>		RequiredDurability = nullptr;
+
+
+private:
+
 };
