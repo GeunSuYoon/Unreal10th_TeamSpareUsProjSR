@@ -4,9 +4,6 @@
 #include "Component/InventoryComponent.h"
 #include "Data/ItemAction/ItemAction.h"
 #include "Framework/SubSystem/ItemActorFactorySubsystem.h"
-//#include "Data/Item/UseableItemDataAsset.h"
-//#include "Data/Item/WeaponDataAsset.h"
-//#include "Interface/WeaponUserInterface.h"
 
 UInventoryComponent::UInventoryComponent()
 {
@@ -293,34 +290,6 @@ bool UInventoryComponent::HandleClearCommand_(const FInventoryCommand& Command, 
     return OutResult.bSuccess;
 }
 
-//bool UInventoryComponent::HandleMoneyCommand(int32 InMoneyDiff, FInventoryCommandResult& OutResult)
-//{
-//    OutResult.bSuccess = false;
-//
-//    AddMoney(InMoneyDiff);
-//    OutResult.bSuccess = true;
-//
-//    return OutResult.bSuccess;
-//}
-//
-//bool UInventoryComponent::HandleSellCommand(int32 InSlotIndex, FInventoryCommandResult& OutResult)
-//{
-//    FInventorySlot* TargetSlot = GetSlot(InSlotIndex);
-//    if (TargetSlot->IsEmpty())
-//    {
-//        OutResult.bSuccess = false;
-//        return OutResult.bSuccess;
-//    }
-//
-//    int32 SellPrice = TargetSlot->ItemData->Price * 0.5f;
-//    AddMoney(SellPrice * TargetSlot->GetCount());
-//
-//    ClearSlot(InSlotIndex);
-//
-//    OutResult.bSuccess = true;
-//    return OutResult.bSuccess;
-//}
-
 bool UInventoryComponent::HandleEquipCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult)
 {
     OutResult.bSuccess = false;
@@ -334,12 +303,6 @@ bool UInventoryComponent::HandleEquipCommand_(const FInventoryCommand& Command, 
 
     return OutResult.bSuccess;
 }
-
-//void UInventoryComponent::AddMoney(int32 InIncome)
-//{
-//    Money += InIncome;
-//    OnMoneyChanged.Broadcast(Money);	// 돈의 변경을 알림
-//}
 
 int32 UInventoryComponent::AddItem_(const UItemDataAsset* InItemData, int32 InCount)
 {
