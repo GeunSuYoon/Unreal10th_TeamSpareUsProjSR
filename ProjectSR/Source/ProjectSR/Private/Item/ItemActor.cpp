@@ -30,6 +30,7 @@ AItemActor::AItemActor()
 
     InteractionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidget"));
     InteractionWidgetComponent->SetupAttachment(RootComponent);
+    InteractionWidgetComponent->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.4f));
     InteractionWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
     InteractionWidgetComponent->SetVisibility(false);
     InteractionWidgetComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);

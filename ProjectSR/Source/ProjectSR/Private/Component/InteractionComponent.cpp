@@ -11,7 +11,7 @@ UInteractionComponent::UInteractionComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
+    PrimaryComponentTick.bCanEverTick = true;
 
 	// ...
 }
@@ -89,12 +89,36 @@ AActor* UInteractionComponent::FindInteractableObject()
 	return nullptr;
 }
 
+void UInteractionComponent::UpdateCurrentTarget__()
+{
+    AActor* TargetActor = FindInteractableObject();
+
+    if (TargetActor && !TargetActor->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
+    {
+        TargetActor = nullptr;
+    }
+
+    if (TargetActor != CurrentTarget__.GetObject())
+    {
+        if (CurrentTarget__)
+        {
+            IInteractInterface::Execute_OnUnfocused(CurrentTarget__.GetObject(), GetOwner());
+        }
+
+        CurrentTarget__ = TargetActor;
+
+        if (CurrentTarget__)
+        {
+            IInteractInterface::Execute_OnFocused(CurrentTarget__.GetObject(), GetOwner());
+        }
+    }
+}
 
 // Called every frame
 void UInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+    UpdateCurrentTarget__();
 }
 
