@@ -12,9 +12,6 @@
 
 class UTemporarySlotWidget;
 
-DECLARE_DELEGATE_OneParam(FOnInventorySlotChanged, int32);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnInventoryMoneyChanged, int32);
-
 USTRUCT(BlueprintType)
 struct FInventorySlot
 {
@@ -69,6 +66,8 @@ public:
 
 };
 
+DECLARE_DELEGATE_OneParam(FOnInventorySlotChanged, int32);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECTSR_API UInventoryComponent : public UActorComponent
 {
@@ -102,10 +101,8 @@ public:
     // 특정 슬롯을 비우는 함수
     void ClearSlot(int32 InSlotIndex);
 
-    // Getter, Setter -----------------------------------------------------
-    // 현재 돈을 리턴하는 함수
-    inline int32 GetMoney() const { return Money; }
 
+    // Getter, Setter -----------------------------------------------------
     // 특정 슬롯을 리턴하는 함수
     FInventorySlot* GetSlot(int InSlotIndex);
 
@@ -136,14 +133,8 @@ protected:
     bool HandleDropCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);
     bool HandleUseCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);
     bool HandleClearCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);
-    //bool HandleMoneyCommand(int32 InMoneyDiff, FInventoryCommandResult& OutResult);
-    //bool HandleSellCommand(int32 InSlotIndex, FInventoryCommandResult& OutResult);
     bool HandleEquipCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);
     // ------------------------------------------------------------------------------------------------------------
-
-    // 인벤토리에 돈을 추가하거나 감소시키는 함수
-    //UFUNCTION(BlueprintCallable)
-    //void AddMoney(int32 InIncome);
 
     // 인벤토리에 아이템을 추가하는 함수
     UFUNCTION(BlueprintCallable)
@@ -176,13 +167,7 @@ public:
     // 슬롯에 변화가 생겼을 때 발동할 델리게이트(싱글캐스트)
     FOnInventorySlotChanged OnSlotChanged;
 
-    // 돈에 변화가 생겼을 때 발동할 델리게이트(멀티캐스트)
-    FOnInventoryMoneyChanged OnMoneyChanged;
-
 protected:
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Money")
-    int32 Money = 0;
-
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Slot")
     TArray<FInventorySlot> Slots_;	// 크기는 InventorySize + 1(임시 슬롯)
 
