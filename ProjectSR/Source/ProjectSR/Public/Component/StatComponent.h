@@ -73,6 +73,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetMoveSpeed() const { return MoveSpeed; }
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetZeroGravityMoveSpeed() const { return ZeroGravityMoveSpeed; }
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetBoostSpeed() const { return BoostSpeed; }
+	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetZeroGravityBoostSpeed() const { return ZeroGravityBoostSpeed; }
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetCrouchSpeed() const { return CrouchSpeed; }
 
 public:
