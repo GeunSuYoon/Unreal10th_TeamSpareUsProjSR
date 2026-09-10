@@ -60,6 +60,15 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 4. PlayerCharacter의 상태값 연동 (부스트 여부)
 	bIsBoosting = PlayerCharacter->IsBoosting(); 
 
-	// 5. 무중력 모드 (InSpaceMovementComponent의 GravityState 확인)
+	// 5. 웅크림 상태
+	bIsCrouching = PlayerCharacter->bIsCrouched;
+
+	// 6. 무중력 모드 (InSpaceMovementComponent의 GravityState 확인)
 	bIsZeroGravity = (MovementComponent->GetGravityState() == EGravityState::ZeroGravityMode);
+
+	// 7. 무중력 상태 방향 정보
+	LocalVelocity = PlayerCharacter->GetActorRotation().UnrotateVector(Velocity);
+
+	// 8. 무중력 전체 속력
+	Speed3D = Velocity.Size();
 }

@@ -287,6 +287,12 @@ void APlayerCharacter::Player_Move_ZeroGravity(const FInputActionValue& Value)
 
 void APlayerCharacter::Player_Jump_Gravity(const FInputActionValue& Value)
 {
+	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
+	if (MoveComp && MoveComp->IsFalling())
+	{
+		return; // 이미 공중에 있으면 재입력 무시
+	}
+
 	Jump();
 }
 
@@ -315,14 +321,16 @@ void APlayerCharacter::RefreshMovementSpeed()
 	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
 	if (!MoveComp || !StatComponent) return;
 
+	const bool bIsZeroGravity = MoveComp->GetGravityState() == EGravityState::ZeroGravityMode;
+
 	if (bIsBoosting)
 	{
-		MoveComp->MaxWalkSpeed = StatComponent->GetBoostSpeed();
-		return;
+		MoveComp->MaxWalkSpeed = bIsZeroGravity ? StatComponent->GetZeroGravityBoostSpeed() : StatComponent->GetBoostSpeed();
 	}
-
-	const bool bIsZeroGravity = MoveComp->GetGravityState() == EGravityState::ZeroGravityMode;
-	MoveComp->MaxWalkSpeed = bIsZeroGravity ? StatComponent->GetZeroGravityMoveSpeed() : StatComponent->GetMoveSpeed();
+	else
+	{
+		MoveComp->MaxWalkSpeed = bIsZeroGravity ? StatComponent->GetZeroGravityMoveSpeed() : StatComponent->GetMoveSpeed();
+	}
 }
 
 void APlayerCharacter::IncreaseHP_Implementation(float InHP)

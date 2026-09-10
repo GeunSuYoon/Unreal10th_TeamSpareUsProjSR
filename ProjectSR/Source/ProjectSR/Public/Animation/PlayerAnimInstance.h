@@ -54,7 +54,19 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bIsBoosting;
 
+	// 웅크리기 여부
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	bool bIsCrouching;
+
 	// 무중력 상태 여부 (StateMachine 전환용)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bIsZeroGravity;
+
+	// 캐릭터 로컬 기준 전후/좌우/상하 속도 (무중력 방향성 블렌드용)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	FVector LocalVelocity; 
+
+	// 무중력 전체 속력
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float Speed3D;
 };
