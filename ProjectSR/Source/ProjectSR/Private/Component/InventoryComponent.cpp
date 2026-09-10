@@ -4,9 +4,6 @@
 #include "Component/InventoryComponent.h"
 #include "Data/ItemAction/ItemAction.h"
 #include "Framework/SubSystem/ItemActorFactorySubsystem.h"
-//#include "Data/Item/UseableItemDataAsset.h"
-//#include "Data/Item/WeaponDataAsset.h"
-//#include "Interface/WeaponUserInterface.h"
 
 UInventoryComponent::UInventoryComponent()
 {
@@ -293,34 +290,6 @@ bool UInventoryComponent::HandleClearCommand_(const FInventoryCommand& Command, 
     return OutResult.bSuccess;
 }
 
-//bool UInventoryComponent::HandleMoneyCommand(int32 InMoneyDiff, FInventoryCommandResult& OutResult)
-//{
-//    OutResult.bSuccess = false;
-//
-//    AddMoney(InMoneyDiff);
-//    OutResult.bSuccess = true;
-//
-//    return OutResult.bSuccess;
-//}
-//
-//bool UInventoryComponent::HandleSellCommand(int32 InSlotIndex, FInventoryCommandResult& OutResult)
-//{
-//    FInventorySlot* TargetSlot = GetSlot(InSlotIndex);
-//    if (TargetSlot->IsEmpty())
-//    {
-//        OutResult.bSuccess = false;
-//        return OutResult.bSuccess;
-//    }
-//
-//    int32 SellPrice = TargetSlot->ItemData->Price * 0.5f;
-//    AddMoney(SellPrice * TargetSlot->GetCount());
-//
-//    ClearSlot(InSlotIndex);
-//
-//    OutResult.bSuccess = true;
-//    return OutResult.bSuccess;
-//}
-
 bool UInventoryComponent::HandleEquipCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult)
 {
     OutResult.bSuccess = false;
@@ -334,12 +303,6 @@ bool UInventoryComponent::HandleEquipCommand_(const FInventoryCommand& Command, 
 
     return OutResult.bSuccess;
 }
-
-//void UInventoryComponent::AddMoney(int32 InIncome)
-//{
-//    Money += InIncome;
-//    OnMoneyChanged.Broadcast(Money);	// 돈의 변경을 알림
-//}
 
 int32 UInventoryComponent::AddItem_(const UItemDataAsset* InItemData, int32 InCount)
 {
@@ -525,13 +488,13 @@ void UInventoryComponent::SetSlot(int32 InSlotIndex, const UItemDataAsset* InIte
                 this,
                 [this, InSlotIndex]() {
                     // 리프레시용으로 변경 브로드 캐스트 날리기
-                    OnSlotChanged.ExecuteIfBound(InSlotIndex);
+                    OnSlotChanged.Broadcast(InSlotIndex);
                 })
         );
     }
 
     // 델리게이트 호출
-    OnSlotChanged.ExecuteIfBound(InSlotIndex);
+    OnSlotChanged.Broadcast(InSlotIndex);
 }
 
 void UInventoryComponent::UpdateSlotCount(int32 InSlotIndex, int32 InDeltaCount)
@@ -552,6 +515,21 @@ void UInventoryComponent::UpdateSlotCount(int32 InSlotIndex, int32 InDeltaCount)
 void UInventoryComponent::ClearSlot(int32 InSlotIndex)
 {
     SetSlot(InSlotIndex, nullptr, 0);
+}
+
+int32 UInventoryComponent::GetUsingSlotCount() const
+{
+    int32 Count = 0;
+
+    for (const FInventorySlot& Slot : Slots_)
+    {
+        if (!Slot.IsEmpty())
+        {
+            Count++;
+        }
+    }
+
+    return Count;
 }
 
 void UInventoryComponent::BeginPlay()
