@@ -20,6 +20,9 @@ struct FRecipeEntry
     FName RecipeId;
 
     UPROPERTY(BlueprintReadOnly)
+    FName RecipeName;
+
+    UPROPERTY(BlueprintReadOnly)
     FRecipeTableRow RecipeData;
 
 };
