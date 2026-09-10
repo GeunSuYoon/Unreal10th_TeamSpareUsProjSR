@@ -23,7 +23,20 @@ void UManufactureIngredientItemWidget::RefreshManufactureIngredientItemWidget(co
     }
     else
     {
-        ItemData->Icon.LoadSynchronous();
+        if (!ItemData->Icon.IsValid())
+        {
+            ItemData->RequestDataLoad(
+                FStreamableDelegate::CreateWeakLambda(
+                    this,
+                    [this, ItemData]() {
+                        if (ItemData)
+                        {
+                            ItemIcon->SetBrushFromTexture(ItemData->Icon.Get());
+                        }
+                    }
+                )
+            );
+        }
 
         ItemIcon->SetBrushFromTexture(ItemData->Icon.Get());
         ItemIcon->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
