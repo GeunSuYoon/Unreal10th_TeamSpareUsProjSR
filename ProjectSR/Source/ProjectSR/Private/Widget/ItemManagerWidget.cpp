@@ -26,6 +26,8 @@ void UItemManagerWidget::BindToInventoryComponent(UInventoryComponent* InInvento
 
     TargetInventory__ = InInventoryComponent;
     TargetInventory__->OnSlotChanged.AddDynamic(this, &UItemManagerWidget::RefreshSlotWidget__);
+
+    InitializeInventoryWidget();
 }
 
 void UItemManagerWidget::InitializeInventoryWidget()
