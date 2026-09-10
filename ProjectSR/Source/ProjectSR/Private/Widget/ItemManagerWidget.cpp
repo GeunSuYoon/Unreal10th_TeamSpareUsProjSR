@@ -167,7 +167,7 @@ void UItemManagerWidget::RefreshItemDetailPanel__() const
 
     if (!TargetSlot->IsEmpty())
     {
-        Iteminfo_Image->SetBrushFromTexture(TargetSlot->ItemData->Icon.LoadSynchronous());
+        Iteminfo_Image->SetBrushFromTexture(TargetSlot->ItemData->Icon.Get());
         Iteminfo_Image->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
         Iteminfo_Name->SetText(FText::FromName(TargetSlot->ItemData->ItemId));
 
