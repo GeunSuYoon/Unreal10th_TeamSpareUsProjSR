@@ -19,6 +19,7 @@ enum class EInventoryCommandType : uint8
     Drop,
     Use,
     Clear,
+    ModifySize,
     Equip
 };
 
@@ -115,6 +116,15 @@ public:
         FInventoryCommand Command;
         Command.Type = EInventoryCommandType::Clear;
         Command.TargetIndex = InSlotIndex;
+
+        return Command;
+    }
+
+    static FInventoryCommand MakeModifySizeCommand(int32 InCount = 1)
+    {
+        FInventoryCommand Command;
+        Command.Type = EInventoryCommandType::ModifySize;
+        Command.Count = InCount;
 
         return Command;
     }
