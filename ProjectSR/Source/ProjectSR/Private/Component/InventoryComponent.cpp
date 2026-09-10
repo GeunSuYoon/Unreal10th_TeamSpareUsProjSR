@@ -3,7 +3,9 @@
 
 #include "Component/InventoryComponent.h"
 #include "Data/ItemAction/ItemAction.h"
+#include "SpaceShip/SpaceShipActor.h"
 #include "Framework/SubSystem/ItemActorFactorySubsystem.h"
+#include "Framework/SubSystem/SpaceSalvageWorldSubsystem.h"
 
 UInventoryComponent::UInventoryComponent()
 {
@@ -447,7 +449,32 @@ void UInventoryComponent::UseItem_(int32 InIndex)
         return;
     }
 
-    Slot->ItemData->ItemAction->ExecuteItemAction_Implementation(GetOwner(), GetOwner());
+    switch (Slot->ItemData->ItemType)
+    {
+        case EItemType::PlayerUsable:
+            Slot->ItemData->ItemAction->ExecuteItemAction_Implementation(GetOwner(), GetOwner());
+            break;
+        case EItemType::SpaceShipUsable:
+        {
+            USpaceSalvageWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+            if (!Subsystem)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::UseItem_()] : SpaceSalvageWorldSubsystem이 nullptr입니다."));
+                return;
+            }
+
+            ASpaceShipActor* SpaceShip = Subsystem->GetSpaceShipActor();
+            if (!SpaceShip)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::UseItem_()] : SpaceShip이 nullptr입니다."));
+                return;
+            }
+
+            Slot->ItemData->ItemAction->ExecuteItemAction_Implementation(GetOwner(), SpaceShip);
+            break;
+        }
+    }
+
     UpdateSlotCount(InIndex, -1);
 }
 
