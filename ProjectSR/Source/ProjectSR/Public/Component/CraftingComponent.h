@@ -58,6 +58,7 @@ public:
     UCraftingComponent();
 
     // 제작법을 해금하는 함수
+    UFUNCTION(BlueprintCallable)
     void Unlock(FName InRecipeId);
 
     bool HasRecipe(FName RecipeId) const;
@@ -66,12 +67,19 @@ public:
     bool IsUnlockedRecipe(FName InRecipeId, bool bDefaultLocked) const;
 
     // 제작법의 재료 아이템이 인벤토리(들)에 충분히 존재하는지 확인하는 함수
+    UFUNCTION(BlueprintCallable)
     bool HasEnoughIngredients(FName InRecipeId, const TArray<UInventoryComponent*>& InInventories) const;
 
     // 제작법의 결과 아이템들이 들어갈 공간이 인벤토리(들)에 충분히 존재하는지 확인하는 함수
+    UFUNCTION(BlueprintCallable)
     bool HasEnoughEmptySlots(FName InRecipeId, const TArray<UInventoryComponent*>& InInventories) const;
 
+    UFUNCTION(BlueprintCallable)
     bool Craft(FName InRecipeId, const TArray<UInventoryComponent*>& InInventories);
+
+    // 테스트용 새로 해금된 제작법 목록 출력 함수
+    UFUNCTION(CallInEditor, Category = "Crafting|Test")
+    void ShowUnlockedRecipeIds();
 
     FRecipeEntry GetRecipeEntry(FName InRecipeId) const;
 

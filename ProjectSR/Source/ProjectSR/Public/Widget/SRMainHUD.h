@@ -7,26 +7,31 @@
 #include "SRMainHUD.generated.h"
 
 class APlayerCharacter;
+class AStorageActor;
 class UMainUserWidget;
 class ASpaceShipActor;
 /**
- * 
+ *
  */
 UCLASS()
 class PROJECTSR_API ASRMainHUD : public AHUD
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	virtual void	BeginPlay() override;
+    virtual void	BeginPlay() override;
 
-	void	RegisterSpaceShip(ASpaceShipActor* InSpaceShipActor);
+    void	RegisterSpaceShip(ASpaceShipActor* InSpaceShipActor);
     void	RegisterPlayerCharacter(APlayerCharacter* InPlayerCharacter);
+    void RegisterStorage(AStorageActor* InStorageActor);
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<UUserWidget>	MainUserWidgetClass_ = nullptr;
+    UFUNCTION(BlueprintCallable)
+    void RegisterCraftingActor(ACraftingActor* InCraftingActor, APlayerCharacter* InPlayerCharacter);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UMainUserWidget>		MainUserWidgetInstance_ = nullptr;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    TSubclassOf<UUserWidget>	MainUserWidgetClass_ = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TObjectPtr<UMainUserWidget>		MainUserWidgetInstance_ = nullptr;
 
 };

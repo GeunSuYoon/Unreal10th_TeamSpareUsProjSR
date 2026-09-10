@@ -311,6 +311,15 @@ bool UCraftingComponent::Craft(FName InRecipeId, const TArray<UInventoryComponen
     return true;
 }
 
+void UCraftingComponent::ShowUnlockedRecipeIds()
+{
+    for (const auto& RecipeId : UnlockedRecipeIds__)
+    {
+        UE_LOG(LogTemp, Log, TEXT("[UCraftingComponent::ShowUnlockedRecipeIds()] : Unlocked Recipe : %s"),
+               *RecipeId.ToString());
+    }
+}
+
 FRecipeEntry UCraftingComponent::GetRecipeEntry(FName InRecipeId) const
 {
     FRecipeEntry Entry;

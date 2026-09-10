@@ -7,46 +7,46 @@
 
 void ASRMainHUD::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
-	if (this->MainUserWidgetClass_)
-	{
-		this->MainUserWidgetInstance_ = CreateWidget<UMainUserWidget>(GetWorld(), this->MainUserWidgetClass_);
-		if (this->MainUserWidgetInstance_)
-		{
-			this->MainUserWidgetInstance_->AddToViewport();
-		}
-	}
-	else
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("[ASRMainHUD::BeginPlay] MainUserWidgetClass_가 nullptr입니다.")
-		);
-		return ;
-	}
-	//this->MainUserWidgetInstance_->AddToViewport();
+    if (this->MainUserWidgetClass_)
+    {
+        this->MainUserWidgetInstance_ = CreateWidget<UMainUserWidget>(GetWorld(), this->MainUserWidgetClass_);
+        if (this->MainUserWidgetInstance_)
+        {
+            this->MainUserWidgetInstance_->AddToViewport();
+        }
+    }
+    else
+    {
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("[ASRMainHUD::BeginPlay] MainUserWidgetClass_가 nullptr입니다.")
+        );
+        return;
+    }
+    this->MainUserWidgetInstance_->AddToViewport();
 
-	USpaceSalvageWorldSubsystem* SpaceSubsystem = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
-	if (IsValid(SpaceSubsystem))
-	{
-		RegisterSpaceShip(SpaceSubsystem->GetSpaceShipActor());
-	}
+    USpaceSalvageWorldSubsystem* SpaceSubsystem = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+    if (IsValid(SpaceSubsystem))
+    {
+        RegisterSpaceShip(SpaceSubsystem->GetSpaceShipActor());
+    }
 }
 
 void ASRMainHUD::RegisterSpaceShip(ASpaceShipActor* InSpaceShipActor)
 {
-	if (!InSpaceShipActor)
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("[ASRMainHUD::RegisterSpaceShip] InSpaceShipActor가 nullptr입니다.")
-		);
-		return ;
-	}
-	this->MainUserWidgetInstance_->BindToSpaceShip(InSpaceShipActor);
+    if (!InSpaceShipActor)
+    {
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("[ASRMainHUD::RegisterSpaceShip] InSpaceShipActor가 nullptr입니다.")
+        );
+        return;
+    }
+    this->MainUserWidgetInstance_->BindToSpaceShip(InSpaceShipActor);
 }
 
 void ASRMainHUD::RegisterPlayerCharacter(APlayerCharacter* InPlayerCharacter)
@@ -64,4 +64,24 @@ void ASRMainHUD::RegisterPlayerCharacter(APlayerCharacter* InPlayerCharacter)
     }
 
     this->MainUserWidgetInstance_->BindToPlayer(InPlayerCharacter);
+}
+
+void ASRMainHUD::RegisterStorage(AStorageActor* InStorageActor)
+{
+    if (!InStorageActor)
+    {
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("[ASRMainHUD::RegisterStorage] InStorageActor가 nullptr입니다.")
+        );
+        return;
+    }
+
+    this->MainUserWidgetInstance_->BindToStorage(InStorageActor);
+}
+
+void ASRMainHUD::RegisterCraftingActor(ACraftingActor* InCraftingActor, APlayerCharacter* InPlayerCharacter)
+{
+    this->MainUserWidgetInstance_->BindToCraftingActor(InCraftingActor, InPlayerCharacter);
 }
