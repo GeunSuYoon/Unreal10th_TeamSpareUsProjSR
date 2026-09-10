@@ -41,7 +41,7 @@ void UManufactureResultItemWidget::RefreshManufactureResultItemWidget(const FIng
 
         ResultItemIcon->SetBrushFromTexture(ItemData->Icon.Get());
         ResultItemIcon->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-        ResultItemName->SetText(FText::FromName(ItemData->ItemId));
+        ResultItemName->SetText(ItemData->DisplayName);
         ResultItemName->SetVisibility(ESlateVisibility::Visible);
         ResultItemQuantity->SetText(FText::AsNumber(Quantity));
         ResultItemQuantity->SetVisibility(ESlateVisibility::Visible);
