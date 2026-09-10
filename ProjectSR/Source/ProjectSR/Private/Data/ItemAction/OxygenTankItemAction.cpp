@@ -2,7 +2,6 @@
 
 
 #include "Data/ItemAction/OxygenTankItemAction.h"
-#include "Component/StatComponent.h"
 #include "Interface/StatComponentInterface.h"
 
 void UOxygenTankItemAction::ExecuteItemAction_Implementation(AActor* InInstigator, AActor* InTarget)
