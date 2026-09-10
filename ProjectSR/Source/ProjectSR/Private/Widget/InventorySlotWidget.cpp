@@ -51,7 +51,22 @@ void UInventorySlotWidget::RefreshSlot() const
     }
     else
     {
-        Item_Grid_Icon->SetBrushFromTexture(TargetSlot->ItemData->Icon.LoadSynchronous());
+        if (!TargetSlot->ItemData->Icon.IsValid())
+        {
+            TargetSlot->ItemData->RequestDataLoad(
+                FStreamableDelegate::CreateWeakLambda(
+                    this,
+                    [this, TargetSlot]() {
+                        if (TargetSlot && !TargetSlot->IsEmpty())
+                        {
+                            Item_Grid_Icon->SetBrushFromTexture(TargetSlot->ItemData->Icon.Get());
+                        }
+                    }
+                )
+            );
+        }
+
+        Item_Grid_Icon->SetBrushFromTexture(TargetSlot->ItemData->Icon.Get());
         Item_Grid_Icon->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
         Item_Grid_Count->SetText(FText::AsNumber(TargetSlot->GetCount()));
         Item_Grid_Count->SetVisibility(ESlateVisibility::Visible);
