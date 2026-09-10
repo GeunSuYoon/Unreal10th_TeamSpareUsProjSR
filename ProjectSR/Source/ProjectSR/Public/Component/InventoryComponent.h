@@ -77,6 +77,12 @@ public:
     // Sets default values for this component's properties
     UInventoryComponent();
 
+    // Plans against copies, then commits all inventories before notifying listeners.
+    // Dragged slots and the temporary slot cannot be spent.
+    static bool ProcessIngredients(const TArray<FIngredient>& Ingredients,
+        const TArray<UInventoryComponent*>& Inventories, bool bConsume);
+    int32 GetSpendableItemCount(const UItemDataAsset* ItemData) const;
+
     // 커맨드 실행용 함수
     UFUNCTION(BlueprintCallable, Category = "Inventory|Command")
     bool ExecuteCommand(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);

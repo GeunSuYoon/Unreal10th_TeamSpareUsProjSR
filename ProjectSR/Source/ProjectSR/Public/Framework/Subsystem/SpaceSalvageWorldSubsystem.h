@@ -18,6 +18,8 @@ class UMeteorAvoidanceComponent;
 class UItemDataAsset;
 class USpaceMapDataAsset;
 class USphereComponent;
+class AMeteorItemActor;
+class ASurvivalLoopActor;
 //class AItemActor;
 //class AMeteorActor;
 
@@ -59,6 +61,9 @@ public:
 	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
 	void	MeteorDetect();
 	void	EndOfDay();
+	bool HasPendingMeteor() const;
+	void StopSurvival();
+	TWeakObjectPtr<ASurvivalLoopActor> SurvivalLoop;
 
 	UFUNCTION(BlueprintCallable)
 	void	SpaceShipRotateDetect(const FRotator& InRotate);
@@ -102,7 +107,12 @@ private:
 
 	//TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
 
+	UPROPERTY()
 	TObjectPtr<USpaceMapDataAsset>	SpaceMapData__ = nullptr;
+	TWeakObjectPtr<AMeteorItemActor> ActiveMeteor__;
+	bool bSpawningEnabled__ = true;
+	bool bMeteorLoading__ = false;
+	uint32 SpawnGeneration__ = 0;
 	// USTRUCT는 값으로 보관
 	//TArray<FMeteor> ActiveVirtualMeteors__;
 

@@ -11,8 +11,21 @@
 
 void USpaceShipUpgaradeMainUserWidget::BindToDataTable()
 {
-	// 각 자식 위젯에 바인드 함수 콜하기
-	this->SpaceShipUpgradeSelect->OnMainPanelUpgradeHomeSelect.BindUFunction(this, TEXT("SwitchWidget"));
+	RefreshUpgradePages();
+}
+
+void USpaceShipUpgaradeMainUserWidget::BindToUpgradeComponent(USpaceShipUpgradeComponent* InComponent)
+{
+	if (SpaceShipUpgrade) SpaceShipUpgrade->BindToUpgradeComponent(InComponent);
+	if (LazerUpgrade) LazerUpgrade->BindToUpgradeComponent(InComponent);
+	if (MachineArmUpgrade) MachineArmUpgrade->BindToUpgradeComponent(InComponent);
+}
+
+void USpaceShipUpgaradeMainUserWidget::RefreshUpgradePages()
+{
+	if (SpaceShipUpgrade) SpaceShipUpgrade->Refresh();
+	if (LazerUpgrade) LazerUpgrade->Refresh();
+	if (MachineArmUpgrade) MachineArmUpgrade->Refresh();
 }
 
 //void USpaceShipUpgaradeMainUserWidget::BindToBackSpace()
@@ -78,6 +91,7 @@ void USpaceShipUpgaradeMainUserWidget::SwitchWidget(int32 InIndex)
 
 void USpaceShipUpgaradeMainUserWidget::SwitchTargetWidget(EUpgradeMenuPage InPage)
 {
+	RefreshUpgradePages();
 	int32	InIndex = static_cast<int32>(InPage);
 
 	if (!this->SpaceShipUpgradeSwitcher ||

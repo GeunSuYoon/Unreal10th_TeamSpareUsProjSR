@@ -14,6 +14,9 @@ class UUniformGridPanel;
 class UInventoryComponent;
 class UInventorySlotWidget;
 
+DECLARE_DELEGATE(FOnItemManagerOpen);
+DECLARE_DELEGATE(FOnItemManagerClose);
+
 UCLASS()
 class PROJECTSR_API UItemManagerWidget : public UUserWidget
 {
@@ -24,6 +27,9 @@ public:
     void InitializeInventoryWidget();
     void RefreshInventoryWidget();
     void ClearInventoryWidget();
+
+	FOnItemManagerOpen	OnItemManagerOpen;
+	FOnItemManagerClose	OnItemManagerClose;
 
 private:
     UFUNCTION()

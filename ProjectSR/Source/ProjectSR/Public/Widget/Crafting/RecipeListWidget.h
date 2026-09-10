@@ -22,10 +22,11 @@ public:
     void BindToCraftingComponent(UCraftingComponent* InCraftingComponent); // DELETE ME
     void BindToInventoryCompomnent(UInventoryComponent* InInventoryComponent); // DELETE ME
     void RefreshRecipeListWidget();
-    UFUNCTION(BlueprintCallable)
-    void ToggleRecipeListWidget();
-    void OpenRecipeListWidget();
-    void CloseRecipeListWidget();
+
+    //UFUNCTION(BlueprintCallable)
+    //void ToggleRecipeListWidget();
+    //void OpenRecipeListWidget();
+    //void CloseRecipeListWidget();
 
     void OpenManufactureWidget(FName InRecipeId);
 

@@ -4,27 +4,40 @@
 #include "Widget/MainPanel/MainPanelUserWidget.h"
 #include "Widget/MainPanel/MainPanelHomeUserWidget.h"
 #include "Widget/MainPanel/Status/SpaceShipActorStatusUserWidget.h"
-//#include "Widget/MainPanel/Status/SpaceShipActorStatusUserWidget.h" // 창고 자리
+#include "Widget/ItemManagerWidget.h"
 #include "Widget/MeteorEventUserWidget.h"
 #include "Widget/MainPanel/Upgrade/SpaceShipUpgaradeMainUserWidget.h"
-// 제작 자리
+#include "Widget/Crafting/RecipeListWidget.h"
+
 #include "SpaceShip/SpaceShipActor.h"
+#include "SpaceShip/SpaceShipUpgradeComponent.h"
+#include "Interface/InventoryComponentInterface.h"
+
 #include "MainPanel/MainPanelActor.h"
 
+#include "GameFramework/Pawn.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/Button.h"
 
+bool UMainPanelUserWidget::HandleMeteorMoveKey(const FKeyEvent& InKeyEvent)
+{
+	return MainPanelSwitcher && MeteoEvent
+		&& MainPanelSwitcher->GetActiveWidget() == MeteoEvent.Get()
+		&& MeteoEvent->HandleMoveKey(InKeyEvent);
+}
+
 void	UMainPanelUserWidget::OpenSelfWidget_Implementation()
 {
+	if (SpaceShipUpgrade) SpaceShipUpgrade->RefreshUpgradePages();
 	this->SetVisibility(ESlateVisibility::Visible);
-	OnWidgetOpen.ExecuteIfBound();
+	OnWidgetOpen.ExecuteIfBound(this);
 }
 
 void	UMainPanelUserWidget::CloseSelfWidget_Implementation()
 {
 	IWidgetStackHostInterface::Execute_ClearStackWidget(this);
 	this->SetVisibility(ESlateVisibility::Collapsed);
-	OnWidgetClose.ExecuteIfBound();
+	OnWidgetClose.ExecuteIfBound(this);
 }
 
 bool	UMainPanelUserWidget::CloseTopWidget_Implementation()
@@ -33,7 +46,7 @@ bool	UMainPanelUserWidget::CloseTopWidget_Implementation()
 	{
 		return (true);
 	}
-	if (this->StackSize__ == 1)
+	if (this->OpenWidgetStack__.Num() <= 1)
 	{
 		return (true);
 	}
@@ -42,9 +55,13 @@ bool	UMainPanelUserWidget::CloseTopWidget_Implementation()
 		if (!IWidgetStackHostInterface::Execute_CloseTopWidget(this->OpenWidgetStack__.Last()))
 			return (false);
 	}
-	this->StackSize__--;
+	if (this->OpenWidgetStack__.Last() == this->Warehouse)
+	{
+		this->Warehouse->OnItemManagerClose.ExecuteIfBound();
+	}
+	//this->StackSize__--;
 	this->OpenWidgetStack__.Pop();
-	this->SwitchWidget(this->StackSize__ - 1);
+	this->SwitchWidget(this->OpenWidgetStack__.Num() - 1);
 	return (false);
 }
 
@@ -61,8 +78,25 @@ void UMainPanelUserWidget::OpenMainPanel()
 
 void	UMainPanelUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 {
+	if (!IsValid(InSpaceShip)) return;
+	if (USpaceShipUpgradeComponent* Upgrade = InSpaceShip->GetUpgradeComponent())
+	{
+		// Match the existing crafting screen: player inventory by default.
+		// Explicitly configured inventory sources are preserved.
+		APawn* Pawn = GetOwningPlayerPawn();
+		if (!Upgrade->HasConfiguredInventories() && Pawn && Pawn->GetClass()->ImplementsInterface(UInventoryComponentInterface::StaticClass()))
+		{
+			TArray<UInventoryComponent*> Sources;
+			Sources.Add(IInventoryComponentInterface::Execute_GetInventoryComponent(Pawn));
+			Upgrade->SetInventories(Sources);
+		}
+		if (SpaceShipUpgrade) SpaceShipUpgrade->BindToUpgradeComponent(Upgrade);
+	}
 	this->SpaceShipStatus->BindToSpaceShip(InSpaceShip);
 	this->MeteoEvent->BindToSpaceShip(InSpaceShip);
+	this->Warehouse->BindToInventoryComponent(InSpaceShip->GetWarehouse());
+	this->Warehouse->InitializeInventoryWidget();
+	this->CraftingRecipeList->BindToCraftingComponent(InSpaceShip->GetCraftingComponent());
 	if (AMainPanelActor* MainPanelActor = InSpaceShip->GetMainPanelActor())
 	{
 		MainPanelActor->OnMainPanelActorInteract.BindUFunction(this, TEXT("OpenMainPanel"));
@@ -75,24 +109,6 @@ void	UMainPanelUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 			TEXT("[UMainPanelUserWidget::BindToSpaceShip] MainPanelActor가 nullptr입니다.")
 		);
 	}
-}
-
-void	UMainPanelUserWidget::SwitchWidget(EMainPanelMenuPage InPage)
-{
-	int32	InIndex = static_cast<int32>(InPage);
-
-	if (!this->MainPanelSwitcher ||
-		InIndex >= MainPanelSwitcher->GetNumWidgets())
-	{
-		UE_LOG(
-			LogTemp,
-			Error,
-			TEXT("[UMainPanelUserWidget::SwitchWidget] 스위처가 nullptr이거나 입력받은 enum[%d]값이 이상합니다."),
-			InIndex
-		);
-		return;
-	}
-	MainPanelSwitcher->SetActiveWidgetIndex(InIndex);
 }
 
 void UMainPanelUserWidget::SwitchWidget(int32 InIndex)
@@ -126,9 +142,12 @@ void UMainPanelUserWidget::SwitchTargetWidget(EMainPanelMenuPage InPage)
 		);
 		return;
 	}
+	if (InPage == EMainPanelMenuPage::Warehouse)
+	{
+		this->Warehouse->OnItemManagerOpen.ExecuteIfBound();
+	}
 	this->MainPanelSwitcher->SetActiveWidgetIndex(InIndex);
 	this->OpenWidgetStack__.Add(MainPanelSwitcher->GetWidgetAtIndex(static_cast<int32>(InPage)));
-	this->StackSize__++;
 }
 
 void UMainPanelUserWidget::CloseDetect()
@@ -139,7 +158,6 @@ void UMainPanelUserWidget::CloseDetect()
 void UMainPanelUserWidget::BackspaceDetect()
 {
 	IWidgetStackHostInterface::Execute_CloseTopWidget(this);
-	//CloseTopWidget_Implementation
 }
 
 void	UMainPanelUserWidget::NativeOnInitialized()
@@ -150,8 +168,6 @@ void	UMainPanelUserWidget::NativeOnInitialized()
 	{
 		this->SwitchTargetWidget(EMainPanelMenuPage::Home);
 		this->MainPanelHome->OnMainPanelHomeSelect.BindUFunction(this, TEXT("SwitchTargetWidget"));
-		//this->OpenWidgetStack__.Add(MainPanelSwitcher->GetWidgetAtIndex(static_cast<int32>(EMainPanelMenuPage::Home)));
-		//this->StackSize__++;
 	}
 	this->BackSpaceButton->OnClicked.AddDynamic(this, &UMainPanelUserWidget::BackspaceDetect);
 	this->CloseButton->OnClicked.AddDynamic(this, &UMainPanelUserWidget::CloseDetect);

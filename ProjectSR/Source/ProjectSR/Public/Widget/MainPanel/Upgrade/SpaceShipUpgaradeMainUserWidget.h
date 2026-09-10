@@ -10,6 +10,7 @@
 #include "SpaceShipUpgaradeMainUserWidget.generated.h"
 
 class UWidgetSwitcher;
+class USpaceShipUpgradeComponent;
 class USpaceShipUpgradeSelectUserWidget;
 class USpaceShipUpgradeUserWidget;
 class UMachineArmUpgradeUserWidget;
@@ -24,6 +25,8 @@ class PROJECTSR_API USpaceShipUpgaradeMainUserWidget : public UUserWidget, publi
 	
 public:
 	void	BindToDataTable();
+	void BindToUpgradeComponent(USpaceShipUpgradeComponent* InComponent);
+	void RefreshUpgradePages();
 
 	UFUNCTION(BlueprintCallable)
 	void	SwitchWidget(EUpgradeMenuPage InPage);

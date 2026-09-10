@@ -34,6 +34,8 @@ public:
 public:
 	// 레이저 데이터를 세팅하는 함수 다른 값도 해당 데이터의 값으로 변경된다.
 	void	SetLazerData(ULazerDataAsset* InLazerData);
+	const FLazerStat& GetStat() const { return LazerStat__; }
+	void ApplyLazerStat(const FLazerStat& NewStat) { LazerStat__ = NewStat; UpdateLazerLevel(); }
 
 	// private 멤버 변수 getter 함수.
 	inline int32	GetLevel() const { return (this->LazerStat__.Level); }

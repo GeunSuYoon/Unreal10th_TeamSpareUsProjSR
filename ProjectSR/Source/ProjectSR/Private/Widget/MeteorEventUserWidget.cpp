@@ -10,9 +10,12 @@
 #include "Components/SizeBox.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/OverlaySlot.h"
+#include "InputCoreTypes.h"
 
 void UMeteorEventUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 {
+	if (!IsValid(InSpaceShip)) return;
+	BoundSpaceShip__ = InSpaceShip;
 	UMeteorAvoidanceComponent* Component = InSpaceShip->GetMeteorAvoidanceComponent();
 
 	this->SpaceShipSize__ = InSpaceShip->GetSafeAreaRadius();
@@ -30,6 +33,27 @@ void UMeteorEventUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 
 		}
 	}
+}
+
+bool UMeteorEventUserWidget::HandleMoveKey(const FKeyEvent& InKeyEvent)
+{
+	const FKey Key = InKeyEvent.GetKey();
+	FVector2D MoveInput = FVector2D::ZeroVector;
+	// The ship stays centered; move the displayed meteor route opposite to WASD.
+	if (Key == EKeys::W) MoveInput.Y = -1.0f;
+	else if (Key == EKeys::S) MoveInput.Y = 1.0f;
+	else if (Key == EKeys::A) MoveInput.X = 1.0f;
+	else if (Key == EKeys::D) MoveInput.X = -1.0f;
+	else return false;
+
+	// The existing movement function applies a fixed displacement per call.
+	// Consume key repeats without applying OS-dependent repeated movement.
+	if (!InKeyEvent.IsRepeat() && BoundSpaceShip__.IsValid()
+		&& IsValid(BoundSpaceShip__->GetMeteorAvoidanceComponent()))
+	{
+		BoundSpaceShip__->SpaceShipMoveInput(MoveInput);
+	}
+	return true;
 }
 
 void UMeteorEventUserWidget::SetWidgetSize(const float InSapwnDist)
