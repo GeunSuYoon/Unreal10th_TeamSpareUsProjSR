@@ -24,4 +24,11 @@ class PROJECTSR_API IInteractInterface
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interact")
 	void	Interact(AActor* InTarget);
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interact")
+    void	OnFocused(AActor* InTarget);
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interact")
+    void	OnUnfocused(AActor* InTarget);
+
 };
