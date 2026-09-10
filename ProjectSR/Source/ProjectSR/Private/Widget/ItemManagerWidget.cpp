@@ -169,7 +169,7 @@ void UItemManagerWidget::RefreshItemDetailPanel__() const
     {
         Iteminfo_Image->SetBrushFromTexture(TargetSlot->ItemData->Icon.Get());
         Iteminfo_Image->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-        Iteminfo_Name->SetText(FText::FromName(TargetSlot->ItemData->ItemId));
+        Iteminfo_Name->SetText(TargetSlot->ItemData->DisplayName);
 
         FText CapacityText = FText::Format(
             NSLOCTEXT("Inventory", "SlotCountFormat", "수량 : {0} / {1} 개"),

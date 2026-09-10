@@ -29,6 +29,9 @@ struct PROJECTSR_API FRecipeTableRow : public FTableRowBase
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FName RecipeName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TArray<FIngredient> Ingredients;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
