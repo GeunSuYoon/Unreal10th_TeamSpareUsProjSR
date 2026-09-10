@@ -57,6 +57,8 @@ void UMainUserWidget::BindWidget__()
 	}
 	this->MainPanelWidget->GetWarehouseWidget()->OnItemManagerOpen.BindUObject(this->InventoryWidget, &UInventoryWindowWidget::OpenWidget);
 	this->MainPanelWidget->GetWarehouseWidget()->OnItemManagerClose.BindUObject(this->InventoryWidget, &UInventoryWindowWidget::CloseWidget);
+	this->MainPanelWidget->GeCraftingRecipeListWidget()->OnCraftingOpen.BindUObject(this->CraftingManufacture, &UManufactureWidget::OpenWidget);
+	this->MainPanelWidget->GeCraftingRecipeListWidget()->OnCraftingClose.BindUObject(this->CraftingManufacture, &UManufactureWidget::CloseWidget);
 }
 
 void UMainUserWidget::RegisterOpenWidget__(UUserWidget* Widget)

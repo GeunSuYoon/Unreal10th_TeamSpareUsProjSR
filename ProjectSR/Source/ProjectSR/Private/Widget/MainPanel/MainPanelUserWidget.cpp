@@ -59,6 +59,10 @@ bool	UMainPanelUserWidget::CloseTopWidget_Implementation()
 	{
 		this->Warehouse->OnItemManagerClose.ExecuteIfBound();
 	}
+	if (this->OpenWidgetStack__.Last() == this->CraftingRecipeList)
+	{
+		this->CraftingRecipeList->OnCraftingClose.ExecuteIfBound();
+	}
 	//this->StackSize__--;
 	this->OpenWidgetStack__.Pop();
 	this->SwitchWidget(this->OpenWidgetStack__.Num() - 1);

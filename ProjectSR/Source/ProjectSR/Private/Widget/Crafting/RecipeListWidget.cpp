@@ -112,6 +112,7 @@ void URecipeListWidget::RefreshRecipeListWidget()
 void URecipeListWidget::OpenManufactureWidget(FName InRecipeId)
 {
     OnRecipeSelected.ExecuteIfBound(InRecipeId);
+	OnCraftingOpen.ExecuteIfBound();
 }
 
 void URecipeListWidget::NativeConstruct()
