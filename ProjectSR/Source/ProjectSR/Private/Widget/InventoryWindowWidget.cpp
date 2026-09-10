@@ -23,52 +23,46 @@ void UInventoryWindowWidget::BindToInventoryComponent(UInventoryComponent* InInv
     ItemManagerWidget->InitializeInventoryWidget();
 }
 
-void UInventoryWindowWidget::OpenInventoryWidget()
+void UInventoryWindowWidget::OpenWidget()
 {
-    if (!TargetInventory__.IsValid())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[UInventoryWindowWidget::OpenInventoryWidget()] : TargetInventory가 nullptr입니다."));
-        return;
-    }
-
-    RefreshCapacityText__(0);
-    ItemManagerWidget->RefreshInventoryWidget();
-
-    SetVisibility(ESlateVisibility::Visible);
-
-    // DELETE ME?
-    if (APlayerController* PC = Cast<APlayerController>(GetOwningPlayer()))
-    {
-        FInputModeUIOnly InputModeUI;
-        InputModeUI.SetWidgetToFocus(TakeWidget());
-
-        PC->SetInputMode(InputModeUI);
-        PC->SetShowMouseCursor(true);
-    }
+	IOpenableWidgetInterface::Execute_OpenSelfWidget(this);
 }
 
-void UInventoryWindowWidget::CloseInventoryWidget()
+void UInventoryWindowWidget::CloseWidget()
 {
-    SetVisibility(ESlateVisibility::Collapsed);
+	IOpenableWidgetInterface::Execute_CloseSelfWidget(this);
+}
 
-    // DELETE ME?
-    if (APlayerController* PC = Cast<APlayerController>(GetOwningPlayer()))
-    {
-        FInputModeGameOnly InputModeGame;
-        PC->SetInputMode(InputModeGame);
-        PC->SetShowMouseCursor(false);
-    }
+void UInventoryWindowWidget::OpenSelfWidget_Implementation()
+{
+	if (!TargetInventory__.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UInventoryWindowWidget::OpenInventoryWidget()] : TargetInventory가 nullptr입니다."));
+		return;
+	}
+
+	RefreshCapacityText__(0);
+	ItemManagerWidget->RefreshInventoryWidget();
+
+	SetVisibility(ESlateVisibility::Visible);
+	OnWidgetOpen.ExecuteIfBound(this);
+}
+
+void UInventoryWindowWidget::CloseSelfWidget_Implementation()
+{
+	SetVisibility(ESlateVisibility::Collapsed);
+	OnWidgetClose.ExecuteIfBound(this);
 }
 
 void UInventoryWindowWidget::ToggleInventoryWidget()
 {
     if (GetVisibility() == ESlateVisibility::Visible)
     {
-        CloseInventoryWidget();
+		IOpenableWidgetInterface::Execute_CloseSelfWidget(this);
     }
     else
     {
-        OpenInventoryWidget();
+		IOpenableWidgetInterface::Execute_OpenSelfWidget(this);
     }
 }
 
@@ -91,14 +85,14 @@ void UInventoryWindowWidget::NativeConstruct()
     Inventory_CloseButton->OnClicked.AddDynamic(this, &UInventoryWindowWidget::OnInventoryCloseButtonClicked__);
 
     SetIsFocusable(true);
-    CloseInventoryWidget();
+	IOpenableWidgetInterface::Execute_CloseSelfWidget(this);
 }
 
 FReply UInventoryWindowWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
     if (InKeyEvent.GetKey() == EKeys::I)
     {
-        CloseInventoryWidget();
+		IOpenableWidgetInterface::Execute_CloseSelfWidget(this);
 
         return FReply::Handled();
     }
@@ -108,5 +102,5 @@ FReply UInventoryWindowWidget::NativeOnKeyDown(const FGeometry& InGeometry, cons
 
 void UInventoryWindowWidget::OnInventoryCloseButtonClicked__()
 {
-    CloseInventoryWidget();
+	IOpenableWidgetInterface::Execute_CloseSelfWidget(this);
 }

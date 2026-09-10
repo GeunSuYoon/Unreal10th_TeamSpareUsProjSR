@@ -11,6 +11,7 @@
 void	USpaceShipEnergyUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 {
 	// 우주선 델리게이트 아래 함수 연결
+	InSpaceShip->OnEnergyChange.AddDynamic(this, &USpaceShipEnergyUserWidget::EnergyChange);
 }
 
 void USpaceShipEnergyUserWidget::EnergyChange(float InCurrentEnergy, float InMaxEnergy)

@@ -12,6 +12,8 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Camera/CameraShakeBase.h"
 #include "ProjectSR.h"
+#include "Framework/SurvivalLoopActor.h"
+#include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
 
 AMeteorItemActor::AMeteorItemActor()
 {
@@ -30,6 +32,8 @@ void AMeteorItemActor::InitMeteor(const FMeteor& InMeteor, const FVector& ShipCe
 {
 	//this->ClosestApproachWorldPos__ = ShipCenter + InMeteor.ClosestApproachPos;
 	this->MoveDir__ = InMeteor.MoveDir;
+	ExitCenter__ = ShipCenter;
+	bMeteorActive__ = true;
 	this->DespawnDist__ = InDespawnDist;
 	this->Damage__ = InMeteor.MeteorDamage;
 	this->SphereCollision_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -53,6 +57,7 @@ void AMeteorItemActor::InitMeteor(const FMeteor& InMeteor, const FVector& ShipCe
 	this->SphereCollision_->SetCollisionResponseToChannel(ECC_SpaceShipActor, ECR_Overlap);
 	this->SphereCollision_->SetGenerateOverlapEvents(true);
 	this->SphereCollision_->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SetActorEnableCollision(true);
 	this->SphereCollision_->UpdateOverlaps();
 }
 
@@ -66,13 +71,14 @@ void AMeteorItemActor::LazerDamage(float InDamage)
 			Log,
 			TEXT("[AMeteorItemActor::LazerDamage] 운석이 파괴됐습니다.")
 		);
-		this->OnReturnToPool();
+		FinishUsingPoolable();
 	}
 }
 
 void AMeteorItemActor::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if (bMeteorActive__ && FVector::DotProduct(GetActorLocation() - ExitCenter__, MoveDir__) >= DespawnDist__) { FinishUsingPoolable(); }
 
 	//FVector	FromClosestPoint = GetActorLocation() - this->ClosestApproachWorldPos__;
 	//float	PassedDistance = FVector::DotProduct(FromClosestPoint, this->MoveDir__);
@@ -85,7 +91,7 @@ void AMeteorItemActor::Tick(float DeltaSeconds)
 
 void AMeteorItemActor::HandleImpact(ASpaceShipActor* InSpaceShipActor)
 {
-	if (this->bImpactResolved__)
+	if (this->bImpactResolved__ || !bMeteorActive__)
 	{
 		return;
 	}
@@ -123,15 +129,21 @@ void AMeteorItemActor::HandleImpact(ASpaceShipActor* InSpaceShipActor)
 			}
 		}
 	}
+	// Actual impact, not the warning timeout. Capture damage before game-over cleanup returns this actor.
+	const float ImpactDamage = Damage__;
+	if (auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>())
+	{
+		if (Salvage->SurvivalLoop.IsValid()) { Salvage->SurvivalLoop->NotifyMeteorImpact(InSpaceShipActor); }
+	}
 	// 우주선에 Damage__ 적용
 	UGameplayStatics::ApplyDamage(
 		InSpaceShipActor,
-		this->Damage__,
+		ImpactDamage,
 		nullptr,
 		this,
 		nullptr
 	);
-	FinishUsingPoolable();
+	if (bMeteorActive__) { FinishUsingPoolable(); }
 }
 
 void AMeteorItemActor::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -154,12 +166,15 @@ void AMeteorItemActor::OnSpawnFromPool_Implementation()
 	Super::OnSpawnFromPool_Implementation();
 
 	this->bImpactResolved__ = false;
+	bMeteorActive__ = false;
+	SetActorEnableCollision(false);
 }
 
 void AMeteorItemActor::OnReturnToPool_Implementation()
 {
 	SetRelativeVelocity(FVector::ZeroVector);
-	this->bImpactResolved__ = false;
+	//this->bImpactResolved__ = false;
+	bMeteorActive__ = false;
 
 	Super::OnReturnToPool_Implementation();
 }

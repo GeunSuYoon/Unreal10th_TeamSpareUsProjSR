@@ -12,7 +12,7 @@ void UMainPanelHomeUserWidget::SpaceShipStatusSelect()
 
 void UMainPanelHomeUserWidget::WarehouseSelect()
 {
-	//this->OnMainPanelHomeSelect.ExecuteIfBound(EMainPanelMenuPage::Warehouse);
+	this->OnMainPanelHomeSelect.ExecuteIfBound(EMainPanelMenuPage::Warehouse);
 }
 
 void UMainPanelHomeUserWidget::MeteorEventSelect()
@@ -27,7 +27,7 @@ void UMainPanelHomeUserWidget::UpgradeSelect()
 
 void UMainPanelHomeUserWidget::ItemCraftSelect()
 {
-	//this->OnMainPanelHomeSelect.ExecuteIfBound(EMainPanelMenuPage::ItemCraft);
+	this->OnMainPanelHomeSelect.ExecuteIfBound(EMainPanelMenuPage::ItemCraft);
 }
 
 void UMainPanelHomeUserWidget::NativeOnInitialized()

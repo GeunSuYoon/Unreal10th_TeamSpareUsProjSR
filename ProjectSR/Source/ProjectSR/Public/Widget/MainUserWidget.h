@@ -8,13 +8,17 @@
 #include "Blueprint/UserWidget.h"
 #include "MainUserWidget.generated.h"
 
-class UMeteorWarningUserWidget;
 class ASpaceShipActor;
 class APlayerCharacter;
+class UMeteorWarningUserWidget;
 class UInventoryWindowWidget;
 class UMainPanelUserWidget;
 class URecipeListWidget;
 class UManufactureWidget;
+class USpaceShipAlarmUserWidget;
+class UInventoryAlarmUserWidget;
+class UPlayerStatUserWidget;
+class USpaceShipStatUserWidget;
 
 /**
  *
@@ -30,24 +34,52 @@ public:
     void	BindToCharacter(ACharacter* InCharacter);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UInventoryWindowWidget>	InventoryWindow;
+    TObjectPtr<UInventoryWindowWidget>		InventoryWidget;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UMeteorWarningUserWidget>	MeteoWarningWidget;
 
-    //UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-    //TObjectPtr<URecipeListWidget>	RecipeListWidget;
-
-    //UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-    //TObjectPtr<UManufactureWidget>	ManufactureWidget;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+    TObjectPtr<UManufactureWidget>			CraftingManufacture;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UMainPanelUserWidget>	MainPanelWidget = nullptr;
+    TObjectPtr<UMainPanelUserWidget>		MainPanelWidget = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+    TObjectPtr<USpaceShipAlarmUserWidget>	SpaceShipAlarm = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+    TObjectPtr<UInventoryAlarmUserWidget>	InventoryAlarm = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+    TObjectPtr<UPlayerStatUserWidget>		PlayerStatWidget = nullptr;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+    TObjectPtr<USpaceShipStatUserWidget>	SpaceShipStat = nullptr;
 
     virtual bool	CloseTopWidget_Implementation() override;
     virtual void	ClearStackWidget_Implementation() override;
 
-private:
-    TArray<UUserWidget*>	OpenWidgetStack__;
+protected:
+    virtual void	NativeOnInitialized() override;
+    virtual FReply	NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
+private:
+	void	BindWidget__();
+
+    void RegisterOpenWidget__(UUserWidget* Widget);
+    void UnregisterOpenWidget__(UUserWidget* Widget);
+    void UpdateInputMode__();
+
+    UFUNCTION()
+    void HandleMainPanelOpened__(UUserWidget* InWidget);
+
+    UFUNCTION()
+    void HandleMainPanelClosed__(UUserWidget* InWidget);
+
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UUserWidget>> OpenWidgetStack__;
+
+	bool	bIsSpaceShipBind = false;
+	bool	bIsPlayerBind = false;
 };

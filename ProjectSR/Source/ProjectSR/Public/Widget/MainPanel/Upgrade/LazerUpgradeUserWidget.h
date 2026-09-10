@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "CommonHeader/MainPanelEnum.h"
 
-#include "Blueprint/UserWidget.h"
+#include "Widget/MainPanel/Upgrade/ShipUpgradeDetailUserWidget.h"
 #include "LazerUpgradeUserWidget.generated.h"
 
 class UTextBlock;
@@ -13,7 +13,7 @@ class UTextBlock;
  * 
  */
 UCLASS()
-class PROJECTSR_API ULazerUpgradeUserWidget : public UUserWidget
+class PROJECTSR_API ULazerUpgradeUserWidget : public UShipUpgradeDetailUserWidget
 {
 	GENERATED_BODY()
 
@@ -21,6 +21,8 @@ public:
 	void	BindToDataAsset();
 
 protected:
+    virtual EUpgradeTarget GetUpgradeTarget() const override { return EUpgradeTarget::Lazer; }
+    virtual void RefreshStats(const FShipUpgradePreview& Preview) override;
 	int32	NowLevel_ = 0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))

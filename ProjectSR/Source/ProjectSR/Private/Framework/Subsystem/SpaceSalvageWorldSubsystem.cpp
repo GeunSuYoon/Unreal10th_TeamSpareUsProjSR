@@ -12,6 +12,7 @@
 #include "Item/ItemActor.h"
 #include "Item/MeteorItemActor.h"
 #include "Utility/UtilFunction.h"
+#include "SpaceShip/LazerComponent.h"
 
 bool USpaceSalvageWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
@@ -81,6 +82,14 @@ void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMap
 			TEXT("[USpaceSalvageWorldSubsystem::SetSpaceMapData] MapData가 nullptr입니다."));
 		return ;
 	}
+	EndOfDay();
+	++SpawnGeneration__;
+	for (const auto& Item : SpawnedItem__)
+	{
+		if (Item.IsValid() && !Item->IsHidden()) { Item->FinishUsingPoolable(); }
+	}
+	SpawnedItem__.Reset();
+	bSpawningEnabled__ = true;
 	this->SpaceMapData__ = InSpaceMapData;
 	this->ItemSpawnTimer__ = InSpaceMapData->ItemSpawnTime;
 	this->ItemSpawnDist__ = InSpaceMapData->ItemSpawnDist;
@@ -123,7 +132,7 @@ void USpaceSalvageWorldSubsystem::RegisterSpaceShipActor(ASpaceShipActor* InSpac
 		return;
 	}
 	InSpaceShip->OnSpaceShipRotate.BindUFunction(this, TEXT("SpaceShipRotateDetect"));
-	InSpaceShip->GetMeteorAvoidance()->OnMeteorCollision.AddDynamic(this, &USpaceSalvageWorldSubsystem::SpawnMeteor__);
+	InSpaceShip->GetMeteorAvoidance()->OnMeteorCollision.AddUniqueDynamic(this, &USpaceSalvageWorldSubsystem::SpawnMeteor__);
 	this->SpaceShipActor__ = InSpaceShip;
 	this->TryStartItemSpawn__();
 }
@@ -134,7 +143,7 @@ void USpaceSalvageWorldSubsystem::RegisterMeteorAvoidance(UMeteorAvoidanceCompon
 
 void USpaceSalvageWorldSubsystem::MeteorDetect()
 {
-	if (FMath::FRand() < this->SpaceMapData__->MeteorSpawnRate)
+	if (bSpawningEnabled__ && IsValid(SpaceMapData__) && IsValid(SpaceShipActor__) && !HasPendingMeteor() && FMath::FRand() < FMath::Clamp(SpaceMapData__->MeteorSpawnRate, 0.0f, 1.0f))
 	{
 		// 나중에 주석 해제해야함
 		this->SpaceShipActor__->MeteorDetect(this->SpaceMapData__);
@@ -151,6 +160,8 @@ void USpaceSalvageWorldSubsystem::EndOfDay()
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
 	TimerManager.ClearTimer(this->ItemSpawnHandler__);
+	TimerManager.ClearTimer(this->MeteorSpawnHandler__);
+	bSpawningEnabled__ = false;
 }
 
 void USpaceSalvageWorldSubsystem::SpaceShipRotateDetect(const FRotator& InRotate)
@@ -163,7 +174,7 @@ void USpaceSalvageWorldSubsystem::SpaceShipRotateDetect(const FRotator& InRotate
 
 void USpaceSalvageWorldSubsystem::TryStartItemSpawn__()
 {
-	if (!IsValid(this->SpaceMapData__)
+	if (!bSpawningEnabled__ || !IsValid(this->SpaceMapData__)
 		|| !IsValid(this->SpaceShipActor__)
 		|| !IsValid(this->SpaceRootActor__))
 	{
@@ -262,7 +273,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemLevelStart__(int32 InitItemCount)
 
 void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 {
-	if (!IsValid(this->SpaceMapData__)
+	if (!bSpawningEnabled__ || !IsValid(this->SpaceMapData__)
 		|| !IsValid(this->SpaceShipActor__)
 		|| !IsValid(this->SpaceRootActor__))
 	{
@@ -342,7 +353,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 		WorldSpawnTransform,
 		FOnPickupSpawned::CreateWeakLambda(
 			this,
-			[this, WeakPivot, Velocity](AItemActor* ItemActor)
+			[this, WeakPivot, Velocity, Generation = SpawnGeneration__](AItemActor* ItemActor)
 			{
 				if (!IsValid(ItemActor))
 				{
@@ -353,14 +364,14 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 					);
 					return;
 				}
-				if (!WeakPivot.IsValid())
+				if (!bSpawningEnabled__ || Generation != SpawnGeneration__ || !WeakPivot.IsValid())
 				{
 					UE_LOG(
 						LogTemp,
 						Error,
 						TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] WeakPivot이 Valid하지 않습니다.")
 					);
-					ItemActor->Destroy();
+					ItemActor->FinishUsingPoolable();
 					return;
 				}
 				ItemActor->AttachToComponent(
@@ -382,7 +393,7 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 
 void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 {
-	if (!this->SpaceShipActor__)
+	if (!bSpawningEnabled__ || !this->SpaceShipActor__)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("SpaceShipActor가 nullptr입니다."));
 		return ;
@@ -454,7 +465,7 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 		WorldSpawnTransform,
 		FOnPickupSpawned::CreateWeakLambda(
 			this,
-			[this, WeakPivot, Velocity](AItemActor* ItemActor)
+			[this, WeakPivot, Velocity, Generation = SpawnGeneration__](AItemActor* ItemActor)
 			{
 				if (!IsValid(ItemActor))
 				{
@@ -465,14 +476,14 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 					);
 					return;
 				}
-				if (!WeakPivot.IsValid())
+				if (!bSpawningEnabled__ || Generation != SpawnGeneration__ || !WeakPivot.IsValid())
 				{
 					UE_LOG(
 						LogTemp,
 						Error,
 						TEXT("[USpaceSalvageWorldSubsystem::SpawnItemActor__] WeakPivot이 Valid하지 않습니다.")
 					);
-					ItemActor->Destroy();
+					ItemActor->FinishUsingPoolable();
 					return;
 				}
 				ItemActor->AttachToComponent(
@@ -519,76 +530,45 @@ void USpaceSalvageWorldSubsystem::DespawnItemActor__()
 	}
 }
 
-void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
+bool USpaceSalvageWorldSubsystem::HasPendingMeteor() const
 {
-	UE_LOG(
-		LogTemp,
-		Log,
-		TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] 운석 생성."));
-	UItemActorFactorySubsystem* ItemFactory = GetWorld()->GetSubsystem<UItemActorFactorySubsystem>();
-
-	if (!ItemFactory)
-	{
-		UE_LOG(
-			LogTemp,
-			Error,
-			TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] ItemFactory가 nullptr입니다.")
-		);
-	}
-	if (this->ItemSpawnDist__ <= 0.0f)
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] ItemSpawnDist가 0입니다."));
-		return;
-	}
-	FVector		ShipCenter = SpaceRootActor__->GetActorLocation();
-	FVector		SpawnPosition = ShipCenter + InMeteor.StartPos - InMeteor.MoveDir * this->ItemSpawnDist__ * 2;
-	FRotator	SpawnRotation = InMeteor.MoveDir.Rotation();
-	//FVector		SpawnScale(InMeteor.MeteorSize);
-	FVector		Velocity = InMeteor.MoveDir * InMeteor.MeteorSpeed;
-	FTransform	WorldSpawnTransform;
-
-	WorldSpawnTransform.SetLocation(SpawnPosition);
-	WorldSpawnTransform.SetRotation(SpawnRotation.Quaternion());
-	//WorldSpawnTransform.SetScale3D(SpawnScale);
-
-	ItemFactory->SpawnItemActorAsync(
-		this->SpaceMapData__->MeteorData,
-		WorldSpawnTransform,
-		FOnPickupSpawned::CreateWeakLambda(
-			this,
-			[this, Velocity, InMeteor](AItemActor* ItemActor)
-			{
-				if (!IsValid(ItemActor))
-				{
-					UE_LOG(
-						LogTemp,
-						Error,
-						TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] MeteorItemActor가 스폰되지 않았습니다.")
-					);
-					return;
-				}
-				AMeteorItemActor* MeteorActor = Cast<AMeteorItemActor>(ItemActor);
-
-				MeteorActor->SetRelativeVelocity(Velocity);
-				MeteorActor->InitMeteor(
-					InMeteor, 
-					this->SpaceRootActor__->GetActorLocation(), 
-					this->SpaceMapData__->ItemSpawnDist
-				);
-				UE_LOG(
-					LogTemp,
-					Log,
-					TEXT("[USpaceSalvageWorldSubsystem::SpawnMeteor__] 운석 %s 생성 위치: %s"),
-					*ItemActor->GetName(),
-					*ItemActor->GetActorLocation().ToString()
-				);
-			})
-	);
+	return bMeteorLoading__ || (ActiveMeteor__.IsValid() && ActiveMeteor__->IsMeteorActive()) || (IsValid(SpaceShipActor__) && SpaceShipActor__->GetMeteorAvoidance() && SpaceShipActor__->GetMeteorAvoidance()->HasMeteor());
 }
 
+void USpaceSalvageWorldSubsystem::StopSurvival()
+{
+	EndOfDay();
+	++SpawnGeneration__;
+	bMeteorLoading__ = false;
+	GetWorld()->GetTimerManager().ClearTimer(ItemDespawnHandler__);
+	if (ActiveMeteor__.IsValid() && ActiveMeteor__->IsMeteorActive()) { ActiveMeteor__->FinishUsingPoolable(); }
+	ActiveMeteor__.Reset();
+}
+
+void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
+{
+	auto* Factory = GetWorld()->GetSubsystem<UItemActorFactorySubsystem>();
+	if (!Factory || !IsValid(SpaceMapData__) || !IsValid(SpaceShipActor__) || ItemSpawnDist__ <= 0.0f) { return; }
+	const FVector Center = SpaceShipActor__->GetActorLocation();
+	const float Distance = ItemSpawnDist__;
+	const FTransform Transform(InMeteor.MoveDir.Rotation(), Center + InMeteor.StartPos - InMeteor.MoveDir * Distance * 2.0f);
+	bMeteorLoading__ = true;
+	Factory->SpawnItemActorAsync(SpaceMapData__->MeteorData, Transform, FOnPickupSpawned::CreateWeakLambda(this, [this, InMeteor, Center, Distance, Generation = SpawnGeneration__](AItemActor* Item)
+	{
+		if (Generation != SpawnGeneration__) { if (IsValid(Item)) { Item->FinishUsingPoolable(); } return; }
+		bMeteorLoading__ = false;
+		auto* Meteor = Cast<AMeteorItemActor>(Item);
+		if (!Meteor || !IsValid(SpaceShipActor__)) { if (IsValid(Item)) { Item->FinishUsingPoolable(); } return; }
+		FMeteor Prepared = InMeteor;
+		const auto* Lazer = SpaceShipActor__->GetLazerComponent();
+		Prepared.MeteorDamage = FMath::Max(0.0f, Prepared.MeteorDamage - (Lazer ? FMath::Max(0.0f, Lazer->GetLazerPower()) : 0.0f));
+		if (Prepared.MeteorDamage <= 0.0f) { Meteor->FinishUsingPoolable(); return; }
+		ActiveMeteor__ = Meteor;
+		Meteor->SetRelativeVelocity(Prepared.MoveDir * Prepared.MeteorSpeed);
+		Meteor->InitMeteor(Prepared, Center, Distance);
+		if (Meteor->IsMeteorActive()) { OnMeteorSpawn.ExecuteIfBound(Meteor); }
+	}));
+}
 UItemDataAsset* USpaceSalvageWorldSubsystem::SelectSpawnItemData__()
 {
 	if (!this->SpaceMapData__)

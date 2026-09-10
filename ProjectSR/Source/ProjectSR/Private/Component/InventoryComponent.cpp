@@ -406,6 +406,81 @@ int32 UInventoryComponent::SubtractItem_(const UItemDataAsset* InItemData, int32
     return RemainingCount;
 }
 
+int32 UInventoryComponent::GetSpendableItemCount(const UItemDataAsset* ItemData) const
+{
+    int64 Count = 0;
+    for (int32 Index = 0; Index < FMath::Min(InventorySize, Slots_.Num()); ++Index)
+    {
+        const FInventorySlot& Slot = Slots_[Index];
+        if (ItemData && Slot.ItemData == ItemData && !Slot.bDragging)
+            Count += Slot.GetCount();
+    }
+    return static_cast<int32>(FMath::Min<int64>(Count, MAX_int32));
+}
+
+bool UInventoryComponent::ProcessIngredients(const TArray<FIngredient>& Ingredients,
+    const TArray<UInventoryComponent*>& Inventories, bool bConsume)
+{
+    if (!IsInGameThread()) return false;
+    TMap<const UItemDataAsset*, int64> Required;
+    for (const FIngredient& Ingredient : Ingredients)
+    {
+        if (!IsValid(Ingredient.ItemData.Get()) || Ingredient.Quantity <= 0) return false;
+        int64& Count = Required.FindOrAdd(Ingredient.ItemData.Get());
+        Count += Ingredient.Quantity;
+        if (Count > MAX_int32) return false;
+    }
+
+    TArray<UInventoryComponent*> UniqueInventories;
+    TArray<TArray<FInventorySlot>> PlannedSlots;
+    for (UInventoryComponent* Inventory : Inventories)
+    {
+        if (!IsValid(Inventory)) return false;
+        if (!UniqueInventories.Contains(Inventory))
+        {
+            UniqueInventories.Add(Inventory);
+            PlannedSlots.Add(Inventory->Slots_);
+        }
+    }
+    for (const auto& Pair : Required)
+    {
+        int32 Remaining = static_cast<int32>(Pair.Value);
+        for (int32 InventoryIndex = 0; InventoryIndex < UniqueInventories.Num(); ++InventoryIndex)
+        {
+            auto& Slots = PlannedSlots[InventoryIndex];
+            const int32 Limit = FMath::Min(UniqueInventories[InventoryIndex]->InventorySize, Slots.Num());
+            for (int32 SlotIndex = 0; SlotIndex < Limit && Remaining > 0; ++SlotIndex)
+            {
+                FInventorySlot& Slot = Slots[SlotIndex];
+                if (Slot.ItemData != Pair.Key || Slot.bDragging) continue;
+                const int32 Taken = FMath::Min(Remaining, Slot.GetCount());
+                Slot.SetCount(Slot.GetCount() - Taken);
+                Remaining -= Taken;
+            }
+        }
+        if (Remaining > 0) return false;
+    }
+    if (!bConsume) return true;
+
+    TArray<TArray<int32>> ChangedSlots;
+    ChangedSlots.SetNum(UniqueInventories.Num());
+    // No delegates or external calls until every inventory has been committed.
+    for (int32 Index = 0; Index < UniqueInventories.Num(); ++Index)
+    {
+        auto* Inventory = UniqueInventories[Index];
+        for (int32 SlotIndex = 0; SlotIndex < PlannedSlots[Index].Num(); ++SlotIndex)
+        {
+            if (Inventory->Slots_[SlotIndex].GetCount() != PlannedSlots[Index][SlotIndex].GetCount())
+                ChangedSlots[Index].Add(SlotIndex);
+        }
+        Inventory->Slots_ = MoveTemp(PlannedSlots[Index]);
+    }
+    for (int32 Index = 0; Index < UniqueInventories.Num(); ++Index)
+        for (int32 SlotIndex : ChangedSlots[Index])
+            if (IsValid(UniqueInventories[Index])) UniqueInventories[Index]->OnSlotChanged.Broadcast(SlotIndex);
+    return true;
+}
+
 int32 UInventoryComponent::GetTotalItemCount(const UItemDataAsset* InItemData)
 {
     if (!InItemData)

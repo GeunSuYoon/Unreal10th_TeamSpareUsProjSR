@@ -57,6 +57,8 @@ public:
     // 제작법을 해금하는 함수
     void Unlock(FName InRecipeId);
 
+    bool HasRecipe(FName RecipeId) const;
+
     // 제작법이 해금됐는지 여부를 반환하는 함수
     bool IsUnlockedRecipe(FName InRecipeId, bool bDefaultLocked) const;
 

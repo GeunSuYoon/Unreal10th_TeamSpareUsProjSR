@@ -6,8 +6,8 @@
 #include "UObject/Interface.h"
 #include "OpenableWidgetInterface.generated.h"
 
-DECLARE_DYNAMIC_DELEGATE(FOnWidgetOpen);
-DECLARE_DYNAMIC_DELEGATE(FOnWidgetClose);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnWidgetOpen, UUserWidget*, InUserWidget);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnWidgetClose, UUserWidget*, InUserWidget);
 
 //DECLARE_DYNAMIC_DELEGATE_OneParam(FOnWidgetOpen, UWidget*, InWidget);
 //DECLARE_DYNAMIC_DELEGATE_OneParam(FOnWidgetClose, UWidget*, InWidget);

@@ -10,6 +10,7 @@
 void	USpaceShipDurabilityUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 {
 	//SpaceShipActor에 델리게이트 생성 후 아래 함수 바인드
+	InSpaceShip->OnDurabilityChange.AddDynamic(this, &USpaceShipDurabilityUserWidget::DurabilityChange);
 }
 
 void USpaceShipDurabilityUserWidget::DurabilityChange(float InCurrentDurability, float InMaxDurability)
