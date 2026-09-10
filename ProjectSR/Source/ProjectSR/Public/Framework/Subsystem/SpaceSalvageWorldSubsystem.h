@@ -61,8 +61,8 @@ public:
 	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
 	void	MeteorDetect();
 	void	EndOfDay();
-	bool HasPendingMeteor() const;
-	void StopSurvival();
+	bool	HasPendingMeteor() const;
+	void	StopSurvival();
 	TWeakObjectPtr<ASurvivalLoopActor> SurvivalLoop;
 
 	UFUNCTION(BlueprintCallable)
