@@ -321,14 +321,16 @@ void APlayerCharacter::RefreshMovementSpeed()
 	UInSpaceMovementComponent* MoveComp = GetInSpaceMovementComponent();
 	if (!MoveComp || !StatComponent) return;
 
+	const bool bIsZeroGravity = MoveComp->GetGravityState() == EGravityState::ZeroGravityMode;
+
 	if (bIsBoosting)
 	{
-		MoveComp->MaxWalkSpeed = StatComponent->GetBoostSpeed();
-		return;
+		MoveComp->MaxWalkSpeed = bIsZeroGravity ? StatComponent->GetZeroGravityBoostSpeed() : StatComponent->GetBoostSpeed();
 	}
-
-	const bool bIsZeroGravity = MoveComp->GetGravityState() == EGravityState::ZeroGravityMode;
-	MoveComp->MaxWalkSpeed = bIsZeroGravity ? StatComponent->GetZeroGravityMoveSpeed() : StatComponent->GetMoveSpeed();
+	else
+	{
+		MoveComp->MaxWalkSpeed = bIsZeroGravity ? StatComponent->GetZeroGravityMoveSpeed() : StatComponent->GetMoveSpeed();
+	}
 }
 
 void APlayerCharacter::IncreaseHP_Implementation(float InHP)

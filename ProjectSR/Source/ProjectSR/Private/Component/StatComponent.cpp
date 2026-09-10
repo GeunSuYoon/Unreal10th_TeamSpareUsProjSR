@@ -29,12 +29,17 @@ void UStatComponent::BeginPlay()
 	DefaultModifier.MoveSpeedMultiplier = 1.0f;
 	DefaultModifier.OxygenDrainMultiplier = 1.0f;
 	
-	// 스탯 기본값으로 초기화
+	// 스탯 Max값 초기화
 	RecalculateMaxStats(DefaultModifier);
 
 	CurrentHealth = MaxHealth;
-	CurrentHunger = MaxHunger;
+	//CurrentHunger = MaxHunger;
 	CurrentOxygen = MaxOxygen;
+
+	// Current 스탯 세팅 후 알림
+	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+	//OnHungerChanged.Broadcast(CurrentHunger, MaxHunger);
+	OnOxygenChanged.Broadcast(CurrentOxygen, MaxOxygen);
 }
 
 
@@ -46,13 +51,13 @@ void UStatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	if (bIsDead || !OwnerCharacter) return;
 
 	// --- Hunger 소모 로직 ---
-	float ActualHungerDrain = BaseHungerDrainRate;
+	//float ActualHungerDrain = BaseHungerDrainRate;
 
-	if (OwnerCharacter->IsBoosting())
-	{
-		ActualHungerDrain *= BoostHungerDrainMultiplier;	// 캐릭터 부스트 상태시 허기 감소 추가 배율 적용
-	}
-	ExecuteStatCommand({ EPlayerStatType::Hunger, -ActualHungerDrain * DeltaTime, TEXT("HungerDrain") });
+	//if (OwnerCharacter->IsBoosting())
+	//{
+	//	ActualHungerDrain *= BoostHungerDrainMultiplier;	// 캐릭터 부스트 상태시 허기 감소 추가 배율 적용
+	//}
+	//ExecuteStatCommand({ EPlayerStatType::Hunger, -ActualHungerDrain * DeltaTime, TEXT("HungerDrain") });
 
 	// --- Oxygen 소모 로직 --- 무중력 상태시
 	if (bIsOxygenConsume)
@@ -65,10 +70,10 @@ void UStatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	}
 
 	// --- 체력 패널티 --- 허기, 산소 고갈시
-	if (CurrentHunger <= 0.0f)
-	{
-		ExecuteStatCommand({ EPlayerStatType::Health, -StarvationDamageRate * DeltaTime, TEXT("Starvation") });
-	}
+	//if (CurrentHunger <= 0.0f)
+	//{
+	//	ExecuteStatCommand({ EPlayerStatType::Health, -StarvationDamageRate * DeltaTime, TEXT("Starvation") });
+	//}
 	if (CurrentOxygen <= 0.0f)
 	{
 		ExecuteStatCommand({ EPlayerStatType::Health, -NoOxygenDamageRate * DeltaTime, TEXT("Suffocation") });
@@ -89,11 +94,11 @@ void UStatComponent::ModifyHealth(float Amount)
 	}
 }
 
-void UStatComponent::ModifyHunger(float Amount)
-{
-	CurrentHunger = FMath::Clamp(CurrentHunger + Amount, 0.0f, MaxHunger);
-	OnHungerChanged.Broadcast(CurrentHunger, MaxHunger);
-}
+//void UStatComponent::ModifyHunger(float Amount)
+//{
+//	CurrentHunger = FMath::Clamp(CurrentHunger + Amount, 0.0f, MaxHunger);
+//	OnHungerChanged.Broadcast(CurrentHunger, MaxHunger);
+//}
 
 void UStatComponent::ModifyOxygen(float Amount)
 {
@@ -109,9 +114,9 @@ void UStatComponent::ExecuteStatCommand(const FStatChangeCommand& Command)
 	case EPlayerStatType::Health:
 		ModifyHealth(Command.Amount);
 		break;
-	case EPlayerStatType::Hunger:
-		ModifyHunger(Command.Amount);
-		break;
+	//case EPlayerStatType::Hunger:
+	//	ModifyHunger(Command.Amount);
+	//	break;
 	case EPlayerStatType::Oxygen:
 		ModifyOxygen(Command.Amount);
 		break;

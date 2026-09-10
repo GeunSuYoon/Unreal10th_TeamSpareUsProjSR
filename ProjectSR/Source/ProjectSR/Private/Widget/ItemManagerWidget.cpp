@@ -5,6 +5,8 @@
 #include "Widget/InventorySlotWidget.h"
 #include "Component/InventoryComponent.h"
 #include "Interface/InventoryComponentInterface.h"
+#include "Player/PlayerCharacter.h"
+#include "SpaceShip/SpaceShipActor.h"
 
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
@@ -141,6 +143,7 @@ void UItemManagerWidget::RefreshSlotWidget__(int32 InSlotIndex) const
 void UItemManagerWidget::RefreshItemDetailPanel__() const
 {
     ItemInfoPanel->SetVisibility(ESlateVisibility::Hidden);
+    Item_Use->SetVisibility(ESlateVisibility::Hidden);
 
     // 아이템 정보를 비우도록 의도된 InvalidIndex 설정이므로 바로 리턴
     if (SelectedSlotIndex__ == InvalidIndex)
@@ -175,6 +178,14 @@ void UItemManagerWidget::RefreshItemDetailPanel__() const
         );
         Iteminfo_Count->SetText(CapacityText);
         Iteminfo_Description->SetText(TargetSlot->ItemData->Description);
+
+        if ((TargetInventory__->GetOwner()->IsA(APlayerCharacter::StaticClass())
+             && TargetSlot->ItemData->ItemType == EItemType::PlayerUsable)
+            || (TargetInventory__->GetOwner()->IsA(ASpaceShipActor::StaticClass())
+                && TargetSlot->ItemData->ItemType == EItemType::SpaceShipUsable))
+        {
+            Item_Use->SetVisibility(ESlateVisibility::Visible);
+        }
 
         ItemInfoPanel->SetVisibility(ESlateVisibility::Visible);
     }
