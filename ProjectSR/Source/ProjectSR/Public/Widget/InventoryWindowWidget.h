@@ -25,8 +25,6 @@ public:
     UFUNCTION(BlueprintCallable)
     void ToggleInventoryWidget();
 
-    inline bool IsInventoryOpened() const { return GetVisibility() == ESlateVisibility::Visible; }
-
 protected:
     virtual void NativeConstruct() override;
     virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
@@ -35,16 +33,18 @@ private:
     UFUNCTION()
     void OnInventoryCloseButtonClicked__();
 
+    UFUNCTION()
+    void RefreshCapacityText__(int32 InSlotIndex);
+
 protected:
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UButton> Inventory_CloseButton;
 
-    // TODO: 
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UTextBlock> CapacityText;
+    TObjectPtr<UTextBlock> CurrentCapacityText;
 
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UTextBlock> WeightText;
+    TObjectPtr<UTextBlock> MaxCapacityText;
 
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UItemManagerWidget> ItemManagerWidget;
