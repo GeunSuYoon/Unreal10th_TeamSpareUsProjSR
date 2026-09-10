@@ -15,7 +15,8 @@ enum class EItemType
 {
     None,
     Resource,
-    Usable,
+    PlayerUsable,
+    SpaceShipUsable,
     Equipment
 };
 
