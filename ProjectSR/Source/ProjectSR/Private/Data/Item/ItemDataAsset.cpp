@@ -17,7 +17,7 @@ TSharedPtr<FStreamableHandle> UItemDataAsset::RequestDataLoad(FStreamableDelegat
 
 bool UItemDataAsset::IsLoaded() const
 {
-    return ItemActorClass.IsValid() && Mesh.IsValid() && (Icon.IsNull() || Icon.IsValid());
+    return ItemActorClass.IsValid() && Mesh.IsValid() && Icon.IsValid();
 }
 
 FPrimaryAssetId UItemDataAsset::GetPrimaryAssetId() const

@@ -54,10 +54,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ZeroGravity")
 	float ZeroGravityBrakingDeceleration = 200.f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "ZeroGravity")
-	float ZeroGravityMaxSpeed = 600.f;
-
-
 private:
 	UPROPERTY()
 	float DefaultGravityScale = 1.f;

@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interface/OpenableWidgetInterface.h"
+
 #include "Blueprint/UserWidget.h"
 #include "InventoryWindowWidget.generated.h"
 
@@ -12,20 +14,24 @@ class UItemManagerWidget;
 class UInventoryComponent;
 
 UCLASS()
-class PROJECTSR_API UInventoryWindowWidget : public UUserWidget
+class PROJECTSR_API UInventoryWindowWidget : public UUserWidget, public IOpenableWidgetInterface
 {
     GENERATED_BODY()
 
 public:
     void BindToInventoryComponent(UInventoryComponent* InInventoryComponent);
 
-    void OpenInventoryWidget();
-    void CloseInventoryWidget();
+	void	OpenWidget();
+	void	CloseWidget();
+
+	virtual void	OpenSelfWidget_Implementation() override;
+	virtual void	CloseSelfWidget_Implementation() override;
 
     UFUNCTION(BlueprintCallable)
     void ToggleInventoryWidget();
 
-    inline bool IsInventoryOpened() const { return GetVisibility() == ESlateVisibility::Visible; }
+	FOnWidgetOpen	OnWidgetOpen;
+	FOnWidgetClose	OnWidgetClose;
 
 protected:
     virtual void NativeConstruct() override;
@@ -35,16 +41,18 @@ private:
     UFUNCTION()
     void OnInventoryCloseButtonClicked__();
 
+    UFUNCTION()
+    void RefreshCapacityText__(int32 InSlotIndex);
+
 protected:
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UButton> Inventory_CloseButton;
 
-    // TODO: 
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UTextBlock> CapacityText;
+    TObjectPtr<UTextBlock> CurrentCapacityText;
 
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UTextBlock> WeightText;
+    TObjectPtr<UTextBlock> MaxCapacityText;
 
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UItemManagerWidget> ItemManagerWidget;

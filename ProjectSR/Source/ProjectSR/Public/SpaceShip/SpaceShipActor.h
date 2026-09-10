@@ -7,6 +7,7 @@
 #include "Interface/InventoryComponentInterface.h"
 #include "CommonHeader/SpaceShipStruct.h"
 #include "Data/SpaceShip/SpaceShipDataAsset.h"
+//#include "comp"
 
 #include "GameFramework/Actor.h"
 #include "SpaceShipActor.generated.h"
@@ -14,6 +15,7 @@
 class USpaceMapDataAsset;
 
 class ULazerComponent;
+class USpaceShipUpgradeComponent;
 class UMachineArmComponent;
 class UInventoryComponent;
 class UCraftingComponent;
@@ -27,6 +29,7 @@ class USphereComponent;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipRotate, const FRotator&, InSpaceShipRotate);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceShipLevelChange, const FSpaceShipStat&, InSpaceShipStat);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSpaceShipStatChange, float, InCurrentValue, float, InMaxValue);
 
 UCLASS()
 class PROJECTSR_API ASpaceShipActor : public AActor, public IDurabilityInterface, public IInventoryComponentInterface
@@ -41,6 +44,10 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// Disable for save loading or call GetUpgradeComponent()->InitializeLevelZero() after custom setup.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrade|Initialization")
+	bool bInitializeLevelZeroOnBeginPlay = true;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -54,6 +61,10 @@ public:
 
 	// Getter 함수
 	inline int32	GetLevel() const { return (this->Level_); }
+	bool IsDoorClosed() const;
+	const FSpaceShipStat& GetStat() const { return SpaceShipStat_; }
+	void ApplySpaceShipStat(const FSpaceShipStat& NewStat);
+	UFUNCTION(BlueprintPure, Category = "Upgrade")
 	inline float	GetMaxDurability() const { return (this->SpaceShipStat_.MaxDurability);	}
 	inline float	GetCurrentDurability() const { return (this->CurrentDurability_); }
 	inline float	GetMaxEnergy() const { return (this->SpaceShipStat_.MaxEnergy); }
@@ -61,11 +72,14 @@ public:
 	inline float	GetMoveSpeed() const { return (this->SpaceShipStat_.MoveSpeed); }
 	inline float	GetSafeAreaRadius() const { return (this->SafeAreaRadius_); }
 
+	inline USpaceShipUpgradeComponent*	GetUpgradeComponent() const { return (this->UpgradeComponent_); }
 	inline ULazerComponent*				GetLazerComponent() const { return (this->LazerComponent_); }
 	inline UMachineArmComponent*		GetMachineArmComponent() const { return (this->MachineArmComponent_); }
 	inline UMeteorAvoidanceComponent*	GetMeteorAvoidance() const { return (this->MeteorAvoidanceComponent_); }
+	inline UInventoryComponent*			GetWarehouse() const { return (this->WarehouseComponent_); }
+	inline UCraftingComponent*			GetCraftingComponent() const { return (this->CraftingComponent_); }
+
 	inline AMainPanelActor*				GetMainPanelActor() const { return (this->MainPanelActor_); }
-	//inline UInventoryComponent*	GetWarehouse() const { return (this->Warehouse_); }
 
 	virtual UInventoryComponent*	GetInventoryComponent_Implementation() override;
 
@@ -106,7 +120,8 @@ public:
 	void	UpdateSpaceShipLevel();
 
 	FOnSpaceShipLevelChange	OnSpaceShipLevelChange;
-
+	FOnSpaceShipStatChange	OnDurabilityChange;
+	FOnSpaceShipStatChange	OnEnergyChange;
 protected:
 	void	SpaceShipRotateInput_(const FVector2D& InInput);
 
@@ -157,17 +172,22 @@ protected:
 
 
 	// 우주선이 가지고 있는 컴포넌트
-	UPROPERTY(BlueprintReadOnly, Category = "Component")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<USpaceShipUpgradeComponent>	UpgradeComponent_ = nullptr;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<ULazerComponent>				LazerComponent_ = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Component")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UMachineArmComponent>		MachineArmComponent_ = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Component")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UInventoryComponent>			WarehouseComponent_ = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Component")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UMeteorAvoidanceComponent>	MeteorAvoidanceComponent_ = nullptr;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Component")
+	TObjectPtr<UCraftingComponent>			CraftingComponent_ = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stat")
 	FSpaceShipStat	SpaceShipStat_;

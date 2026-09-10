@@ -30,6 +30,7 @@ public:
 
 	void	SetDamage(float InDamage) { this->Damage__ = InDamage; }
 	void	LazerDamage(float InDamage);
+	bool IsMeteorActive() const { return bMeteorActive__; }
 
 	virtual void	Tick(float DeltaSeconds) override;
 
@@ -74,4 +75,6 @@ private:
 	TSubclassOf<UCameraShakeBase>	ImpactCameraShake__;
 
 	bool	bImpactResolved__ = false;
+	bool bMeteorActive__ = false;
+	FVector ExitCenter__ = FVector::ZeroVector;
 };

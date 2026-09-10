@@ -14,19 +14,22 @@ class UUniformGridPanel;
 class UInventoryComponent;
 class UInventorySlotWidget;
 
+DECLARE_DELEGATE(FOnItemManagerOpen);
+DECLARE_DELEGATE(FOnItemManagerClose);
+
 UCLASS()
 class PROJECTSR_API UItemManagerWidget : public UUserWidget
 {
     GENERATED_BODY()
 
 public:
-    void InitializeItemManagerWidget(UInventoryComponent* InInventoryComponent);
-    void ClearInventoryWidget();
+    void BindToInventoryComponent(UInventoryComponent* InInventoryComponent);
+    void InitializeInventoryWidget();
     void RefreshInventoryWidget();
+    void ClearInventoryWidget();
 
-protected:
-    void RefreshSlotWidget_(int32 InSlotIndex) const;
-    void RefreshItemDetailPanel_() const;
+	FOnItemManagerOpen	OnItemManagerOpen;
+	FOnItemManagerClose	OnItemManagerClose;
 
 private:
     UFUNCTION()
@@ -35,9 +38,17 @@ private:
     UFUNCTION()
     void OnItemDropButtonClicked__();
 
-    inline bool IsValidIndex__(int32 InIndex) const { return 0 <= InIndex && InIndex < SlotSize__; }
+    UFUNCTION()
+    void RefreshSlotWidget__(int32 InSlotIndex) const;
+
+    void RefreshItemDetailPanel__() const;
+
+    inline bool IsValidIndex__(int32 InIndex) const { return 0 <= InIndex && InIndex < Capacity__; }
 
 protected:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TSubclassOf<UInventorySlotWidget> InventorySlotWidgetClass;
+
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UUniformGridPanel> ItemGridPanel;
 
@@ -49,9 +60,6 @@ protected:
 
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UTextBlock> Iteminfo_Name;
-
-    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UTextBlock> Iteminfo_Weight;
 
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UTextBlock> Iteminfo_Count;
@@ -71,6 +79,6 @@ private:
     TWeakObjectPtr<UInventoryComponent> TargetInventory__ = nullptr;
     TArray<TObjectPtr<UInventorySlotWidget>> SlotWidgets__;
     int32 SelectedSlotIndex__ = InvalidIndex;
-    int32 SlotSize__ = 0;
+    int32 Capacity__ = 0;
 
 };

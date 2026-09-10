@@ -5,44 +5,87 @@
 #include "Widget/InventorySlotWidget.h"
 #include "Component/InventoryComponent.h"
 #include "Interface/InventoryComponentInterface.h"
+#include "Player/PlayerCharacter.h"
+#include "SpaceShip/SpaceShipActor.h"
 
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/Border.h"
 #include "Components/UniformGridPanel.h"
+#include "Components/UniformGridSlot.h"
 #include "GameFramework/PlayerController.h"
 
-void UItemManagerWidget::InitializeItemManagerWidget(UInventoryComponent* InInventoryComponent)
+void UItemManagerWidget::BindToInventoryComponent(UInventoryComponent* InInventoryComponent)
 {
-    ClearInventoryWidget();
-
     if (!InInventoryComponent)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::InitializeItemManagerWidget()] : InInventoryComponent가 nullptr 입니다."));
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::BindToInventoryComponent()] : InInventoryComponent가 nullptr 입니다."));
         return;
     }
 
     TargetInventory__ = InInventoryComponent;
-    TargetInventory__->OnSlotChanged.BindUObject(this, &UItemManagerWidget::RefreshSlotWidget_);
+    TargetInventory__->OnSlotChanged.AddDynamic(this, &UItemManagerWidget::RefreshSlotWidget__);
+}
 
-    if (!ItemGridPanel)
+void UItemManagerWidget::InitializeInventoryWidget()
+{
+    if (!Item_Use)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::InitializeItemManagerWidget()] : ItemGridPanel이 nullptr 입니다."));
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::InitializeInventoryWidget()] : Item_Use 버튼이 nullptr 입니다."));
         return;
     }
 
-    int32 ChildCount = ItemGridPanel->GetChildrenCount();
-    int32 InventorySize = TargetInventory__->GetSize();
+    Item_Use->OnClicked.AddDynamic(this, &UItemManagerWidget::OnItemUseButtonClicked__);
 
-    SlotWidgets__.Empty(SlotSize__);
-    SlotSize__ = FMath::Min(ChildCount, InventorySize);
-
-    for (int i = 0; i < SlotSize__; i++)
+    if (!Item_Drop)
     {
-        if (UInventorySlotWidget* SlotWidget = Cast<UInventorySlotWidget>(ItemGridPanel->GetChildAt(i)))
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::InitializeInventoryWidget()] : Item_Drop 버튼이 nullptr 입니다."));
+        return;
+    }
+
+    Item_Drop->OnClicked.AddDynamic(this, &UItemManagerWidget::OnItemDropButtonClicked__);
+
+    RefreshInventoryWidget();
+}
+
+void UItemManagerWidget::RefreshInventoryWidget()
+{
+    if (!TargetInventory__.IsValid())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshInventoryWidget()] : TargetInventory가 nullptr 입니다."));
+        return;
+    }
+
+    if (!ItemGridPanel)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshInventoryWidget()] : ItemGridPanel이 nullptr 입니다."));
+        return;
+    }
+
+    SelectedSlotIndex__ = InvalidIndex;
+
+    RefreshItemDetailPanel__();
+    ClearInventoryWidget();
+
+    Capacity__ = TargetInventory__->GetSize();
+    SlotWidgets__.Empty(Capacity__);
+
+    const int32 ColumnSize = 4;
+    for (int i = 0; i < Capacity__; i++)
+    {
+        UInventorySlotWidget* SlotWidget = CreateWidget<UInventorySlotWidget>(GetOwningPlayer(), InventorySlotWidgetClass);
+        if (SlotWidget)
         {
-            SlotWidget->InitializeSlot(TargetInventory__.Get(), i);
+            UUniformGridSlot* GridSlot = ItemGridPanel->AddChildToUniformGrid(SlotWidget, i / ColumnSize, i % ColumnSize);
+            if (GridSlot)
+            {
+                GridSlot->SetHorizontalAlignment(HAlign_Fill);
+                GridSlot->SetVerticalAlignment(VAlign_Fill);
+            }
+
+            SlotWidget->BindToInventoryComponent(TargetInventory__.Get());
+            SlotWidget->InitializeSlot(i);
 
             SlotWidget->OnSlotClicked.BindWeakLambda(
                 this,
@@ -50,7 +93,7 @@ void UItemManagerWidget::InitializeItemManagerWidget(UInventoryComponent* InInve
                     if (TargetInventory__.IsValid())
                     {
                         SelectedSlotIndex__ = InIndex;
-                        RefreshItemDetailPanel_();
+                        RefreshItemDetailPanel__();
                     }
                 }
             );
@@ -61,7 +104,7 @@ void UItemManagerWidget::InitializeItemManagerWidget(UInventoryComponent* InInve
                     if (TargetInventory__.IsValid())
                     {
                         SelectedSlotIndex__ = InvalidIndex;
-                        RefreshItemDetailPanel_();
+                        RefreshItemDetailPanel__();
                     }
                 }
             );
@@ -69,60 +112,17 @@ void UItemManagerWidget::InitializeItemManagerWidget(UInventoryComponent* InInve
             SlotWidgets__.Add(SlotWidget);
         }
     }
-
-    if (!Item_Use)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::InitializeItemManagerWidget()] : Item_Use 버튼이 nullptr 입니다."));
-        return;
-    }
-
-    Item_Use->OnClicked.AddDynamic(this, &UItemManagerWidget::OnItemUseButtonClicked__);
-
-    if (!Item_Drop)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::InitializeItemManagerWidget()] : Item_Drop 버튼이 nullptr 입니다."));
-        return;
-    }
-
-    Item_Drop->OnClicked.AddDynamic(this, &UItemManagerWidget::OnItemDropButtonClicked__);
-
-    RefreshInventoryWidget();
 }
 
 void UItemManagerWidget::ClearInventoryWidget()
 {
-    if (TargetInventory__.IsValid())
-    {
-        TargetInventory__->OnSlotChanged.Unbind();
-        //TargetInventory__->OnMoneyChanged.RemoveAll(this);
-        TargetInventory__ = nullptr;
-    }
-
     SlotWidgets__.Empty();
-    SlotSize__ = 0;
+    Capacity__ = 0;
+
+    ItemGridPanel->ClearChildren();
 }
 
-void UItemManagerWidget::RefreshInventoryWidget()
-{
-    if (!TargetInventory__.IsValid())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshInventoryWidget_()] : TargetInventory가 nullptr 입니다."));
-        return;
-    }
-
-    SelectedSlotIndex__ = InvalidIndex;
-    RefreshItemDetailPanel_();
-
-    for (const UInventorySlotWidget* SlotWidget : SlotWidgets__)
-    {
-        if (SlotWidget)
-        {
-            SlotWidget->RefreshSlot();
-        }
-    }
-}
-
-void UItemManagerWidget::RefreshSlotWidget_(int32 InSlotIndex) const
+void UItemManagerWidget::RefreshSlotWidget__(int32 InSlotIndex) const
 {
     // 드래그 전용 슬롯은 갱신 무시
     if (InSlotIndex == TargetInventory__->GetTempSlotIndex())
@@ -132,17 +132,18 @@ void UItemManagerWidget::RefreshSlotWidget_(int32 InSlotIndex) const
 
     if (!IsValidIndex__(InSlotIndex) || !SlotWidgets__[InSlotIndex])
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshSlotWidget_()] : InSlotIndex가 유효하지 않습니다."));
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshSlotWidget__()] : InSlotIndex가 유효하지 않습니다."));
         return;
     }
 
     SlotWidgets__[InSlotIndex]->RefreshSlot();
-    RefreshItemDetailPanel_();
+    RefreshItemDetailPanel__();
 }
 
-void UItemManagerWidget::RefreshItemDetailPanel_() const
+void UItemManagerWidget::RefreshItemDetailPanel__() const
 {
     ItemInfoPanel->SetVisibility(ESlateVisibility::Hidden);
+    Item_Use->SetVisibility(ESlateVisibility::Hidden);
 
     // 아이템 정보를 비우도록 의도된 InvalidIndex 설정이므로 바로 리턴
     if (SelectedSlotIndex__ == InvalidIndex)
@@ -152,13 +153,13 @@ void UItemManagerWidget::RefreshItemDetailPanel_() const
 
     if (!IsValidIndex__(SelectedSlotIndex__) || !SlotWidgets__[SelectedSlotIndex__])
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshItemDetailPanel_()] : SelectedSlotIndex가 유효하지 않습니다."));
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshItemDetailPanel__()] : SelectedSlotIndex가 유효하지 않습니다."));
         return;
     }
 
     if (!TargetInventory__.IsValid())
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshItemDetailPanel_()] : TargetInventory가 nullptr입니다."));
+        UE_LOG(LogTemp, Warning, TEXT("[UItemManagerWidget::RefreshItemDetailPanel__()] : TargetInventory가 nullptr입니다."));
         return;
     }
 
@@ -169,9 +170,22 @@ void UItemManagerWidget::RefreshItemDetailPanel_() const
         Iteminfo_Image->SetBrushFromTexture(TargetSlot->ItemData->Icon.Get());
         Iteminfo_Image->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
         Iteminfo_Name->SetText(FText::FromName(TargetSlot->ItemData->ItemId));
-        Iteminfo_Weight->SetText(FText::AsNumber(TargetSlot->ItemData->Weight));
-        Iteminfo_Count->SetText(FText::AsNumber(TargetSlot->GetCount()));
+
+        FText CapacityText = FText::Format(
+            NSLOCTEXT("Inventory", "SlotCountFormat", "수량 : {0} / {1} 개"),
+            FText::AsNumber(TargetSlot->GetCount()),
+            FText::AsNumber(TargetSlot->ItemData->MaxStackCount)
+        );
+        Iteminfo_Count->SetText(CapacityText);
         Iteminfo_Description->SetText(TargetSlot->ItemData->Description);
+
+        if ((TargetInventory__->GetOwner()->IsA(APlayerCharacter::StaticClass())
+             && TargetSlot->ItemData->ItemType == EItemType::PlayerUsable)
+            || (TargetInventory__->GetOwner()->IsA(ASpaceShipActor::StaticClass())
+                && TargetSlot->ItemData->ItemType == EItemType::SpaceShipUsable))
+        {
+            Item_Use->SetVisibility(ESlateVisibility::Visible);
+        }
 
         ItemInfoPanel->SetVisibility(ESlateVisibility::Visible);
     }

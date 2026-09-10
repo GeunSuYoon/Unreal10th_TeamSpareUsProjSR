@@ -35,6 +35,8 @@ public:
 
 	// 데이터 에셋 설정 함수
 	void	SetMachineArmData(UMachineArmDataAsset* InMachineArmData);
+	const FMachineArmStat& GetStat() const { return MachineArmStat__; }
+	void ApplyMachineArmStat(const FMachineArmStat& NewStat) { MachineArmStat__ = NewStat; UpdateMachineArmLevel(); }
 
 	// Getter 함수
 	inline int32	GetLevel() const { return (this->MachineArmStat__.Level); }

@@ -42,8 +42,7 @@ float UInSpaceMovementComponent::GetMaxSpeed() const
 {
 	if (MovementMode == MOVE_Custom && CustomMovementMode == CMOVE_ZeroGravity)
 	{
-		// 우주복에 따라 달라지는 StatComponent의 Effective 값과 연동 예정
-		return ZeroGravityMaxSpeed;
+		return MaxWalkSpeed;
 	}
 	return Super::GetMaxSpeed();
 }

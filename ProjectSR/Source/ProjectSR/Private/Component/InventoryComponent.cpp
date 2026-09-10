@@ -3,10 +3,9 @@
 
 #include "Component/InventoryComponent.h"
 #include "Data/ItemAction/ItemAction.h"
+#include "SpaceShip/SpaceShipActor.h"
 #include "Framework/SubSystem/ItemActorFactorySubsystem.h"
-//#include "Data/Item/UseableItemDataAsset.h"
-//#include "Data/Item/WeaponDataAsset.h"
-//#include "Interface/WeaponUserInterface.h"
+#include "Framework/SubSystem/SpaceSalvageWorldSubsystem.h"
 
 UInventoryComponent::UInventoryComponent()
 {
@@ -293,34 +292,6 @@ bool UInventoryComponent::HandleClearCommand_(const FInventoryCommand& Command, 
     return OutResult.bSuccess;
 }
 
-//bool UInventoryComponent::HandleMoneyCommand(int32 InMoneyDiff, FInventoryCommandResult& OutResult)
-//{
-//    OutResult.bSuccess = false;
-//
-//    AddMoney(InMoneyDiff);
-//    OutResult.bSuccess = true;
-//
-//    return OutResult.bSuccess;
-//}
-//
-//bool UInventoryComponent::HandleSellCommand(int32 InSlotIndex, FInventoryCommandResult& OutResult)
-//{
-//    FInventorySlot* TargetSlot = GetSlot(InSlotIndex);
-//    if (TargetSlot->IsEmpty())
-//    {
-//        OutResult.bSuccess = false;
-//        return OutResult.bSuccess;
-//    }
-//
-//    int32 SellPrice = TargetSlot->ItemData->Price * 0.5f;
-//    AddMoney(SellPrice * TargetSlot->GetCount());
-//
-//    ClearSlot(InSlotIndex);
-//
-//    OutResult.bSuccess = true;
-//    return OutResult.bSuccess;
-//}
-
 bool UInventoryComponent::HandleEquipCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult)
 {
     OutResult.bSuccess = false;
@@ -334,12 +305,6 @@ bool UInventoryComponent::HandleEquipCommand_(const FInventoryCommand& Command, 
 
     return OutResult.bSuccess;
 }
-
-//void UInventoryComponent::AddMoney(int32 InIncome)
-//{
-//    Money += InIncome;
-//    OnMoneyChanged.Broadcast(Money);	// 돈의 변경을 알림
-//}
 
 int32 UInventoryComponent::AddItem_(const UItemDataAsset* InItemData, int32 InCount)
 {
@@ -441,6 +406,81 @@ int32 UInventoryComponent::SubtractItem_(const UItemDataAsset* InItemData, int32
     return RemainingCount;
 }
 
+int32 UInventoryComponent::GetSpendableItemCount(const UItemDataAsset* ItemData) const
+{
+    int64 Count = 0;
+    for (int32 Index = 0; Index < FMath::Min(InventorySize, Slots_.Num()); ++Index)
+    {
+        const FInventorySlot& Slot = Slots_[Index];
+        if (ItemData && Slot.ItemData == ItemData && !Slot.bDragging)
+            Count += Slot.GetCount();
+    }
+    return static_cast<int32>(FMath::Min<int64>(Count, MAX_int32));
+}
+
+bool UInventoryComponent::ProcessIngredients(const TArray<FIngredient>& Ingredients,
+    const TArray<UInventoryComponent*>& Inventories, bool bConsume)
+{
+    if (!IsInGameThread()) return false;
+    TMap<const UItemDataAsset*, int64> Required;
+    for (const FIngredient& Ingredient : Ingredients)
+    {
+        if (!IsValid(Ingredient.ItemData.Get()) || Ingredient.Quantity <= 0) return false;
+        int64& Count = Required.FindOrAdd(Ingredient.ItemData.Get());
+        Count += Ingredient.Quantity;
+        if (Count > MAX_int32) return false;
+    }
+
+    TArray<UInventoryComponent*> UniqueInventories;
+    TArray<TArray<FInventorySlot>> PlannedSlots;
+    for (UInventoryComponent* Inventory : Inventories)
+    {
+        if (!IsValid(Inventory)) return false;
+        if (!UniqueInventories.Contains(Inventory))
+        {
+            UniqueInventories.Add(Inventory);
+            PlannedSlots.Add(Inventory->Slots_);
+        }
+    }
+    for (const auto& Pair : Required)
+    {
+        int32 Remaining = static_cast<int32>(Pair.Value);
+        for (int32 InventoryIndex = 0; InventoryIndex < UniqueInventories.Num(); ++InventoryIndex)
+        {
+            auto& Slots = PlannedSlots[InventoryIndex];
+            const int32 Limit = FMath::Min(UniqueInventories[InventoryIndex]->InventorySize, Slots.Num());
+            for (int32 SlotIndex = 0; SlotIndex < Limit && Remaining > 0; ++SlotIndex)
+            {
+                FInventorySlot& Slot = Slots[SlotIndex];
+                if (Slot.ItemData != Pair.Key || Slot.bDragging) continue;
+                const int32 Taken = FMath::Min(Remaining, Slot.GetCount());
+                Slot.SetCount(Slot.GetCount() - Taken);
+                Remaining -= Taken;
+            }
+        }
+        if (Remaining > 0) return false;
+    }
+    if (!bConsume) return true;
+
+    TArray<TArray<int32>> ChangedSlots;
+    ChangedSlots.SetNum(UniqueInventories.Num());
+    // No delegates or external calls until every inventory has been committed.
+    for (int32 Index = 0; Index < UniqueInventories.Num(); ++Index)
+    {
+        auto* Inventory = UniqueInventories[Index];
+        for (int32 SlotIndex = 0; SlotIndex < PlannedSlots[Index].Num(); ++SlotIndex)
+        {
+            if (Inventory->Slots_[SlotIndex].GetCount() != PlannedSlots[Index][SlotIndex].GetCount())
+                ChangedSlots[Index].Add(SlotIndex);
+        }
+        Inventory->Slots_ = MoveTemp(PlannedSlots[Index]);
+    }
+    for (int32 Index = 0; Index < UniqueInventories.Num(); ++Index)
+        for (int32 SlotIndex : ChangedSlots[Index])
+            if (IsValid(UniqueInventories[Index])) UniqueInventories[Index]->OnSlotChanged.Broadcast(SlotIndex);
+    return true;
+}
+
 int32 UInventoryComponent::GetTotalItemCount(const UItemDataAsset* InItemData)
 {
     if (!InItemData)
@@ -484,7 +524,32 @@ void UInventoryComponent::UseItem_(int32 InIndex)
         return;
     }
 
-    Slot->ItemData->ItemAction->ExecuteItemAction_Implementation(GetOwner(), GetOwner());
+    switch (Slot->ItemData->ItemType)
+    {
+        case EItemType::PlayerUsable:
+            Slot->ItemData->ItemAction->ExecuteItemAction_Implementation(GetOwner(), GetOwner());
+            break;
+        case EItemType::SpaceShipUsable:
+        {
+            USpaceSalvageWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+            if (!Subsystem)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::UseItem_()] : SpaceSalvageWorldSubsystem이 nullptr입니다."));
+                return;
+            }
+
+            ASpaceShipActor* SpaceShip = Subsystem->GetSpaceShipActor();
+            if (!SpaceShip)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::UseItem_()] : SpaceShip이 nullptr입니다."));
+                return;
+            }
+
+            Slot->ItemData->ItemAction->ExecuteItemAction_Implementation(GetOwner(), SpaceShip);
+            break;
+        }
+    }
+
     UpdateSlotCount(InIndex, -1);
 }
 
@@ -525,13 +590,13 @@ void UInventoryComponent::SetSlot(int32 InSlotIndex, const UItemDataAsset* InIte
                 this,
                 [this, InSlotIndex]() {
                     // 리프레시용으로 변경 브로드 캐스트 날리기
-                    OnSlotChanged.ExecuteIfBound(InSlotIndex);
+                    OnSlotChanged.Broadcast(InSlotIndex);
                 })
         );
     }
 
     // 델리게이트 호출
-    OnSlotChanged.ExecuteIfBound(InSlotIndex);
+    OnSlotChanged.Broadcast(InSlotIndex);
 }
 
 void UInventoryComponent::UpdateSlotCount(int32 InSlotIndex, int32 InDeltaCount)
@@ -552,6 +617,21 @@ void UInventoryComponent::UpdateSlotCount(int32 InSlotIndex, int32 InDeltaCount)
 void UInventoryComponent::ClearSlot(int32 InSlotIndex)
 {
     SetSlot(InSlotIndex, nullptr, 0);
+}
+
+int32 UInventoryComponent::GetUsingSlotCount() const
+{
+    int32 Count = 0;
+
+    for (const FInventorySlot& Slot : Slots_)
+    {
+        if (!Slot.IsEmpty())
+        {
+            Count++;
+        }
+    }
+
+    return Count;
 }
 
 void UInventoryComponent::BeginPlay()

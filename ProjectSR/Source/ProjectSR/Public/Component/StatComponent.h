@@ -34,8 +34,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stat")
 	void ModifyHealth(float Amount);
 
-	UFUNCTION(BlueprintCallable, Category = "Stat")
-	void ModifyHunger(float Amount);
+	//UFUNCTION(BlueprintCallable, Category = "Stat")
+	//void ModifyHunger(float Amount);
 
 	UFUNCTION(BlueprintCallable, Category = "Stat")
 	void ModifyOxygen(float Amount);
@@ -59,10 +59,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stat")
 	float GetMaxHealth() const { return MaxHealth; }
 
-	UFUNCTION(BlueprintPure, Category = "Stat")
-	float GetHunger() const { return CurrentHunger; }
-	UFUNCTION(BlueprintPure, Category = "Stat")
-	float GetMaxHunger() const { return MaxHunger; }
+	//UFUNCTION(BlueprintPure, Category = "Stat")
+	//float GetHunger() const { return CurrentHunger; }
+	//UFUNCTION(BlueprintPure, Category = "Stat")
+	//float GetMaxHunger() const { return MaxHunger; }
 
 	UFUNCTION(BlueprintPure, Category = "Stat")
 	float GetOxygen() const { return CurrentOxygen; }
@@ -73,6 +73,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetMoveSpeed() const { return MoveSpeed; }
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetZeroGravityMoveSpeed() const { return ZeroGravityMoveSpeed; }
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetBoostSpeed() const { return BoostSpeed; }
+	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetZeroGravityBoostSpeed() const { return ZeroGravityBoostSpeed; }
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetCrouchSpeed() const { return CrouchSpeed; }
 
 public:
@@ -80,8 +81,8 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Stat|Events")
 	FOnStatChangedSignature OnHealthChanged;
 
-	UPROPERTY(BlueprintAssignable, Category = "Stat|Events")
-	FOnStatChangedSignature OnHungerChanged;
+	//UPROPERTY(BlueprintAssignable, Category = "Stat|Events")
+	//FOnStatChangedSignature OnHungerChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Stat|Events")
 	FOnStatChangedSignature OnOxygenChanged;
@@ -93,7 +94,7 @@ protected:
 	// --- Base 최대 스탯값 --- 장비 영향 X
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseMaxHealth = 100.0f;
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseMaxOxygen = 150.0f;
-	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float MaxHunger = 100.0f;	// 장비 영향 없다고 가정
+	//UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float MaxHunger = 100.0f;	// 장비 영향 없다고 가정
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseMoveSpeed = 600.0f;
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseZeroGravityMoveSpeed = 400.0f;
 	UPROPERTY(EditDefaultsOnly, Category = "Stat|Base") float BaseBoostSpeed = 900.0f;
@@ -112,9 +113,9 @@ protected:
 	
 	// --- 초당 스탯 소모율 ---
 	// 기본 허기 감소율
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate") float BaseHungerDrainRate = 0.5f;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate") float BaseHungerDrainRate = 0.5f;
 	// 부스트 시 추가 허기 감소 배율
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate") float BoostHungerDrainMultiplier = 2.0f;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate") float BoostHungerDrainMultiplier = 2.0f;
 	// 무중력 상태시 산소 감소율
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate") float OxygenDrainRate = 2.0f;
 	// 허기 고갈시 체력 감소율
@@ -127,7 +128,7 @@ protected:
 private:
 	// 현재 스탯 값
 	float CurrentHealth;
-	float CurrentHunger;
+	//float CurrentHunger;
 	float CurrentOxygen;
 
 	// 사망 여부 플래그

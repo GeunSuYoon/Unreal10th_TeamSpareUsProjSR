@@ -18,55 +18,58 @@ void UInventoryWindowWidget::BindToInventoryComponent(UInventoryComponent* InInv
     }
 
     TargetInventory__ = InInventoryComponent;
-    ItemManagerWidget->InitializeItemManagerWidget(TargetInventory__.Get());
+    TargetInventory__->OnSlotChanged.AddDynamic(this, &UInventoryWindowWidget::RefreshCapacityText__);
+    ItemManagerWidget->BindToInventoryComponent(TargetInventory__.Get());
+    ItemManagerWidget->InitializeInventoryWidget();
 }
 
-void UInventoryWindowWidget::OpenInventoryWidget()
+void UInventoryWindowWidget::OpenWidget()
 {
-    if (!TargetInventory__.IsValid())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[UInventoryWindowWidget::OpenInventoryWidget()] : TargetInventory가 nullptr입니다."));
-        return;
-    }
-
-    CapacityText->SetText(FText::FromString("Hello Capacity"));
-    WeightText->SetText(FText::FromString("Hello Weight"));
-    ItemManagerWidget->RefreshInventoryWidget();
-
-    SetVisibility(ESlateVisibility::Visible);
-
-    if (APlayerController* PC = Cast<APlayerController>(GetOwningPlayer()))
-    {
-        FInputModeUIOnly InputModeUI;
-        InputModeUI.SetWidgetToFocus(TakeWidget());
-
-        PC->SetInputMode(InputModeUI);
-        PC->SetShowMouseCursor(true);
-    }
+	IOpenableWidgetInterface::Execute_OpenSelfWidget(this);
 }
 
-void UInventoryWindowWidget::CloseInventoryWidget()
+void UInventoryWindowWidget::CloseWidget()
 {
-    SetVisibility(ESlateVisibility::Collapsed);
+	IOpenableWidgetInterface::Execute_CloseSelfWidget(this);
+}
 
-    if (APlayerController* PC = Cast<APlayerController>(GetOwningPlayer()))
-    {
-        FInputModeGameOnly InputModeGame;
-        PC->SetInputMode(InputModeGame);
-        PC->SetShowMouseCursor(false);
-    }
+void UInventoryWindowWidget::OpenSelfWidget_Implementation()
+{
+	if (!TargetInventory__.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UInventoryWindowWidget::OpenInventoryWidget()] : TargetInventory가 nullptr입니다."));
+		return;
+	}
+
+	RefreshCapacityText__(0);
+	ItemManagerWidget->RefreshInventoryWidget();
+
+	SetVisibility(ESlateVisibility::Visible);
+	OnWidgetOpen.ExecuteIfBound(this);
+}
+
+void UInventoryWindowWidget::CloseSelfWidget_Implementation()
+{
+	SetVisibility(ESlateVisibility::Collapsed);
+	OnWidgetClose.ExecuteIfBound(this);
 }
 
 void UInventoryWindowWidget::ToggleInventoryWidget()
 {
-    if (IsInventoryOpened())
+    if (GetVisibility() == ESlateVisibility::Visible)
     {
-        CloseInventoryWidget();
+		IOpenableWidgetInterface::Execute_CloseSelfWidget(this);
     }
     else
     {
-        OpenInventoryWidget();
+		IOpenableWidgetInterface::Execute_OpenSelfWidget(this);
     }
+}
+
+void UInventoryWindowWidget::RefreshCapacityText__(int32 InSlotIndex)
+{
+    CurrentCapacityText->SetText(FText::AsNumber(TargetInventory__->GetUsingSlotCount()));
+    MaxCapacityText->SetText(FText::AsNumber(TargetInventory__->GetSize()));
 }
 
 void UInventoryWindowWidget::NativeConstruct()
@@ -82,14 +85,14 @@ void UInventoryWindowWidget::NativeConstruct()
     Inventory_CloseButton->OnClicked.AddDynamic(this, &UInventoryWindowWidget::OnInventoryCloseButtonClicked__);
 
     SetIsFocusable(true);
-    CloseInventoryWidget();
+	IOpenableWidgetInterface::Execute_CloseSelfWidget(this);
 }
 
 FReply UInventoryWindowWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
     if (InKeyEvent.GetKey() == EKeys::I)
     {
-        CloseInventoryWidget();
+		IOpenableWidgetInterface::Execute_CloseSelfWidget(this);
 
         return FReply::Handled();
     }
@@ -99,5 +102,5 @@ FReply UInventoryWindowWidget::NativeOnKeyDown(const FGeometry& InGeometry, cons
 
 void UInventoryWindowWidget::OnInventoryCloseButtonClicked__()
 {
-    CloseInventoryWidget();
+	IOpenableWidgetInterface::Execute_CloseSelfWidget(this);
 }

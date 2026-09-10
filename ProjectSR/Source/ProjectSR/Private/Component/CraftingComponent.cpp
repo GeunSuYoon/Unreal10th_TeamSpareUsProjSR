@@ -7,6 +7,7 @@
 #include "CommonHeader/InventoryCommandTypes.h"
 #include "Data/Item/ItemDataAsset.h"
 #include "Interface/InventoryComponentInterface.h"
+#include "SpaceShip/SpaceShipActor.h"
 
 UCraftingComponent::UCraftingComponent()
 {
@@ -31,6 +32,12 @@ void UCraftingComponent::Unlock(FName InRecipeId)
     }
 
     UnlockedRecipeIds__.Add(InRecipeId);
+}
+
+bool UCraftingComponent::HasRecipe(FName RecipeId) const
+{
+    return RecipeTable_ && RecipeTable_->GetRowStruct() == FRecipeTableRow::StaticStruct()
+        && RecipeTable_->FindRow<FRecipeTableRow>(RecipeId, TEXT("Upgrade recipe validation"), false);
 }
 
 bool UCraftingComponent::IsUnlockedRecipe(FName InRecipeId, bool bDefaultLocked) const
@@ -351,107 +358,139 @@ FManufactureWidgetDisplayData UCraftingComponent::BuildManufactureWidgetDisplayD
 
     if (!Recipe)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[UCraftingComponent::BuildManufactureWidgetDisplayData()] : 존재하지 않는 제작법입니다 (%s)"),
-               *InRecipeId.ToString());
-        return Data;
-    }
+		UE_LOG(LogTemp, Warning, TEXT("[UCraftingComponent::BuildManufactureWidgetDisplayData()] : 존재하지 않는 제작법입니다 (%s)"),
+			*InRecipeId.ToString());
+		return Data;
+	}
 
-    RecipeEntry.RecipeId = InRecipeId;
-    RecipeEntry.RecipeData = *Recipe;
+	RecipeEntry.RecipeId = InRecipeId;
+	RecipeEntry.RecipeData = *Recipe;
 
-    Data.RecipeEntry = RecipeEntry;
+	Data.RecipeEntry = RecipeEntry;
 
-    TMap<FName, int32> IngredientStatusMap;
-    // DELETE ME
-    UInventoryComponent* InventoryComponent__ = IInventoryComponentInterface::Execute_GetInventoryComponent(GetWorld()->GetFirstPlayerController()->GetPawn());
-    for (int i = 0; i < RecipeEntry.RecipeData.Ingredients.Num(); i++)
-    {
-        IngredientStatusMap.Add(
-            RecipeEntry.RecipeData.Ingredients[i].ItemData->ItemId,
-            InventoryComponent__->GetTotalItemCount(RecipeEntry.RecipeData.Ingredients[i].ItemData));
-    }
+	TMap<FName, int32> IngredientStatusMap;
+	// DELETE ME
+	UInventoryComponent* InventoryComponent__ = IInventoryComponentInterface::Execute_GetInventoryComponent(GetWorld()->GetFirstPlayerController()->GetPawn());
+	UInventoryComponent* SpaceShipInventoryComponent__ = nullptr;
+	if (ASpaceShipActor* SS = Cast<ASpaceShipActor>(GetOwner()))
+	{
+		SpaceShipInventoryComponent__ = IInventoryComponentInterface::Execute_GetInventoryComponent(SS);
+	}
+	else
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Warehouse 오너가 우주선이 아니에용")
+		);
+	}
+	for (int i = 0; i < RecipeEntry.RecipeData.Ingredients.Num(); i++)
+	{
+		int32	TotalCount = 0;
 
-    Data.IngredientStatusMap = IngredientStatusMap;
+		TotalCount += InventoryComponent__->GetTotalItemCount(RecipeEntry.RecipeData.Ingredients[i].ItemData);
+		TotalCount += SpaceShipInventoryComponent__->GetTotalItemCount(RecipeEntry.RecipeData.Ingredients[i].ItemData);
+		IngredientStatusMap.Add(
+			RecipeEntry.RecipeData.Ingredients[i].ItemData->ItemId,
+			TotalCount);
+	}
 
-    // DELETE ME
-    TArray<UInventoryComponent*> Inventories;
-    Inventories.Add(InventoryComponent__);
-    Data.bHasEnoughIngredients = HasEnoughIngredients(InRecipeId, Inventories);
-    Data.bHasEnoughEmptySlots = HasEnoughEmptySlots(InRecipeId, Inventories);
+	Data.IngredientStatusMap = IngredientStatusMap;
 
-    return Data;
+	// DELETE ME
+	TArray<UInventoryComponent*> Inventories;
+	Inventories.Add(InventoryComponent__);
+	Inventories.Add(SpaceShipInventoryComponent__);
+	Data.bHasEnoughIngredients = HasEnoughIngredients(InRecipeId, Inventories);
+	Data.bHasEnoughEmptySlots = HasEnoughEmptySlots(InRecipeId, Inventories);
+
+	return Data;
 }
 
 void UCraftingComponent::BeginPlay()
 {
-    Super::BeginPlay();
+	Super::BeginPlay();
 }
 
 void UCraftingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 int32 UCraftingComponent::FindSlotWithFewestCount__(const TArray<FInventorySlot>& InSlots, const UItemDataAsset* InItemData, int32 StartIndex) const
 {
-    int32 FoundIndex = -1;
-    int32 MinStackCount = TNumericLimits<int32>::Max();
+	int32 FoundIndex = -1;
+	int32 MinStackCount = TNumericLimits<int32>::Max();
 
-    int32 SlotSize = InSlots.Num() - 1;
-    for (int i = StartIndex; i < SlotSize; i++)
-    {
-        if (InSlots[i].ItemData == InItemData
-            && InSlots[i].GetCount() < MinStackCount)
-        {
-            FoundIndex = i;
-            MinStackCount = InSlots[i].GetCount();
-        }
-    }
+	int32 SlotSize = InSlots.Num() - 1;
+	for (int i = StartIndex; i < SlotSize; i++)
+	{
+		if (InSlots[i].ItemData == InItemData
+			&& InSlots[i].GetCount() < MinStackCount)
+		{
+			FoundIndex = i;
+			MinStackCount = InSlots[i].GetCount();
+		}
+	}
 
-    return FoundIndex;
+	return FoundIndex;
 }
 
 int32 UCraftingComponent::FindSlotWithItem__(const TArray<FInventorySlot>& InSlots, const UItemDataAsset* InItemData, int32 StartIndex) const
 {
-    int32 SlotSize = InSlots.Num() - 1;
-    for (int i = StartIndex; i < SlotSize; i++)
-    {
-        if (InSlots[i].ItemData == InItemData
-            && !InSlots[i].IsFull())
-        {
-            return i;
-        }
-    }
+	int32 SlotSize = InSlots.Num() - 1;
+	for (int i = StartIndex; i < SlotSize; i++)
+	{
+		if (InSlots[i].ItemData == InItemData
+			&& !InSlots[i].IsFull())
+		{
+			return i;
+		}
+	}
 
-    return -1;
+	return -1;
 }
 
 // 빈 슬롯의 인덱스를 반환하는 함수
 int32 UCraftingComponent::FindEmptySlot__(const TArray<FInventorySlot>& InSlots) const
 {
-    int32 SlotSize = InSlots.Num() - 1;
-    for (int i = 0; i < SlotSize; i++)
-    {
-        if (InSlots[i].IsEmpty())
-        {
-            return i;
-        }
-    }
+	int32 SlotSize = InSlots.Num() - 1;
+	for (int i = 0; i < SlotSize; i++)
+	{
+		if (InSlots[i].IsEmpty())
+		{
+			return i;
+		}
+	}
 
-    return -1;
+	return -1;
 }
 
 void UCraftingComponent::HandleRecipeSelected(FName InRecipeId)
 {
-    FManufactureWidgetDisplayData Data = BuildManufactureWidgetDisplayData(InRecipeId);
-    OnManufactureWidgetOpened.Broadcast(Data);
+	FManufactureWidgetDisplayData Data = BuildManufactureWidgetDisplayData(InRecipeId);
+	OnManufactureWidgetOpened.Broadcast(Data);
 }
 
 void UCraftingComponent::HandleCraftRequested(FName InRecipeId)
 {
-    UInventoryComponent* InventoryComponent__ = IInventoryComponentInterface::Execute_GetInventoryComponent(GetWorld()->GetFirstPlayerController()->GetPawn());
+	UInventoryComponent* InventoryComponent__ = IInventoryComponentInterface::Execute_GetInventoryComponent(GetWorld()->GetFirstPlayerController()->GetPawn());
+    UInventoryComponent* SpaceShipInventoryComponent__ = nullptr;
+	if (ASpaceShipActor* SS = Cast<ASpaceShipActor>(GetOwner()))
+	{
+		SpaceShipInventoryComponent__ = IInventoryComponentInterface::Execute_GetInventoryComponent(SS);
+	}
+	else
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Warehouse 오너가 우주선이 아니에용")
+		);
+	}
     TArray<UInventoryComponent*> Inventories;
     Inventories.Add(InventoryComponent__);
+    Inventories.Add(SpaceShipInventoryComponent__);
 
     bool bSuccess = Craft(InRecipeId, Inventories);
     if (bSuccess)

@@ -10,7 +10,6 @@
 void UTemporarySlotWidget::InitializeSlot(const FInventorySlot* InSlot)
 {
     IconImage->SetBrushFromTexture(InSlot->ItemData->Icon.Get());
-    //IconImage->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
     CountText->SetText(FText::AsNumber(InSlot->GetCount()));
 }
 
