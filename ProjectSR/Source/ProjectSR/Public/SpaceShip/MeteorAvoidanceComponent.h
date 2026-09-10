@@ -48,6 +48,7 @@ public:
 	void	MeteorAlarm();
 	void	SpawnMeteor();
 	void	ClearMeteor();
+	bool HasMeteor() const { return bIsMeteor__; }
 
 protected:
 	FMeteor	TargetMeteor_;

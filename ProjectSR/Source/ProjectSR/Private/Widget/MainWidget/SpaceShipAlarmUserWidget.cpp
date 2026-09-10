@@ -10,6 +10,8 @@
 void	USpaceShipAlarmUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 {
 	// 바인드해야해용
+	InSpaceShip->OnDurabilityChange.AddDynamic(this, &USpaceShipAlarmUserWidget::SpaceShipDurabilityChange);
+	InSpaceShip->OnEnergyChange.AddDynamic(this, &USpaceShipAlarmUserWidget::SpaceShipEnergyChange);
 }
 
 void USpaceShipAlarmUserWidget::SpaceShipEnergyChange(float InCurrentEnergy, float InOperationalEnergy)
@@ -23,21 +25,23 @@ void USpaceShipAlarmUserWidget::SpaceShipEnergyChange(float InCurrentEnergy, flo
 	{
 		this->EnergyAlarmHorizontalBox->SetVisibility(ESlateVisibility::Collapsed);
 	}
-	CheckChildVisibility();
+	this->CheckChildVisibility();
 }
 
-void USpaceShipAlarmUserWidget::SpaceShipDurabilityChange(float InCurrentDurability, float InRequiredDurability)
+void USpaceShipAlarmUserWidget::SpaceShipDurabilityChange(float InCurrentDurability, float InMaxDurability)
 {
-	if (InCurrentDurability <= InRequiredDurability)
-	{
-		this->DurabilityAlarmHorizontalBox->SetVisibility(ESlateVisibility::Visible);
-		this->SetVisibility(ESlateVisibility::Visible);
-	}
-	else
-	{
-		this->DurabilityAlarmHorizontalBox->SetVisibility(ESlateVisibility::Collapsed);
-	}
-	CheckChildVisibility();
+	this->CurrentDurability->SetText(FText::AsNumber(InCurrentDurability));
+	this->CurrentDurability__ = InCurrentDurability;
+	this->CheckDurability();
+	this->CheckChildVisibility();
+}
+
+void USpaceShipAlarmUserWidget::RequiredDurabilityChange(float InRequiredDurability)
+{
+	this->RequiredDurability->SetText(FText::AsNumber(InRequiredDurability));
+	this->RequiredDurability__ = InRequiredDurability;
+	this->CheckDurability();
+	this->CheckChildVisibility();
 }
 
 void	USpaceShipAlarmUserWidget::InitVisibility()
@@ -53,5 +57,18 @@ void USpaceShipAlarmUserWidget::CheckChildVisibility()
 		this->DurabilityAlarmHorizontalBox->GetVisibility() == ESlateVisibility::Collapsed)
 	{
 		this->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void USpaceShipAlarmUserWidget::CheckDurability()
+{
+	if (this->CurrentDurability__ <= this->RequiredDurability__)
+	{
+		this->DurabilityAlarmHorizontalBox->SetVisibility(ESlateVisibility::Visible);
+		this->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		this->DurabilityAlarmHorizontalBox->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }

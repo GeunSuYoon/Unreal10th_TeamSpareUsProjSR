@@ -2,6 +2,7 @@
 
 
 #include "SpaceShip/SpaceShipActor.h"
+#include "SpaceShip/SpaceShipUpgradeComponent.h"
 #include "SpaceShip/SpaceShipVisualActor.h"
 #include "SpaceShip/LazerComponent.h"
 #include "SpaceShip/MachineArmComponent.h"
@@ -9,11 +10,20 @@
 #include "SpaceShip/DoorButtonActor.h"
 #include "Component/InventoryComponent.h"
 #include "Component/CraftingComponent.h"
+#include "Component/InSpaceMovementComponent.h"
+#include "Player/PlayerCharacter.h"
+#include "Kismet/GameplayStatics.h"
 #include "MainPanel/MainPanelActor.h"
 #include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
 
 #include "Components/SphereComponent.h"
 #include "ProjectSR.h"
+#include "Framework/SurvivalLoopActor.h"
+
+bool ASpaceShipActor::IsDoorClosed() const
+{
+	return !bIsDoorOpen_ && !GetWorldTimerManager().IsTimerActive(DoorMoveTimerHandle_);
+}
 
 // Sets default values
 ASpaceShipActor::ASpaceShipActor()
@@ -46,9 +56,11 @@ ASpaceShipActor::ASpaceShipActor()
 	this->DoorMesh_->SetupAttachment(GetRootComponent());
 
 	this->LazerComponent_ = CreateDefaultSubobject<ULazerComponent>(TEXT("LazerComponent"));
+	this->UpgradeComponent_ = CreateDefaultSubobject<USpaceShipUpgradeComponent>(TEXT("UpgradeComponent"));
 	this->MachineArmComponent_ = CreateDefaultSubobject<UMachineArmComponent>(TEXT("MainArmComponent"));
 	this->WarehouseComponent_ = CreateDefaultSubobject<UInventoryComponent>(TEXT("WarehouseComponent"));
 	this->MeteorAvoidanceComponent_ = CreateDefaultSubobject<UMeteorAvoidanceComponent>(TEXT("MeteorAvoidanceComponent"));
+	this->CraftingComponent_ = CreateDefaultSubobject<UCraftingComponent>(TEXT("CraftingComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -121,6 +133,12 @@ void ASpaceShipActor::BeginPlay()
 			TEXT("[ASpaceShipActor::BeginPlay] MeteorAvoidanceComponent가 nullptr입니다.")
 		);
 	}
+	// Initialize before publishing the ship to the world subsystem.
+	if (bInitializeLevelZeroOnBeginPlay && UpgradeComponent_ && !UpgradeComponent_->InitializeLevelZero())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Level-zero initialization failed. Check the level-zero row, stats, recipes, and current level."), *GetName());
+	}
+
 	USpaceSalvageWorldSubsystem* SpaceSubsystem = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
 
 	if (!IsValid(SpaceSubsystem))
@@ -176,8 +194,9 @@ void ASpaceShipActor::RepairDurability_Implementation(float InDurability)
 		Log,
 		TEXT("[ASpaceShipActor::RepairDurability_Implementation] 들어온 내구도 수리 : [%.1f], 현재 내구도 : [%.1f]"),
 		InDurability,
-		this->CurrentDurability_ + InDurability
+		this->CurrentDurability_
 	);
+	OnDurabilityChange.Broadcast(this->CurrentDurability_, this->SpaceShipStat_.MaxDurability);
 	// 우주선 내구도가 0이 되면 터지는 로직 추가 필요
 }
 
@@ -189,8 +208,9 @@ void ASpaceShipActor::ConsumDurability_Implementation(float InDurability)
 		Log,
 		TEXT("[ASpaceShipActor::ConsumDurability_Implementation] 들어온 내구도 데미지 : [%.1f], 현재 내구도 : [%.1f]"),
 		InDurability,
-		this->CurrentDurability_ - InDurability
+		this->CurrentDurability_
 	);
+	OnDurabilityChange.Broadcast(this->CurrentDurability_, this->SpaceShipStat_.MaxDurability);
 }
 
 void ASpaceShipActor::GainEnergy(float InEnergy)
@@ -201,8 +221,9 @@ void ASpaceShipActor::GainEnergy(float InEnergy)
 		Log,
 		TEXT("[ASpaceShipActor::GainEnergy] 들어온 추가 에너지 : [%.1f], 현재 에너지 : [%.1f]"),
 		InEnergy,
-		this->CurrentEnergy_ + InEnergy
+		this->CurrentEnergy_
 	);
+	OnEnergyChange.Broadcast(this->CurrentEnergy_, this->SpaceShipStat_.MaxEnergy);
 }
 
 void ASpaceShipActor::UseEnergy(float InEnergy)
@@ -213,8 +234,9 @@ void ASpaceShipActor::UseEnergy(float InEnergy)
 		Log,
 		TEXT("[ASpaceShipActor::UseEnergy] 들어온 소모 에너지 : [%.1f], 현재 에너지 : [%.1f]"),
 		InEnergy,
-		this->CurrentEnergy_ - InEnergy
+		this->CurrentEnergy_
 	);
+	OnEnergyChange.Broadcast(this->CurrentEnergy_, this->SpaceShipStat_.MaxEnergy);
 }
 
 void ASpaceShipActor::SpaceShipMoveInput(const FVector2D& InInput)
@@ -247,9 +269,20 @@ void ASpaceShipActor::SetSpaceShipData(USpaceShipDataAsset* InSpaceShipData)
 	OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
 }
 
+void ASpaceShipActor::ApplySpaceShipStat(const FSpaceShipStat& NewStat)
+{
+	SpaceShipStat_ = NewStat;
+	Level_ = NewStat.Level;
+	CurrentDurability_ = NewStat.MaxDurability;
+	CurrentEnergy_ = NewStat.MaxEnergy;
+	UpdateSpaceShipLevel();
+}
+
 void ASpaceShipActor::UpdateSpaceShipLevel()
 {
-	OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
+	this->OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
+	this->OnDurabilityChange.Broadcast(this->CurrentDurability_, this->SpaceShipStat_.MaxDurability);
+	this->OnEnergyChange.Broadcast(this->CurrentEnergy_, this->SpaceShipStat_.MaxEnergy);
 	this->LazerComponent_->UpdateLazerLevel();
 	this->MachineArmComponent_->UpdateMachineArmLevel();
 }
@@ -305,6 +338,24 @@ void	ASpaceShipActor::UpdateDoorRotation_()
 		//	TEXT("[ADoorButtonActor::Interact_Implementation] 문이 움직입니다.")
 		//);
 		GetWorldTimerManager().ClearTimer(this->DoorMoveTimerHandle_);
+
+		// Apply the completed door state, including when its direction changes mid-animation.
+		if (APlayerCharacter* Player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		{
+			if (UInSpaceMovementComponent* Movement = Player->GetInSpaceMovementComponent())
+			{
+				if (this->bIsDoorOpen_)
+				{
+					Movement->EnterZeroGravity();
+				}
+				else
+				{
+					auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+					if (Salvage && Salvage->SurvivalLoop.IsValid() && !Salvage->SurvivalLoop->IsPlayerInside()) { Movement->EnterZeroGravity(); }
+					else { Movement->ExitZeroGravity(); }
+				}
+			}
+		}
 	}
 }
 

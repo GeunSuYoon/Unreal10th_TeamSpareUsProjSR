@@ -15,10 +15,10 @@ class UWidgetSwitcher;
 
 class UMainPanelHomeUserWidget;
 class USpaceShipActorStatusUserWidget;
-// 인벤토리 위젯 클래스 가져와야해용
+class UItemManagerWidget;
 class UMeteorEventUserWidget;
 class USpaceShipUpgaradeMainUserWidget;
-// 아이템 제작 위젯 클래스 가져와야해용
+class URecipeListWidget;
 class ASpaceShipActor;
 
 //DECLARE_DYNAMIC_DELEGATE(FOnOpenMainPanel);
@@ -35,6 +35,8 @@ class PROJECTSR_API UMainPanelUserWidget : public UUserWidget, public IOpenableW
 public:
 	void	BindToSpaceShip(ASpaceShipActor* InSpaceShip);
 
+	bool	HandleMeteorMoveKey(const FKeyEvent& InKeyEvent);
+
 	virtual void	OpenSelfWidget_Implementation() override;
 	virtual void	CloseSelfWidget_Implementation() override;
 
@@ -43,9 +45,6 @@ public:
 
 	UFUNCTION()
 	void	OpenMainPanel();
-
-	UFUNCTION(BlueprintCallable)
-	void	SwitchWidget(EMainPanelMenuPage InPage);
 
 	//UFUNCTION(BlueprintCallable)
 	void	SwitchWidget(int32 InIndex);
@@ -61,6 +60,8 @@ public:
 	FOnWidgetOpen	OnWidgetOpen;
 	FOnWidgetClose	OnWidgetClose;
 
+	UItemManagerWidget*	GetWarehouseWidget() { return (this->Warehouse); }
+
 protected:
 	virtual void NativeOnInitialized() override;
 
@@ -75,14 +76,14 @@ protected:
 	TObjectPtr<UMainPanelHomeUserWidget>		MainPanelHome = nullptr;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<USpaceShipActorStatusUserWidget>	SpaceShipStatus = nullptr;
-	//UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	// TObjectPtr<UMainPanelHomeUserWidget>	MainPanelSwitcher = nullptr; // 창고자리
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UItemManagerWidget>				Warehouse = nullptr;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMeteorEventUserWidget>			MeteoEvent = nullptr;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<USpaceShipUpgaradeMainUserWidget>SpaceShipUpgrade = nullptr;
-	//UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	//TObjectPtr<UWidgetSwitcher>	MainPanelSwitcher = nullptr; // 제작 자리
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<URecipeListWidget>				CraftingRecipeList = nullptr;
 
 private:
 	TArray<TObjectPtr<UWidget>>	OpenWidgetStack__;

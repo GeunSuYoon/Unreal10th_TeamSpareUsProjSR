@@ -22,11 +22,16 @@ class PROJECTSR_API USpaceShipAlarmUserWidget : public UUserWidget
 public:
 	void	BindToSpaceShip(ASpaceShipActor* InSpaceShip);
 
+	UFUNCTION()
 	void	SpaceShipEnergyChange(float InCurrentEnergy, float InOperationalEnergy);
-	void	SpaceShipDurabilityChange(float InCurrentDurability, float InRequiredDurability);
+	UFUNCTION()
+	void	SpaceShipDurabilityChange(float InCurrentDurability, float InMaxDurability);
+	UFUNCTION()
+	void	RequiredDurabilityChange(float InRequiredDurability);
 
 	void	InitVisibility();
 	void	CheckChildVisibility();
+	void	CheckDurability();
 
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -45,5 +50,7 @@ protected:
 
 
 private:
+	float	RequiredDurability__ = 0.0f;
+	float	CurrentDurability__ = 0.0f;
 
 };

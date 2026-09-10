@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interface/OpenableWidgetInterface.h"
+
 #include "Blueprint/UserWidget.h"
 #include "InventoryWindowWidget.generated.h"
 
@@ -12,18 +14,24 @@ class UItemManagerWidget;
 class UInventoryComponent;
 
 UCLASS()
-class PROJECTSR_API UInventoryWindowWidget : public UUserWidget
+class PROJECTSR_API UInventoryWindowWidget : public UUserWidget, public IOpenableWidgetInterface
 {
     GENERATED_BODY()
 
 public:
     void BindToInventoryComponent(UInventoryComponent* InInventoryComponent);
 
-    void OpenInventoryWidget();
-    void CloseInventoryWidget();
+	void	OpenWidget();
+	void	CloseWidget();
+
+	virtual void	OpenSelfWidget_Implementation() override;
+	virtual void	CloseSelfWidget_Implementation() override;
 
     UFUNCTION(BlueprintCallable)
     void ToggleInventoryWidget();
+
+	FOnWidgetOpen	OnWidgetOpen;
+	FOnWidgetClose	OnWidgetClose;
 
 protected:
     virtual void NativeConstruct() override;

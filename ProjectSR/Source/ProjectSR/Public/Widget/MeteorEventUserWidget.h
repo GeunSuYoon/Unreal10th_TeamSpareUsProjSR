@@ -26,6 +26,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void	BindToSpaceShip(ASpaceShipActor* InSpaceShip);
 
+	bool HandleMoveKey(const FKeyEvent& InKeyEvent);
+
 	UFUNCTION()
 	void	SetWidgetSize(const float InSapwnDist);
 
@@ -51,6 +53,8 @@ protected:
 	virtual void NativeConstruct() override;
 
 private:
+	TWeakObjectPtr<ASpaceShipActor> BoundSpaceShip__;
+
 	UFUNCTION()
 	void	OnMeteorDetect__(const FMeteor& InMeteor);
 

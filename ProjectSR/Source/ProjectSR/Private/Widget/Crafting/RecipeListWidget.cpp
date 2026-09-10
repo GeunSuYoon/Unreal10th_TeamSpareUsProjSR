@@ -18,7 +18,7 @@ void URecipeListWidget::BindToCraftingComponent(UCraftingComponent* InCraftingCo
     }
 
     CraftingComponent__ = InCraftingComponent;
-
+	this->OnRecipeSelected.BindUObject(InCraftingComponent, &UCraftingComponent::HandleRecipeSelected);
     RefreshRecipeListWidget();
 }
 
@@ -69,45 +69,45 @@ void URecipeListWidget::RefreshRecipeListWidget()
     }
 }
 
-void URecipeListWidget::ToggleRecipeListWidget()
-{
-    if (GetVisibility() == ESlateVisibility::Visible)
-    {
-        CloseRecipeListWidget();
-    }
-    else
-    {
-        OpenRecipeListWidget();
-    }
-}
+//void URecipeListWidget::ToggleRecipeListWidget()
+//{
+//    if (GetVisibility() == ESlateVisibility::Visible)
+//    {
+//        CloseRecipeListWidget();
+//    }
+//    else
+//    {
+//        OpenRecipeListWidget();
+//    }
+//}
 
-void URecipeListWidget::OpenRecipeListWidget()
-{
-    if (!CraftingComponent__.IsValid())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[URecipeListWidget::OpenRecipeListWidget()] : CraftingComponent가 nullptr입니다."));
-        return;
-    }
+//void URecipeListWidget::OpenRecipeListWidget()
+//{
+//    if (!CraftingComponent__.IsValid())
+//    {
+//        UE_LOG(LogTemp, Warning, TEXT("[URecipeListWidget::OpenRecipeListWidget()] : CraftingComponent가 nullptr입니다."));
+//        return;
+//    }
+//
+//    RefreshRecipeListWidget();
+//
+//    SetVisibility(ESlateVisibility::Visible);
+//
+//    // DELETE ME
+//    if (APlayerController* PC = Cast<APlayerController>(GetOwningPlayer()))
+//    {
+//        FInputModeUIOnly InputModeUI;
+//        InputModeUI.SetWidgetToFocus(TakeWidget());
+//
+//        PC->SetInputMode(InputModeUI);
+//        PC->SetShowMouseCursor(true);
+//    }
+//}
 
-    RefreshRecipeListWidget();
-
-    SetVisibility(ESlateVisibility::Visible);
-
-    // DELETE ME
-    if (APlayerController* PC = Cast<APlayerController>(GetOwningPlayer()))
-    {
-        FInputModeUIOnly InputModeUI;
-        InputModeUI.SetWidgetToFocus(TakeWidget());
-
-        PC->SetInputMode(InputModeUI);
-        PC->SetShowMouseCursor(true);
-    }
-}
-
-void URecipeListWidget::CloseRecipeListWidget()
-{
-    SetVisibility(ESlateVisibility::Collapsed);
-}
+//void URecipeListWidget::CloseRecipeListWidget()
+//{
+//    SetVisibility(ESlateVisibility::Collapsed);
+//}
 
 void URecipeListWidget::OpenManufactureWidget(FName InRecipeId)
 {
@@ -118,6 +118,6 @@ void URecipeListWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    SetIsFocusable(true);
-    CloseRecipeListWidget();
+    //SetIsFocusable(true);
+    //CloseRecipeListWidget();
 }
