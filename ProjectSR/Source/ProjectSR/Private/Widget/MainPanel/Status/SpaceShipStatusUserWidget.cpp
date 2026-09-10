@@ -9,6 +9,8 @@
 void	USpaceShipStatusUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 {
 	InSpaceShip->OnSpaceShipLevelChange.BindUFunction(this, TEXT("UpdateStat__"));
+	InSpaceShip->OnDurabilityChange.AddDynamic(this, &USpaceShipStatusUserWidget::UpdateDurability__);
+	InSpaceShip->OnEnergyChange.AddDynamic(this, &USpaceShipStatusUserWidget::UpdateEnergy__);
 }
 
 bool USpaceShipStatusUserWidget::bIsLevelup(int32 InLevel)
@@ -29,8 +31,21 @@ void USpaceShipStatusUserWidget::UpdateStat__(const FSpaceShipStat& InSpaceShipS
 	this->CurrentEnergy->SetText(FText::AsNumber(InSpaceShipStat.MaxEnergy));
 	this->MaxEnergy->SetText(FText::AsNumber(InSpaceShipStat.MaxEnergy));
 	this->OperationalEnergy->SetText(FText::AsNumber(InSpaceShipStat.OperationalEnergy));
+	this->CurrentSpeed->SetText(FText::AsNumber(InSpaceShipStat.MoveSpeed));
 	//this->CurrentCapacity->SetText(FText::AsNumber(InSpaceShipStat.MaxCapacity));
 	this->MaxCapacity->SetText(FText::AsNumber(InSpaceShipStat.MaxCapacity));
+}
+
+void USpaceShipStatusUserWidget::UpdateDurability__(float InCurrentDurability, float InMaxDurability)
+{
+	this->CurrentDurability->SetText(FText::AsNumber(InCurrentDurability));
+	this->MaxDurability->SetText(FText::AsNumber(InMaxDurability));
+}
+
+void USpaceShipStatusUserWidget::UpdateEnergy__(float InCurrentEnergy, float InMaxEnergy)
+{
+	this->CurrentEnergy->SetText(FText::AsNumber(InCurrentEnergy));
+	this->MaxEnergy->SetText(FText::AsNumber(InMaxEnergy));
 }
 
 void USpaceShipStatusUserWidget::UpdateCurrentDurability__(float InDurability)
