@@ -8,9 +8,10 @@ class ASpaceShipActor;
 class APlayerCharacter;
 class UBoxComponent;
 class USpaceMapDataAsset;
+class APlayerController;
 
 UENUM(BlueprintType)
-enum class ESurvivalState : uint8 { Ready, Playing, WaitingForMeteor, GameOver };
+enum class ESurvivalState : uint8 { Ready, Playing, WaitingForMeteor, GameOver, PreparingDay, PreparationFailed };
 
 UENUM(BlueprintType)
 enum class ESurvivalEndReason : uint8 { ShipDestroyed, PlayerDied };
@@ -27,6 +28,7 @@ struct FSurvivalMapEntry
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSurvivalDayStarted, int32, Day, USpaceMapDataAsset*, MapData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSurvivalGameOver, ESurvivalEndReason, Reason, int32, Day);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDayPreparationFailed, int32, Day, const FString&, Reason);
 
 // Place one instance in the level. InteriorBounds must fit the cabin, not the meteor safe area.
 UCLASS()
@@ -40,8 +42,14 @@ public:
 	bool StartSurvival();
 	UFUNCTION(BlueprintCallable, Category = "Survival")
 	void FinishDay();
+	UFUNCTION(BlueprintCallable, Category = "Survival|Preparation")
+	bool RetryDayPreparation();
+	UFUNCTION(BlueprintPure, Category = "Survival|Preparation")
+	float GetDayPreparationProgress() const;
 	UFUNCTION(BlueprintPure, Category = "Survival")
 	bool IsPlayerInside() const;
+	UFUNCTION(BlueprintPure, Category = "Survival")
+	bool IsPlayerSafe() const;
 	UFUNCTION(BlueprintCallable, Category = "Survival")
 	void NotifyPlayerDeath();
 	void NotifyMeteorImpact(ASpaceShipActor* HitShip);
@@ -54,10 +62,27 @@ public:
 	TObjectPtr<UBoxComponent> InteriorBounds;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival")
 	TArray<FSurvivalMapEntry> Maps;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival", meta = (ClampMin = "1.0"))
-	float DayDuration = 300.0f;
+	// Snapshot of maximum oxygen / drain rate at the start of this day.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Survival")
+	float DayDuration = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Daily", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float LowEnergyOxygenRatio = 0.7f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Daily", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DailyHealthRecoveryRatio = 0.5f;
+	UPROPERTY(BlueprintReadOnly, Category = "Survival|Daily")
+	bool bLastDailyEnergySufficient = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival")
 	bool bAutoStart = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Preparation", meta = (ClampMin = "1.0"))
+	float DayPreparationTimeout = 30.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Preparation", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float MinimumInitialSpawnRatio = 0.8f;
+	UPROPERTY(BlueprintReadOnly, Category = "Survival|Preparation")
+	FString DayPreparationError;
+	UPROPERTY(BlueprintAssignable, Category = "Survival|Preparation")
+	FSurvivalDayStarted OnDayPreparationStarted;
+	UPROPERTY(BlueprintAssignable, Category = "Survival|Preparation")
+	FDayPreparationFailed OnDayPreparationFailed;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|SolarWind", meta = (ClampMin = "0.0"))
 	float FirstSolarWindDamage = 10.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|SolarWind", meta = (ClampMin = "0.0"))
@@ -79,6 +104,14 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 private:
 	void BeginDay__();
+	void CompleteDayPreparation__();
+	void FailDayPreparation__(const FString& Reason);
+	void SetPreparationInputLocked__(bool bLocked);
+	bool bPreparationInputLocked__ = false;
+	bool bPlayerInputWasEnabled__ = false;
+	bool bMovementTickWasEnabled__ = false;
+	TWeakObjectPtr<APlayerController> LockedController__;
+	void ApplyDailySettlement__();
 	void UpdateGravity__();
 	void EndGame__(ESurvivalEndReason Reason);
 	UFUNCTION()

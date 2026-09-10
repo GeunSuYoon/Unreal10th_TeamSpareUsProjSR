@@ -42,13 +42,18 @@ void USpaceSalvageWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 void USpaceSalvageWorldSubsystem::Deinitialize()
 {
-
+	CancelDayPreparation();
 	Super::Deinitialize();
 }
 
 void USpaceSalvageWorldSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (PreparationStatus__ == EDayPreparationStatus::Preparing)
+	{
+		PreparationTimeLeft__ -= DeltaTime;
+		if (PreparationTimeLeft__ <= 0.0f) { FailDayPreparation__(TEXT("Initial item spawning timed out.")); }
+	}
 	
 	if (this->MeteorSpawnTime__ <= 0.0f)
 	{
@@ -75,6 +80,11 @@ void USpaceSalvageWorldSubsystem::SetSafeArea(float InArea)
 
 void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData)
 {
+	if (SurvivalLoop.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("The survival loop owns map changes. Remove the separate SetSpaceMapData call."));
+		return;
+	}
 	if (!InSpaceMapData)
 	{
 		UE_LOG(LogTemp,
@@ -387,7 +397,10 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 					*ItemActor->GetName(),
 					*ItemActor->GetActorLocation().ToString()
 				);
-			})
+			}), [WeakThis = TWeakObjectPtr<USpaceSalvageWorldSubsystem>(this), Generation = SpawnGeneration__]()
+		{
+			return WeakThis.IsValid() && WeakThis->bSpawningEnabled__ && WeakThis->SpawnGeneration__ == Generation;
+		}
 	);
 }
 
@@ -499,7 +512,10 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 					*ItemActor->GetName(),
 					*ItemActor->GetActorLocation().ToString()
 				);
-			})
+			}), [WeakThis = TWeakObjectPtr<USpaceSalvageWorldSubsystem>(this), Generation = SpawnGeneration__]()
+		{
+			return WeakThis.IsValid() && WeakThis->bSpawningEnabled__ && WeakThis->SpawnGeneration__ == Generation;
+		}
 	);
 }
 
@@ -538,11 +554,217 @@ bool USpaceSalvageWorldSubsystem::HasPendingMeteor() const
 void USpaceSalvageWorldSubsystem::StopSurvival()
 {
 	EndOfDay();
-	++SpawnGeneration__;
+	CancelDayPreparation();
 	bMeteorLoading__ = false;
 	GetWorld()->GetTimerManager().ClearTimer(ItemDespawnHandler__);
 	if (ActiveMeteor__.IsValid() && ActiveMeteor__->IsMeteorActive()) { ActiveMeteor__->FinishUsingPoolable(); }
 	ActiveMeteor__.Reset();
+}
+
+void USpaceSalvageWorldSubsystem::CancelDayPreparation()
+{
+	++SpawnGeneration__; // Late async results belong to the cancelled generation.
+	PreparationStatus__ = EDayPreparationStatus::Idle;
+	PendingInitialItems__ = 0;
+	RequestedInitialItems__ = 0;
+	RequiredInitialItems__ = 0;
+	SuccessfulInitialItems__ = 0;
+	for (const auto& Prepared : PreparedItems__)
+	{
+		if (Prepared.Actor.IsValid()) { Prepared.Actor->FinishUsingPoolable(); }
+	}
+	PreparedItems__.Reset();
+}
+
+void USpaceSalvageWorldSubsystem::FailDayPreparation__(const FString& Reason)
+{
+	CancelDayPreparation();
+	PreparationError__ = Reason;
+	PreparationStatus__ = EDayPreparationStatus::Failed;
+	UE_LOG(LogTemp, Warning, TEXT("Day preparation failed: %s"), *Reason);
+}
+
+float USpaceSalvageWorldSubsystem::GetDayPreparationProgress() const
+{
+	if (PreparationStatus__ == EDayPreparationStatus::Ready) return 1.0f;
+	return RequestedInitialItems__ > 0
+		? static_cast<float>(RequestedInitialItems__ - PendingInitialItems__) / RequestedInitialItems__ : 0.0f;
+}
+
+void USpaceSalvageWorldSubsystem::PrepareDay(USpaceMapDataAsset* Map, float TimeoutSeconds, float MinimumSuccessRatio)
+{
+	EndOfDay();
+	GetWorld()->GetTimerManager().ClearTimer(ItemDespawnHandler__);
+	CancelDayPreparation();
+	for (const auto& Item : SpawnedItem__)
+	{
+		if (Item.IsValid() && !Item->IsHidden()) { Item->FinishUsingPoolable(); }
+	}
+	SpawnedItem__.Reset();
+	PreparationError__.Reset();
+	PreparationStatus__ = EDayPreparationStatus::Preparing;
+	if (!IsValid(Map) || !IsValid(SpaceShipActor__) || !IsValid(SpaceRootActor__)
+		|| !IsValid(SpaceRootActor__->GetItemPivot()) || !FMath::IsFinite(TimeoutSeconds) || TimeoutSeconds <= 0.0f
+		|| !FMath::IsFinite(MinimumSuccessRatio))
+	{
+		FailDayPreparation__(TEXT("Assign a valid map, ship, item pivot and positive preparation timeout."));
+		return;
+	}
+	SpaceMapData__ = Map;
+	ItemSpawnTimer__ = Map->ItemSpawnTime;
+	ItemSpawnDist__ = Map->ItemSpawnDist;
+	ItemDespawnDistSquared__ = FMath::Square(Map->ItemSpawnDist * 1.5f);
+	ItemMoveSpeed__ = Map->ItemMoveSpeed;
+	MeteorSpawnDelayTime__ = Map->MeteorSpawnDelayTime;
+	MeteorSpawnTime__ = Map->MeteorSpawnTime;
+	PreparationTimeLeft__ = TimeoutSeconds;
+	RequestedInitialItems__ = Map->ItemSpawnInitCount;
+	PendingInitialItems__ = RequestedInitialItems__; // Set before any callback can run synchronously.
+	SuccessfulInitialItems__ = 0;
+	RequiredInitialItems__ = FMath::CeilToInt(RequestedInitialItems__ * FMath::Clamp(MinimumSuccessRatio, 0.0f, 1.0f));
+	if (RequestedInitialItems__ < 0 || !FMath::IsFinite(ItemSpawnTimer__)
+		|| !FMath::IsFinite(MeteorSpawnTime__) || !FMath::IsFinite(MeteorSpawnDelayTime__)
+		|| !FMath::IsFinite(ItemSpawnDist__) || !FMath::IsFinite(ItemMoveSpeed__) || ItemMoveSpeed__ < 0.0f)
+	{
+		FailDayPreparation__(TEXT("Invalid map spawn counts, timing, distance or speed."));
+		return;
+	}
+	if ((RequestedInitialItems__ > 0 || ItemSpawnTimer__ > 0.0f) && ItemSpawnDist__ <= SafeArea__)
+	{
+		FailDayPreparation__(TEXT("ItemSpawnDist must exceed the ship safe-area radius."));
+		return;
+	}
+	const uint32 Generation = SpawnGeneration__;
+	OnSpaceMapUpdate.ExecuteIfBound(ItemSpawnDist__);
+	if (Generation != SpawnGeneration__) return;
+	if (RequiredInitialItems__ == 0) { PreparationStatus__ = EDayPreparationStatus::Ready; return; }
+	for (int32 Index = 0; Index < RequestedInitialItems__ && PreparationStatus__ == EDayPreparationStatus::Preparing; ++Index)
+	{
+		SpawnPreparedItem__();
+	}
+}
+
+void USpaceSalvageWorldSubsystem::ResolvePreparedItem__(bool bSuccess)
+{
+	if (PreparationStatus__ != EDayPreparationStatus::Preparing) return;
+	PendingInitialItems__ = FMath::Max(0, PendingInitialItems__ - 1);
+	if (bSuccess) ++SuccessfulInitialItems__;
+	if (SuccessfulInitialItems__ >= RequiredInitialItems__)
+	{
+		// Outstanding async requests are no longer part of this ready generation.
+		++SpawnGeneration__;
+		PreparationStatus__ = EDayPreparationStatus::Ready;
+		return;
+	}
+	if (SuccessfulInitialItems__ + PendingInitialItems__ < RequiredInitialItems__)
+	{
+		FailDayPreparation__(FString::Printf(TEXT("Only %d of %d initial items spawned; %d required."),
+			SuccessfulInitialItems__, RequestedInitialItems__, RequiredInitialItems__));
+	}
+}
+
+void USpaceSalvageWorldSubsystem::SpawnPreparedItem__()
+{
+	auto* Factory = GetWorld()->GetSubsystem<UItemActorFactorySubsystem>();
+	auto* ItemData = SelectSpawnItemData__();
+	if (!Factory || !IsValid(ItemData) || ItemData->ItemActorClass.IsNull() || ItemData->Mesh.IsNull())
+	{
+		ResolvePreparedItem__(false);
+		return;
+	}
+	// Ship-relative sphere: never use world origin for safe-area placement.
+	// Tangential fallback guarantees a safe route even close to the inner radius.
+	const FVector Direction = FMath::VRand();
+	const FVector Offset = Direction * FMath::FRandRange((SafeArea__ + ItemSpawnDist__) * 0.5f, ItemSpawnDist__);
+	FVector MoveDirection;
+	FVector OtherAxis;
+	Direction.FindBestAxisVectors(MoveDirection, OtherAxis);
+	for (int32 Attempt = 0; Attempt < ItemSpawnMaxRetryCount__; ++Attempt)
+	{
+		const FVector Candidate = (-Direction + FMath::VRand() * 0.6f).GetSafeNormal();
+		if (!Candidate.IsNearlyZero() && FUtilFunction::GetPointToLineDistanceSquared(FVector::ZeroVector, Offset, Candidate) > SafeAreaSquared__)
+		{
+			MoveDirection = Candidate;
+			break;
+		}
+	}
+	const FVector Velocity = MoveDirection * ItemMoveSpeed__ * FMath::FRandRange(0.8f, 1.2f);
+	const FTransform Transform(FRotator::ZeroRotator, SpaceShipActor__->GetActorLocation() + Offset);
+	const uint32 Generation = SpawnGeneration__;
+	TWeakObjectPtr<UItemDataAsset> WeakData(ItemData);
+	Factory->SpawnItemActorAsync(ItemData, Transform, FOnPickupSpawned::CreateWeakLambda(this,
+		[this, Generation, Velocity, WeakData](AItemActor* Item)
+		{
+			if (Generation != SpawnGeneration__ || PreparationStatus__ != EDayPreparationStatus::Preparing)
+			{
+				if (IsValid(Item)) Item->FinishUsingPoolable();
+				return;
+			}
+			if (!IsValid(Item) || !WeakData.IsValid() || !WeakData->IsLoaded()
+				|| !IsValid(SpaceRootActor__) || !IsValid(SpaceRootActor__->GetItemPivot()))
+			{
+				if (IsValid(Item)) Item->FinishUsingPoolable();
+				ResolvePreparedItem__(false);
+				return;
+			}
+			if (PreparedItems__.ContainsByPredicate([Item](const FPreparedItem& P) { return P.Actor.Get() == Item; }))
+			{
+				PreparedItems__.RemoveAll([Item](const FPreparedItem& P) { return P.Actor.Get() == Item; });
+				SuccessfulInitialItems__ = FMath::Max(0, SuccessfulInitialItems__ - 1);
+				Item->FinishUsingPoolable();
+				ResolvePreparedItem__(false);
+				return;
+			}
+			Item->AttachToComponent(SpaceRootActor__->GetItemPivot(), FAttachmentTransformRules::KeepWorldTransform);
+			FPreparedItem Prepared;
+			Prepared.Actor = Item;
+			Prepared.Velocity = Velocity;
+			Prepared.bTickEnabled = Item->IsActorTickEnabled();
+			Prepared.bCollisionEnabled = Item->GetActorEnableCollision();
+			PreparedItems__.Add(Prepared);
+			Item->SetRelativeVelocity(FVector::ZeroVector);
+			Item->SetActorTickEnabled(false);
+			Item->SetActorEnableCollision(false);
+			ResolvePreparedItem__(true);
+		}), [WeakThis = TWeakObjectPtr<USpaceSalvageWorldSubsystem>(this), Generation]()
+		{
+			return WeakThis.IsValid() && WeakThis->SpawnGeneration__ == Generation
+				&& WeakThis->PreparationStatus__ == EDayPreparationStatus::Preparing;
+		});
+}
+
+bool USpaceSalvageWorldSubsystem::ActivatePreparedDay()
+{
+	if (PreparationStatus__ != EDayPreparationStatus::Ready) return false;
+	for (const auto& Prepared : PreparedItems__)
+	{
+		if (!Prepared.Actor.IsValid())
+		{
+			FailDayPreparation__(TEXT("An initial item disappeared before day activation."));
+			return false;
+		}
+	}
+	for (const auto& Prepared : PreparedItems__)
+	{
+		auto* Item = Prepared.Actor.Get();
+		// Pooled actors may still carry their returned hidden flag after an async reuse.
+		Item->SetActorHiddenInGame(false);
+		Item->SetRelativeVelocity(Prepared.Velocity);
+		Item->SetActorTickEnabled(Prepared.bTickEnabled);
+		Item->SetActorEnableCollision(Prepared.bCollisionEnabled);
+		SpawnedItem__.AddUnique(Item);
+	}
+	PreparedItems__.Reset();
+	PreparationStatus__ = EDayPreparationStatus::Idle;
+	bSpawningEnabled__ = true;
+	auto& Timers = GetWorld()->GetTimerManager();
+	Timers.SetTimer(ItemSpawnHandler__, this, &USpaceSalvageWorldSubsystem::SpawnItemActor__, ItemSpawnTimer__, true);
+	Timers.SetTimer(ItemDespawnHandler__, this, &USpaceSalvageWorldSubsystem::DespawnItemActor__, ItemDespawnTimer__, true);
+	if (MeteorSpawnTime__ > 0.0f)
+	{
+		Timers.SetTimer(MeteorSpawnHandler__, this, &USpaceSalvageWorldSubsystem::MeteorDetect, MeteorSpawnTime__, true, MeteorSpawnDelayTime__);
+	}
+	return true;
 }
 
 void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)

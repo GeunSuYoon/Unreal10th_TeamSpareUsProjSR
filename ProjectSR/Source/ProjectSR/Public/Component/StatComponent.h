@@ -40,6 +40,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stat")
 	void ModifyOxygen(float Amount);
 
+	// Called once by the survival loop after a day has elapsed.
+	void ApplyDailyRecovery(float OxygenFillRatio, float HealthRecoveryRatio);
+
+	UFUNCTION(BlueprintPure, Category = "Stat")
+	float GetOxygenDrainRate() const { return OxygenDrainRate; }
+
 	// 외부(캐릭터, 장비 등)에서 알아야 할 커맨드 함수
 	UFUNCTION(BlueprintCallable, Category = "Stat")
 	void ExecuteStatCommand(const FStatChangeCommand& Command);
@@ -117,13 +123,13 @@ protected:
 	// 부스트 시 추가 허기 감소 배율
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate") float BoostHungerDrainMultiplier = 2.0f;
 	// 무중력 상태시 산소 감소율
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate") float OxygenDrainRate = 2.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate", meta = (ClampMin = "0.01")) float OxygenDrainRate = 1.0f;
 	// 허기 고갈시 체력 감소율
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate") float StarvationDamageRate = 5.0f;
 	// 산소 고갈시 체력 감소율
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate") float NoOxygenDamageRate = 10.0f;
-	// 우주선 복귀시 산소 회복 속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate") float OxygenRecoverRate = 20.0f;
+	// Legacy BP property; cabin oxygen no longer regenerates. Daily recovery is managed by SurvivalLoopActor.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate", meta = (DeprecatedProperty, DeprecationMessage = "Cabin oxygen recovery is disabled. Use SurvivalLoopActor daily recovery settings.")) float OxygenRecoverRate = 0.0f;
 
 private:
 	// 현재 스탯 값
