@@ -9,6 +9,7 @@ class APlayerCharacter;
 class UBoxComponent;
 class USpaceMapDataAsset;
 class APlayerController;
+class UUserWidget;
 
 UENUM(BlueprintType)
 enum class ESurvivalState : uint8 { Ready, Playing, WaitingForMeteor, GameOver, PreparingDay, PreparationFailed, Cleared };
@@ -70,6 +71,10 @@ public:
 	float LowEnergyOxygenRatio = 0.7f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Daily", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float DailyHealthRecoveryRatio = 0.5f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Transition", meta = (ClampMin = "0.0"))
+	float DayFadeOutDuration = 0.75f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Transition", meta = (ClampMin = "0.0"))
+	float DayFadeInDuration = 0.75f;
 	UPROPERTY(BlueprintReadOnly, Category = "Survival|Daily")
 	bool bLastDailyEnergySufficient = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival")
@@ -106,22 +111,44 @@ public:
 	FSurvivalGameOver OnGameOver;
 	UPROPERTY(BlueprintAssignable, Category = "Survival")
 	FSurvivalGameCleared OnGameCleared;
+
+	// Result text remains owned by the widget Blueprint; C++ only controls display and navigation.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Survival|GameOver")
+	TSubclassOf<UUserWidget> GameOverWidgetClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|GameOver")
+	FName MainMenuLevel = TEXT("/Game/FirstPerson/Lvl_FirstPerson");
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 private:
 	void BeginDay__();
 	void CompleteDayPreparation__();
+	void HandleDayFadeOutComplete__();
+	void StartDayFadeIn__();
+	void HandleDayFadeInComplete__();
+	void EnterPlayableDay__();
+	void RecenterPlayer__();
 	void FailDayPreparation__(const FString& Reason);
 	void SetPreparationInputLocked__(bool bLocked);
 	bool bPreparationInputLocked__ = false;
 	bool bPlayerInputWasEnabled__ = false;
 	bool bMovementTickWasEnabled__ = false;
 	TWeakObjectPtr<APlayerController> LockedController__;
+	FTimerHandle DayFadeInTimer__;
+	float DayFadeOutRemaining__ = 0.0f;
+	bool bTransitionFromCompletedDay__ = false;
 	void ApplyDailySettlement__();
 	void UpdateGravity__();
 	void EndGame__(ESurvivalEndReason Reason);
 	void ClearGame__();
+	void ShowGameOverWidget__();
+	UFUNCTION()
+	void HandleGoToMainMenu__();
+
+	UPROPERTY(Transient)
+	TObjectPtr<UUserWidget> GameOverWidgetInstance__;
+
 	UFUNCTION()
 	void HandleDurability__(float Current, float Maximum);
 };

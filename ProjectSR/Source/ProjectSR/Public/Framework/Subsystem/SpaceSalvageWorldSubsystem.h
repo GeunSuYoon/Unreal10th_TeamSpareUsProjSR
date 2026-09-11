@@ -66,6 +66,8 @@ public:
 	void	RegisterPlayer(APlayerCharacter* InPlayer);
 	void	MeteorDetect();
 	void	EndOfDay();
+	// Cancels outstanding async work and returns every day-scoped item/meteor to its pool.
+	void ClearDayActors();
 	bool	HasPendingMeteor() const;
 	void	StopSurvival();
 	// Survival-only two-phase start. Actors stay inert until ActivatePreparedDay succeeds.

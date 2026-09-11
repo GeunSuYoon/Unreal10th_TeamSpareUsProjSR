@@ -57,6 +57,8 @@ bool FSurvivalLoopTest::RunTest(const FString& Parameters)
 	auto* Ship = World->SpawnActor<ASpaceShipActor>();
 	auto* Player = World->SpawnActor<APlayerCharacter>();
 	auto* Loop = World->SpawnActor<ASurvivalLoopActor>();
+	Loop->DayFadeOutDuration = 0.0f;
+	Loop->DayFadeInDuration = 0.0f;
 	Player->DispatchBeginPlay();
 	auto* Salvage = World->GetSubsystem<USpaceSalvageWorldSubsystem>();
 	if (!Ship || !Player || !Loop || !Salvage) { AddError(TEXT("Test setup failed")); World->DestroyWorld(false); return false; }
@@ -119,6 +121,8 @@ bool FSurvivalDailyTest::RunTest(const FString& Parameters)
 	auto* Ship = World->SpawnActor<ASpaceShipActor>();
 	auto* Player = World->SpawnActor<APlayerCharacter>();
 	auto* Loop = World->SpawnActor<ASurvivalLoopActor>();
+	Loop->DayFadeOutDuration = 0.0f;
+	Loop->DayFadeInDuration = 0.0f;
 	Player->DispatchBeginPlay();
 	auto* Stats = Player->FindComponentByClass<UStatComponent>();
 	FSpaceShipStat ShipStat;
@@ -212,6 +216,8 @@ bool FSurvivalPreparationTest::RunTest(const FString& Parameters)
 	PC->Possess(Player);
 	Player->DispatchBeginPlay();
 	auto* Loop = World->SpawnActor<ASurvivalLoopActor>();
+	Loop->DayFadeOutDuration = 0.0f;
+	Loop->DayFadeInDuration = 0.0f;
 	auto* Salvage = World->GetSubsystem<USpaceSalvageWorldSubsystem>();
 	auto* Stats = Player->FindComponentByClass<UStatComponent>();
 	FSpaceShipStat ShipStat;

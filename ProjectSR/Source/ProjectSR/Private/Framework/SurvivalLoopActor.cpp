@@ -11,6 +11,11 @@
 #include "Data/SpaceMap/SpaceMapDataAsset.h"
 #include "GameFramework/PlayerController.h"
 #include "Save/SurvivalSaveSubsystem.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/Button.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Camera/PlayerCameraManager.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 ASurvivalLoopActor::ASurvivalLoopActor()
 {
@@ -19,6 +24,13 @@ ASurvivalLoopActor::ASurvivalLoopActor()
 	SetRootComponent(InteriorBounds);
 	InteriorBounds->SetBoxExtent(FVector(500.0f, 300.0f, 200.0f));
 	InteriorBounds->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> GameOverClassFinder(
+		TEXT("/Game/Blueprint/GeunSuYoon/Widget/MainPanel/WBP_GameOver"));
+	if (GameOverClassFinder.Succeeded())
+	{
+		GameOverWidgetClass = GameOverClassFinder.Class;
+	}
 }
 
 void ASurvivalLoopActor::BeginPlay()
@@ -126,7 +138,6 @@ void ASurvivalLoopActor::CompleteDayPreparation__()
 	++CurrentDay;
 	if (CurrentDay > 1) { ApplyDailySettlement__(); }
 	if (State == ESurvivalState::GameOver) return;
-	State = ESurvivalState::Playing;
 	RemainingDayTime = DayDuration;
 	UpdateGravity__();
 	if (CurrentDay % 3 == 0)
@@ -136,17 +147,35 @@ void ASurvivalLoopActor::CompleteDayPreparation__()
 	}
 	if (State != ESurvivalState::GameOver)
 	{
-		SetPreparationInputLocked__(false);
-		OnDayStarted.Broadcast(CurrentDay, CurrentMap);
-		if (FinalDay > 0 && CurrentDay >= FinalDay) { ClearGame__(); }
+		if (bTransitionFromCompletedDay__) StartDayFadeIn__();
+		else EnterPlayableDay__();
 	}
+}
+
+void ASurvivalLoopActor::EnterPlayableDay__()
+{
+	if (State == ESurvivalState::GameOver || State == ESurvivalState::Cleared) return;
+	State = ESurvivalState::Playing;
+	SetPreparationInputLocked__(false);
+	OnDayStarted.Broadcast(CurrentDay, CurrentMap);
+	if (FinalDay > 0 && CurrentDay >= FinalDay) ClearGame__();
 }
 
 void ASurvivalLoopActor::FailDayPreparation__(const FString& Reason)
 {
 	DayPreparationError = Reason;
 	State = ESurvivalState::PreparationFailed;
-	GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->CancelDayPreparation();
+	if (USpaceSalvageWorldSubsystem* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>())
+	{
+		Salvage->CancelDayPreparation();
+	}
+	GetWorldTimerManager().ClearTimer(DayFadeInTimer__);
+	bTransitionFromCompletedDay__ = false;
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0); PC && PC->PlayerCameraManager)
+	{
+		PC->PlayerCameraManager->StartCameraFade(1.0f, 0.0f, DayFadeInDuration, FLinearColor::Black, false, false);
+	}
+	SetPreparationInputLocked__(false);
 	OnDayPreparationFailed.Broadcast(CurrentDay + 1, DayPreparationError);
 }
 
@@ -209,6 +238,12 @@ void ASurvivalLoopActor::Tick(float DeltaSeconds)
 	if (!IsValid(Player)) { NotifyPlayerDeath(); return; }
 	if (!IsValid(SpaceShip)) { EndGame__(ESurvivalEndReason::ShipDestroyed); return; }
 	if (State == ESurvivalState::PreparationFailed) return;
+	if (State == ESurvivalState::WaitingForMeteor)
+	{
+		DayFadeOutRemaining__ = FMath::Max(0.0f, DayFadeOutRemaining__ - FMath::Max(0.0f, DeltaSeconds));
+		if (DayFadeOutRemaining__ <= 0.0f) HandleDayFadeOutComplete__();
+		return;
+	}
 	if (State == ESurvivalState::PreparingDay)
 	{
 		auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
@@ -222,17 +257,6 @@ void ASurvivalLoopActor::Tick(float DeltaSeconds)
 		RemainingDayTime = FMath::Max(0.0f, RemainingDayTime - DeltaSeconds);
 		if (RemainingDayTime <= 0.0f) { FinishDay(); }
 	}
-	else if (State == ESurvivalState::WaitingForMeteor && !GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->HasPendingMeteor())
-	{
-		if (UGameInstance* GameInstance = GetGameInstance())
-		{
-			if (USurvivalSaveSubsystem* SaveSubsystem = GameInstance->GetSubsystem<USurvivalSaveSubsystem>())
-			{
-				SaveSubsystem->SaveCompletedDay(this);
-			}
-		}
-		BeginDay__();
-	}
 }
 
 void ASurvivalLoopActor::FinishDay()
@@ -240,7 +264,76 @@ void ASurvivalLoopActor::FinishDay()
 	if (State != ESurvivalState::Playing) { return; }
 	RemainingDayTime = 0.0f;
 	State = ESurvivalState::WaitingForMeteor;
+	SetPreparationInputLocked__(true);
 	GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->EndOfDay();
+
+	const float FadeDuration = FMath::Max(0.0f, DayFadeOutDuration);
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0); PC && PC->PlayerCameraManager)
+	{
+		PC->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, FadeDuration, FLinearColor::Black, false, true);
+	}
+	// Tick owns this countdown. Even a zero-duration transition completes on the
+	// next tick, preserving an observable and re-entry-safe WaitingForMeteor state.
+	DayFadeOutRemaining__ = FadeDuration;
+}
+
+void ASurvivalLoopActor::HandleDayFadeOutComplete__()
+{
+	if (State != ESurvivalState::WaitingForMeteor) return;
+
+	USpaceSalvageWorldSubsystem* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+	if (!Salvage)
+	{
+		FailDayPreparation__(TEXT("SpaceSalvageWorldSubsystem is missing during day transition."));
+		return;
+	}
+	Salvage->ClearDayActors();
+
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (USurvivalSaveSubsystem* SaveSubsystem = GameInstance->GetSubsystem<USurvivalSaveSubsystem>())
+		{
+			SaveSubsystem->SaveCompletedDay(this);
+		}
+	}
+
+	RecenterPlayer__();
+	bTransitionFromCompletedDay__ = true;
+	BeginDay__();
+}
+
+void ASurvivalLoopActor::RecenterPlayer__()
+{
+	if (!IsValid(Player) || !IsValid(InteriorBounds)) return;
+	if (UCharacterMovementComponent* Movement = Player->GetCharacterMovement())
+	{
+		Movement->StopMovementImmediately();
+	}
+	Player->SetActorLocation(InteriorBounds->GetComponentLocation(), false, nullptr, ETeleportType::TeleportPhysics);
+}
+
+void ASurvivalLoopActor::StartDayFadeIn__()
+{
+	const float FadeDuration = FMath::Max(0.0f, DayFadeInDuration);
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0); PC && PC->PlayerCameraManager)
+	{
+		PC->PlayerCameraManager->StartCameraFade(1.0f, 0.0f, FadeDuration, FLinearColor::Black, false, false);
+	}
+	if (FadeDuration <= 0.0f)
+	{
+		HandleDayFadeInComplete__();
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(DayFadeInTimer__, this,
+			&ThisClass::HandleDayFadeInComplete__, FadeDuration, false);
+	}
+}
+
+void ASurvivalLoopActor::HandleDayFadeInComplete__()
+{
+	bTransitionFromCompletedDay__ = false;
+	EnterPlayableDay__();
 }
 
 bool ASurvivalLoopActor::IsPlayerInside() const
@@ -283,17 +376,73 @@ void ASurvivalLoopActor::EndGame__(ESurvivalEndReason Reason)
 {
 	if (State == ESurvivalState::Ready || State == ESurvivalState::GameOver || State == ESurvivalState::Cleared) { return; }
 	State = ESurvivalState::GameOver;
+	GetWorldTimerManager().ClearTimer(DayFadeInTimer__);
+	DayFadeOutRemaining__ = 0.0f;
+	bTransitionFromCompletedDay__ = false;
 	SetPreparationInputLocked__(false);
 	GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->StopSurvival();
 	if (IsValid(SpaceShip) && SpaceShip->GetMeteorAvoidance()) { SpaceShip->GetMeteorAvoidance()->ClearMeteor(); }
 	OnGameOver.Broadcast(Reason, CurrentDay);
 	UGameplayStatics::SetGamePaused(this, true);
+	ShowGameOverWidget__();
+}
+
+void ASurvivalLoopActor::ShowGameOverWidget__()
+{
+	if (IsValid(GameOverWidgetInstance__)) return;
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	if (!IsValid(PlayerController) || !GameOverWidgetClass)
+	{
+		// Headless automation worlds intentionally have no local player controller.
+		UE_LOG(LogTemp, Warning, TEXT("Cannot show game over UI: PlayerController or GameOverWidgetClass is invalid."));
+		return;
+	}
+
+	GameOverWidgetInstance__ = CreateWidget<UUserWidget>(PlayerController, GameOverWidgetClass);
+	if (!IsValid(GameOverWidgetInstance__))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to create WBP_GameOver."));
+		return;
+	}
+
+	UButton* MainMenuButton = Cast<UButton>(GameOverWidgetInstance__->GetWidgetFromName(TEXT("GoToMainButton")));
+	if (MainMenuButton)
+	{
+		MainMenuButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleGoToMainMenu__);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("WBP_GameOver requires a Button named 'GoToMainButton'."));
+	}
+
+	GameOverWidgetInstance__->AddToViewport(1000);
+	FInputModeUIOnly InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	InputMode.SetWidgetToFocus(GameOverWidgetInstance__->TakeWidget());
+	PlayerController->SetInputMode(InputMode);
+	PlayerController->SetShowMouseCursor(true);
+}
+
+void ASurvivalLoopActor::HandleGoToMainMenu__()
+{
+	if (MainMenuLevel.IsNone())
+	{
+		UE_LOG(LogTemp, Error, TEXT("MainMenuLevel is not configured."));
+		return;
+	}
+
+	UGameplayStatics::SetGamePaused(this, false);
+	UGameplayStatics::OpenLevel(this, MainMenuLevel);
 }
 
 void ASurvivalLoopActor::ClearGame__()
 {
 	if (State == ESurvivalState::Ready || State == ESurvivalState::GameOver || State == ESurvivalState::Cleared) { return; }
 	State = ESurvivalState::Cleared;
+	GetWorldTimerManager().ClearTimer(DayFadeInTimer__);
+	DayFadeOutRemaining__ = 0.0f;
+	bTransitionFromCompletedDay__ = false;
 	SetPreparationInputLocked__(false);
 	GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->StopSurvival();
 	if (IsValid(SpaceShip) && SpaceShip->GetMeteorAvoidance()) { SpaceShip->GetMeteorAvoidance()->ClearMeteor(); }
@@ -303,6 +452,7 @@ void ASurvivalLoopActor::ClearGame__()
 
 void ASurvivalLoopActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	GetWorldTimerManager().ClearTimer(DayFadeInTimer__);
 	SetPreparationInputLocked__(false);
 	if (IsValid(SpaceShip)) { SpaceShip->OnDurabilityChange.RemoveDynamic(this, &ASurvivalLoopActor::HandleDurability__); }
 	if (IsValid(Player))

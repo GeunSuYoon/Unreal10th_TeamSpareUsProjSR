@@ -204,6 +204,31 @@ void USpaceSalvageWorldSubsystem::EndOfDay()
 	bSpawningEnabled__ = false;
 }
 
+void USpaceSalvageWorldSubsystem::ClearDayActors()
+{
+	EndOfDay();
+	GetWorld()->GetTimerManager().ClearTimer(ItemDespawnHandler__);
+	CancelDayPreparation(); // Also invalidates late asynchronous item callbacks.
+	bMeteorLoading__ = false;
+
+	for (const TWeakObjectPtr<AItemActor>& Item : SpawnedItem__)
+	{
+		if (Item.IsValid() && !Item->IsHidden()) Item->FinishUsingPoolable();
+	}
+	SpawnedItem__.Reset();
+
+	if (ActiveMeteor__.IsValid() && ActiveMeteor__->IsMeteorActive())
+	{
+		ActiveMeteor__->FinishUsingPoolable();
+	}
+	ActiveMeteor__.Reset();
+
+	if (IsValid(SpaceShipActor__) && SpaceShipActor__->GetMeteorAvoidance())
+	{
+		SpaceShipActor__->GetMeteorAvoidance()->ClearMeteor();
+	}
+}
+
 void USpaceSalvageWorldSubsystem::SpaceShipRotateDetect(const FRotator& InRotate)
 {
 	if (this->SpaceRootActor__)
