@@ -26,7 +26,7 @@ void UManufactureWidget::RefreshManufactureWidget(const FManufactureWidgetDispla
     TMap<FName, int32> IngredientStatusMap = InManufactureWidgetRefreshData.IngredientStatusMap;
 
 
-    RecipeName->SetText(FText::FromName(CurrentRecipeId__));
+    RecipeName->SetText(FText::FromName(InManufactureWidgetRefreshData.RecipeEntry.RecipeName));
 
     ResultItemGridPanel->ClearChildren();
     for (int i = 0; i < RecipeData.Results.Num(); i++)

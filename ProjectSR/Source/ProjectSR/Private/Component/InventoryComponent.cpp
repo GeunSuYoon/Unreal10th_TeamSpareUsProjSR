@@ -39,6 +39,9 @@ bool UInventoryComponent::ExecuteCommand(const FInventoryCommand& Command, FInve
         case EInventoryCommandType::Clear:
             HandleClearCommand_(Command, OutResult);
             break;
+        case EInventoryCommandType::ModifySize:
+            HandleModifySizeCommand_(Command, OutResult);
+            break;
         case EInventoryCommandType::Equip:
             HandleEquipCommand_(Command, OutResult);
             break;
@@ -292,6 +295,21 @@ bool UInventoryComponent::HandleClearCommand_(const FInventoryCommand& Command, 
     return OutResult.bSuccess;
 }
 
+bool UInventoryComponent::HandleModifySizeCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult)
+{
+    OutResult.bSuccess = false;
+
+    if (Command.Count == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::HandleModifySizeCommand_()] : Command.Count가 0 입니다."));
+        return OutResult.bSuccess;
+    }
+
+    OutResult.bSuccess = SetInventorySize(Command.Count);
+
+    return OutResult.bSuccess;
+}
+
 bool UInventoryComponent::HandleEquipCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult)
 {
     OutResult.bSuccess = false;
@@ -419,7 +437,7 @@ int32 UInventoryComponent::GetSpendableItemCount(const UItemDataAsset* ItemData)
 }
 
 bool UInventoryComponent::ProcessIngredients(const TArray<FIngredient>& Ingredients,
-    const TArray<UInventoryComponent*>& Inventories, bool bConsume)
+                                             const TArray<UInventoryComponent*>& Inventories, bool bConsume)
 {
     if (!IsInGameThread()) return false;
     TMap<const UItemDataAsset*, int64> Required;
@@ -632,6 +650,43 @@ int32 UInventoryComponent::GetUsingSlotCount() const
     }
 
     return Count;
+}
+
+bool UInventoryComponent::SetInventorySize(int InSizeDiff)
+{
+    // 크기가 늘어나면 그냥 늘리면 됨
+    // 크기가 줄어들면 줄어드는 슬롯에 있던 아이템을 버리도록 구현
+
+    const int32 TargetInventorySize = InventorySize + InSizeDiff;
+
+    if (InSizeDiff < 0)
+    {
+        const int32 LastInventorySlotIndex = InventorySize - 1;
+        for (int32 i = LastInventorySlotIndex; i >= TargetInventorySize; --i)
+        {
+            FInventoryCommandResult Result;
+
+            ExecuteCommand(
+                FInventoryCommand::MakeDropCommand(i, GetOwner()->GetActorLocation()),
+                Result);
+
+            if (!Result.bSuccess)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::SetInventorySize()] : %d번 슬롯 아이템 버리기에 실패했습니다. 해당 슬롯까지만 인벤토리 크기를 줄입니다."),
+                       i);
+
+                InventorySize = i + 1;
+                Slots_.SetNum(InventorySize + 1);
+
+                return false;
+            }
+        }
+    }
+
+    InventorySize = TargetInventorySize;
+    Slots_.SetNum(InventorySize + 1);
+
+    return true;
 }
 
 void UInventoryComponent::BeginPlay()

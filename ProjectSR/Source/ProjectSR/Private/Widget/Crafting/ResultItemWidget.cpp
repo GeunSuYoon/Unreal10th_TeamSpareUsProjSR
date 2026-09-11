@@ -22,7 +22,20 @@ void UResultItemWidget::RefreshResultItemWidget(const FIngredient& InResultItem)
     }
     else
     {
-        ItemData->Icon.LoadSynchronous();
+        if (!ItemData->Icon.IsValid())
+        {
+            ItemData->RequestDataLoad(
+                FStreamableDelegate::CreateWeakLambda(
+                    this,
+                    [this, ItemData]() {
+                        if (ItemData)
+                        {
+                            ResultItemIcon->SetBrushFromTexture(ItemData->Icon.Get());
+                        }
+                    }
+                )
+            );
+        }
 
         ResultItemIcon->SetBrushFromTexture(ItemData->Icon.Get());
         ResultItemIcon->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));

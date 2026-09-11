@@ -24,11 +24,24 @@ void UManufactureResultItemWidget::RefreshManufactureResultItemWidget(const FIng
     }
     else
     {
-        ItemData->Icon.LoadSynchronous();
+        if (!ItemData->Icon.IsValid())
+        {
+            ItemData->RequestDataLoad(
+                FStreamableDelegate::CreateWeakLambda(
+                    this,
+                    [this, ItemData]() {
+                        if (ItemData)
+                        {
+                            ResultItemIcon->SetBrushFromTexture(ItemData->Icon.Get());
+                        }
+                    }
+                )
+            );
+        }
 
         ResultItemIcon->SetBrushFromTexture(ItemData->Icon.Get());
         ResultItemIcon->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-        ResultItemName->SetText(FText::FromName(ItemData->ItemId));
+        ResultItemName->SetText(ItemData->DisplayName);
         ResultItemName->SetVisibility(ESlateVisibility::Visible);
         ResultItemQuantity->SetText(FText::AsNumber(Quantity));
         ResultItemQuantity->SetVisibility(ESlateVisibility::Visible);
