@@ -15,7 +15,6 @@ class ASpaceRootActor;
 class UMeteorAvoidanceComponent;
 class UItemDataAsset;
 class USpaceMapDataAsset;
-class USphereComponent;
 class AMeteorItemActor;
 class ASurvivalLoopActor;
 class APlayerCharacter;
@@ -96,11 +95,6 @@ public:
 
 	FOnSpaceMapUpdate	OnSpaceMapUpdate;
 	FOnMeteorSpawn		OnMeteorSpawn;
-
-protected:
-	// 테스트용 코드에용
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Area")
-	TObjectPtr<USphereComponent> SafeAreaVisualizer_;
 
 private:
 	void FailDayPreparation__(const FString& Reason);

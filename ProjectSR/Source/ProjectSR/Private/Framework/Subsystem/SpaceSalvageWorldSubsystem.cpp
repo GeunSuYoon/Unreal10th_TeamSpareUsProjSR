@@ -9,7 +9,6 @@
 #include "SpaceShip/MeteorAvoidanceComponent.h"
 #include "Data/SpaceMap/SpaceMapDataAsset.h"
 #include "Interface/PoolableInterface.h"
-#include "Components/SphereComponent.h"
 #include "Item/ItemActor.h"
 #include "Item/MeteorItemActor.h"
 #include "Utility/UtilFunction.h"
@@ -82,7 +81,6 @@ void USpaceSalvageWorldSubsystem::SetSafeArea(float InArea)
 {
 	this->SafeArea__ = InArea;
 	this->SafeAreaSquared__ = FMath::Square(InArea);
-	this->SafeAreaVisualizer_->SetSphereRadius(InArea);
 }
 
 void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData)
@@ -286,19 +284,7 @@ void USpaceSalvageWorldSubsystem::SpawnSpaceRoot__()
 		Log, 
 		TEXT("[USpaceSalvageWorldSubsystem::SpawnSpaceRoot__] SpaceRootActor %s가 할당됐습니다."),
 		*this->SpaceRootActor__.GetName());
-	this->SafeAreaVisualizer_ = NewObject<USphereComponent>(
-		this->SpaceRootActor__,
-		TEXT("SafeAreaVisualizer")
-	);
 	this->TryStartItemSpawn__();
-	// 테스트용 코드
-	this->SpaceRootActor__->AddInstanceComponent(this->SafeAreaVisualizer_);
-	this->SafeAreaVisualizer_->SetupAttachment(this->SpaceRootActor__->GetRootComponent());
-	this->SafeAreaVisualizer_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	this->SafeAreaVisualizer_->SetGenerateOverlapEvents(false);
-	this->SafeAreaVisualizer_->SetHiddenInGame(false);
-	this->SafeAreaVisualizer_->InitSphereRadius(this->SafeArea__);
-	this->SafeAreaVisualizer_->RegisterComponent();
 }
 
 void USpaceSalvageWorldSubsystem::SpawnItemLevelStart__(int32 InitItemCount)
