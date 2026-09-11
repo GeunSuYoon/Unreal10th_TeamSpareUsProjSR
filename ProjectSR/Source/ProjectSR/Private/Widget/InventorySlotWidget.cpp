@@ -147,7 +147,8 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 
     UInventoryDragDropOperation* DragOp = Cast<UInventoryDragDropOperation>(InOperation);
 
-    if (DragOp->SourceInventory->GetTempSlot()->IsEmpty())
+    if (!DragOp || !DragOp->SourceInventory.IsValid() || !DragOp->SourceInventory->GetTempSlot()
+        || DragOp->SourceInventory->GetTempSlot()->IsEmpty())
     {
         UE_LOG(LogTemp, Warning, TEXT("[UInventorySlotWidget::NativeOnDrop()] : DragOp->SourceInventory의 TempSlot이 비어있습니다."));
         return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
@@ -155,22 +156,28 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 
     FInventoryCommandResult Result;
 
-    TargetInventory__->ExecuteCommand(
+    const bool bMoved = TargetInventory__->ExecuteCommand(
         FInventoryCommand::MakeMoveCommand(DragOp->SourceInventory.Get(), DragOp->SourceInventory->GetTempSlotIndex(), Index__),
         Result);
 
-    DragOp->SourceInventory->ExecuteCommand(
-        FInventoryCommand::MakeMoveCommand(DragOp->SourceInventory.Get(), DragOp->SourceInventory->GetTempSlotIndex(), DragOp->SourceIndex),
-        Result);
+    // A merge can leave a remainder in the source temp slot. A failed move
+    // leaves the whole stack there. In both cases restore only that remainder.
+    if (FInventorySlot* TempSlot = DragOp->SourceInventory->GetTempSlot(); TempSlot && !TempSlot->IsEmpty())
+    {
+        DragOp->SourceInventory->ExecuteCommand(
+            FInventoryCommand::MakeMoveCommand(DragOp->SourceInventory.Get(), DragOp->SourceInventory->GetTempSlotIndex(), DragOp->SourceIndex),
+            Result);
+    }
 
-    return true;
+    return bMoved;
 }
 
 void UInventorySlotWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
     UInventoryDragDropOperation* DragOp = Cast<UInventoryDragDropOperation>(InOperation);
 
-    if (DragOp->SourceInventory->GetTempSlot()->IsEmpty())
+    if (!DragOp || !DragOp->SourceInventory.IsValid() || !DragOp->SourceInventory->GetTempSlot()
+        || DragOp->SourceInventory->GetTempSlot()->IsEmpty())
     {
         UE_LOG(LogTemp, Warning, TEXT("[UInventorySlotWidget::NativeOnDragCancelled()] : DragOp->SourceInventory의 TempSlot이 비어있습니다."));
         return;
@@ -178,7 +185,7 @@ void UInventorySlotWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDro
 
     FInventoryCommandResult Result;
 
-    TargetInventory__->ExecuteCommand(
+    DragOp->SourceInventory->ExecuteCommand(
         FInventoryCommand::MakeMoveCommand(DragOp->SourceInventory.Get(), DragOp->SourceInventory->GetTempSlotIndex(), DragOp->SourceIndex),
         Result);
 }

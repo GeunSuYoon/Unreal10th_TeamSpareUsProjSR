@@ -41,11 +41,16 @@ private:
     UFUNCTION()
     void RefreshSlotWidget__(int32 InSlotIndex) const;
 
+    UFUNCTION()
+    void HandleInventorySizeChanged__(int32 InCurrentSlotUseSize, int32 InMaxSlotSize);
+
     void RefreshItemDetailPanel__() const;
 
     inline bool IsValidIndex__(int32 InIndex) const { return 0 <= InIndex && InIndex < Capacity__; }
 
 protected:
+    virtual void NativeDestruct() override;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TSubclassOf<UInventorySlotWidget> InventorySlotWidgetClass;
 

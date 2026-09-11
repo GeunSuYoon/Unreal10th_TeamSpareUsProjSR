@@ -57,6 +57,7 @@ bool FSurvivalLoopTest::RunTest(const FString& Parameters)
 	auto* Ship = World->SpawnActor<ASpaceShipActor>();
 	auto* Player = World->SpawnActor<APlayerCharacter>();
 	auto* Loop = World->SpawnActor<ASurvivalLoopActor>();
+	Player->DispatchBeginPlay();
 	auto* Salvage = World->GetSubsystem<USpaceSalvageWorldSubsystem>();
 	if (!Ship || !Player || !Loop || !Salvage) { AddError(TEXT("Test setup failed")); World->DestroyWorld(false); return false; }
 	FSpaceShipStat Stat;
@@ -135,7 +136,7 @@ bool FSurvivalDailyTest::RunTest(const FString& Parameters)
 	Player->SetActorLocation(Loop->GetActorLocation());
 	TestTrue(TEXT("Start daily test"), Loop->StartSurvival());
 	Loop->Tick(0.0f);
-	TestEqual(TEXT("Day uses full oxygen capacity"), Loop->DayDuration, 150.0f);
+	TestEqual(TEXT("Day duration is independently configured"), Loop->DayDuration, 300.0f);
 	TestEqual(TEXT("First day does not charge energy"), Ship->GetCurrentEnergy(), 10.0f);
 	Stats->ModifyOxygen(-149.5f);
 	Stats->SetOxygenConsuming(true);
@@ -163,13 +164,13 @@ bool FSurvivalDailyTest::RunTest(const FString& Parameters)
 	Suit.OxygenBonus = 30.0f;
 	Stats->RecalculateMaxStats(Suit);
 	TestEqual(TEXT("Suit does not grant free oxygen"), Stats->GetOxygen(), 0.0f);
-	TestEqual(TEXT("Suit does not extend current day"), Loop->DayDuration, 150.0f);
+	TestEqual(TEXT("Suit does not extend current day"), Loop->DayDuration, 300.0f);
 	Loop->FinishDay();
 	Loop->Tick(0.01f);
 	Loop->Tick(0.0f);
 	TestFalse(TEXT("Insufficient energy limits recovery"), Loop->bLastDailyEnergySufficient);
 	TestEqual(TEXT("Partial available energy is spent"), Ship->GetCurrentEnergy(), 0.0f);
-	TestEqual(TEXT("Suit changes next day duration"), Loop->DayDuration, 180.0f);
+	TestEqual(TEXT("Suit still does not extend the next day"), Loop->DayDuration, 300.0f);
 	TestEqual(TEXT("Low energy fills 70 percent of upgraded capacity"), Stats->GetOxygen(), 126.0f);
 	TestEqual(TEXT("HP recovery clamps to maximum"), Stats->GetHealth(), 100.0f);
 	Stats->ModifyOxygen(44.0f);

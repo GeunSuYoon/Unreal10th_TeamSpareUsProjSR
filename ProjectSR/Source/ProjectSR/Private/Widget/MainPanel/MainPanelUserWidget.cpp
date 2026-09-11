@@ -85,13 +85,18 @@ void	UMainPanelUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 	if (!IsValid(InSpaceShip)) return;
 	if (USpaceShipUpgradeComponent* Upgrade = InSpaceShip->GetUpgradeComponent())
 	{
-		// Match the existing crafting screen: player inventory by default.
+		// Match the manufacture screen: ingredients can be paid from both the
+		// player's inventory and the ship warehouse.
 		// Explicitly configured inventory sources are preserved.
 		APawn* Pawn = GetOwningPlayerPawn();
-		if (!Upgrade->HasConfiguredInventories() && Pawn && Pawn->GetClass()->ImplementsInterface(UInventoryComponentInterface::StaticClass()))
+		if (!Upgrade->HasConfiguredInventories())
 		{
 			TArray<UInventoryComponent*> Sources;
-			Sources.Add(IInventoryComponentInterface::Execute_GetInventoryComponent(Pawn));
+			if (Pawn && Pawn->GetClass()->ImplementsInterface(UInventoryComponentInterface::StaticClass()))
+			{
+				Sources.Add(IInventoryComponentInterface::Execute_GetInventoryComponent(Pawn));
+			}
+			Sources.Add(InSpaceShip->GetWarehouse());
 			Upgrade->SetInventories(Sources);
 		}
 		if (SpaceShipUpgrade) SpaceShipUpgrade->BindToUpgradeComponent(Upgrade);
@@ -99,7 +104,7 @@ void	UMainPanelUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 	this->SpaceShipStatus->BindToSpaceShip(InSpaceShip);
 	this->MeteoEvent->BindToSpaceShip(InSpaceShip);
 	this->Warehouse->BindToInventoryComponent(InSpaceShip->GetWarehouse());
-	this->Warehouse->InitializeInventoryWidget();
+	//this->Warehouse->InitializeInventoryWidget();
 	this->CraftingRecipeList->BindToCraftingComponent(InSpaceShip->GetCraftingComponent());
 	if (AMainPanelActor* MainPanelActor = InSpaceShip->GetMainPanelActor())
 	{

@@ -11,7 +11,7 @@ class USpaceMapDataAsset;
 class APlayerController;
 
 UENUM(BlueprintType)
-enum class ESurvivalState : uint8 { Ready, Playing, WaitingForMeteor, GameOver, PreparingDay, PreparationFailed };
+enum class ESurvivalState : uint8 { Ready, Playing, WaitingForMeteor, GameOver, PreparingDay, PreparationFailed, Cleared };
 
 UENUM(BlueprintType)
 enum class ESurvivalEndReason : uint8 { ShipDestroyed, PlayerDied };
@@ -28,6 +28,7 @@ struct FSurvivalMapEntry
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSurvivalDayStarted, int32, Day, USpaceMapDataAsset*, MapData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSurvivalGameOver, ESurvivalEndReason, Reason, int32, Day);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSurvivalGameCleared, int32, Day);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDayPreparationFailed, int32, Day, const FString&, Reason);
 
 // Place one instance in the level. InteriorBounds must fit the cabin, not the meteor safe area.
@@ -62,9 +63,9 @@ public:
 	TObjectPtr<UBoxComponent> InteriorBounds;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival")
 	TArray<FSurvivalMapEntry> Maps;
-	// Snapshot of maximum oxygen / drain rate at the start of this day.
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Survival")
-	float DayDuration = 0.0f;
+	// Independent day length. Oxygen capacity only limits how long the player can remain outside.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival", meta = (ClampMin = "1.0"))
+	float DayDuration = 300.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Daily", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float LowEnergyOxygenRatio = 0.7f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Daily", meta = (ClampMin = "0.0", ClampMax = "1.0"))
@@ -73,6 +74,10 @@ public:
 	bool bLastDailyEnergySufficient = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival")
 	bool bAutoStart = true;
+	// The campaign is cleared after this day's settlement and solar-wind damage.
+	// Set to 0 to run without a final day.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival", meta = (ClampMin = "0"))
+	int32 FinalDay = 12;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Preparation", meta = (ClampMin = "1.0"))
 	float DayPreparationTimeout = 30.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|Preparation", meta = (ClampMin = "0.0", ClampMax = "1.0"))
@@ -99,6 +104,8 @@ public:
 	FSurvivalDayStarted OnDayStarted;
 	UPROPERTY(BlueprintAssignable, Category = "Survival")
 	FSurvivalGameOver OnGameOver;
+	UPROPERTY(BlueprintAssignable, Category = "Survival")
+	FSurvivalGameCleared OnGameCleared;
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -114,6 +121,7 @@ private:
 	void ApplyDailySettlement__();
 	void UpdateGravity__();
 	void EndGame__(ESurvivalEndReason Reason);
+	void ClearGame__();
 	UFUNCTION()
 	void HandleDurability__(float Current, float Maximum);
 };

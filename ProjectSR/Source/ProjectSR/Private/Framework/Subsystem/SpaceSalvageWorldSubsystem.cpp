@@ -3,6 +3,7 @@
 
 #include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
 #include "Framework/Subsystem/ItemActorFactorySubsystem.h"
+#include "Framework/SurvivalLoopActor.h"
 #include "RootActor/SpaceRootActor.h"
 #include "SpaceShip/SpaceShipActor.h"
 #include "SpaceShip/MeteorAvoidanceComponent.h"
@@ -13,6 +14,8 @@
 #include "Item/MeteorItemActor.h"
 #include "Utility/UtilFunction.h"
 #include "SpaceShip/LazerComponent.h"
+#include "Player/PlayerCharacter.h"
+#include "TimerManager.h"
 
 bool USpaceSalvageWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
@@ -43,6 +46,10 @@ void USpaceSalvageWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 void USpaceSalvageWorldSubsystem::Deinitialize()
 {
 	CancelDayPreparation();
+	bStartCheckScheduled__ = false;
+	SurvivalLoop__ = nullptr;
+	PlayerCharacter__ = nullptr;
+	SpaceShipActor__ = nullptr;
 	Super::Deinitialize();
 }
 
@@ -80,7 +87,7 @@ void USpaceSalvageWorldSubsystem::SetSafeArea(float InArea)
 
 void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData)
 {
-	if (SurvivalLoop.IsValid())
+	if (SurvivalLoop__)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("The survival loop owns map changes. Remove the separate SetSpaceMapData call."));
 		return;
@@ -145,10 +152,33 @@ void USpaceSalvageWorldSubsystem::RegisterSpaceShipActor(ASpaceShipActor* InSpac
 	InSpaceShip->GetMeteorAvoidance()->OnMeteorCollision.AddUniqueDynamic(this, &USpaceSalvageWorldSubsystem::SpawnMeteor__);
 	this->SpaceShipActor__ = InSpaceShip;
 	this->TryStartItemSpawn__();
+	this->CheckStartDay__();
 }
 
-void USpaceSalvageWorldSubsystem::RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent)
+void USpaceSalvageWorldSubsystem::RegisterSurvivalLoopActor(ASurvivalLoopActor* InSurvivalLoop)
 {
+	if (!IsValid(InSurvivalLoop)) return;
+	if (IsValid(SurvivalLoop__) && SurvivalLoop__ != InSurvivalLoop)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Multiple SurvivalLoop actors tried to register. Keep only one in the level."));
+		return;
+	}
+	this->SurvivalLoop__ = InSurvivalLoop;
+	this->CheckStartDay__();
+}
+
+void USpaceSalvageWorldSubsystem::UnregisterSurvivalLoopActor(ASurvivalLoopActor* InSurvivalLoop)
+{
+	if (SurvivalLoop__ != InSurvivalLoop) return;
+	bStartCheckScheduled__ = false;
+	SurvivalLoop__ = nullptr;
+}
+
+void USpaceSalvageWorldSubsystem::RegisterPlayer(APlayerCharacter* InPlayer)
+{
+	if (!IsValid(InPlayer)) return;
+	this->PlayerCharacter__ = InPlayer;
+	this->CheckStartDay__();
 }
 
 void USpaceSalvageWorldSubsystem::MeteorDetect()
@@ -773,7 +803,9 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 	if (!Factory || !IsValid(SpaceMapData__) || !IsValid(SpaceShipActor__) || ItemSpawnDist__ <= 0.0f) { return; }
 	const FVector Center = SpaceShipActor__->GetActorLocation();
 	const float Distance = ItemSpawnDist__;
-	const FTransform Transform(InMeteor.MoveDir.Rotation(), Center + InMeteor.StartPos - InMeteor.MoveDir * Distance * 2.0f);
+	// MeteorAvoidance already stores StartPos relative to the ship. Applying an
+	// extra two spawn distances put the physical actor three times too far away.
+	const FTransform Transform(InMeteor.MoveDir.Rotation(), Center + InMeteor.StartPos);
 	bMeteorLoading__ = true;
 	Factory->SpawnItemActorAsync(SpaceMapData__->MeteorData, Transform, FOnPickupSpawned::CreateWeakLambda(this, [this, InMeteor, Center, Distance, Generation = SpawnGeneration__](AItemActor* Item)
 	{
@@ -838,4 +870,34 @@ UItemDataAsset* USpaceSalvageWorldSubsystem::SelectSpawnItemData__()
 		TEXT("[USpaceSalvageWorldSubsystem::SelectSpawnItemData__] 아이템이 생성되지 않았습니다.")
 	);
 	return (nullptr);
+}
+
+void USpaceSalvageWorldSubsystem::CheckStartDay__()
+{
+	if (bStartCheckScheduled__ || !IsValid(SpaceShipActor__) || !IsValid(PlayerCharacter__)
+		|| !IsValid(SurvivalLoop__) || !SurvivalLoop__->bAutoStart
+		|| SurvivalLoop__->State != ESurvivalState::Ready)
+	{
+		return;
+	}
+
+	// Actor/component and Blueprint BeginPlay order is not guaranteed across actors.
+	// Defer once after all three participants have announced that their own setup is done.
+	bStartCheckScheduled__ = true;
+	GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		bStartCheckScheduled__ = false;
+		if (!IsValid(SpaceShipActor__) || !IsValid(PlayerCharacter__) || !IsValid(SurvivalLoop__)
+			|| !SurvivalLoop__->bAutoStart || SurvivalLoop__->State != ESurvivalState::Ready)
+		{
+			return;
+		}
+
+		if (!IsValid(SurvivalLoop__->SpaceShip)) SurvivalLoop__->SpaceShip = SpaceShipActor__;
+		if (!IsValid(SurvivalLoop__->Player)) SurvivalLoop__->Player = PlayerCharacter__;
+		if (!SurvivalLoop__->StartSurvival())
+		{
+			UE_LOG(LogTemp, Error, TEXT("Auto StartSurvival failed after player, ship, and loop initialization completed."));
+		}
+	}));
 }

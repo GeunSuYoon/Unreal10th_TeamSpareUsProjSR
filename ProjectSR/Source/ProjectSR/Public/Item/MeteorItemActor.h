@@ -17,6 +17,7 @@ class UNiagaraComponent;
 class UNiagaraSystem;
 class USoundBase;
 class UCameraShakeBase;
+class UStaticMesh;
 
 UCLASS()
 class PROJECTSR_API AMeteorItemActor : public AItemActor
@@ -64,6 +65,12 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Meteor")
 	TObjectPtr<USoundBase>			MoveSFX__ = nullptr;
+
+	// Visual used by physical meteors. Kept separate from the legacy item-data
+	// mesh so DA_TestMeteor cannot turn the meteor back into the engine test cube.
+	UPROPERTY(EditDefaultsOnly, Category = "Meteor")
+	TSoftObjectPtr<UStaticMesh> MeteorVisualMesh__ = TSoftObjectPtr<UStaticMesh>(
+		FSoftObjectPath(TEXT("/Game/ExtraAsset/ModularSpacePack/Meshes/SM_Asteroid1.SM_Asteroid1")));
 
 	UPROPERTY(EditDefaultsOnly, Category = "Meteor|Impact")
 	TObjectPtr<UNiagaraSystem>		ImpactVFX__ = nullptr;

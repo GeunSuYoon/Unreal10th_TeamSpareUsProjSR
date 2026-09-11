@@ -18,6 +18,7 @@ class USpaceMapDataAsset;
 class USphereComponent;
 class AMeteorItemActor;
 class ASurvivalLoopActor;
+class APlayerCharacter;
 //class AItemActor;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceMapUpdate, const float, InDist);
@@ -60,7 +61,9 @@ public:
 	void	SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData);
 
 	void	RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip);
-	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
+	void	RegisterSurvivalLoopActor(ASurvivalLoopActor* InSurvivalLoop);
+	void	UnregisterSurvivalLoopActor(ASurvivalLoopActor* InSurvivalLoop);
+	void	RegisterPlayer(APlayerCharacter* InPlayer);
 	void	MeteorDetect();
 	void	EndOfDay();
 	bool	HasPendingMeteor() const;
@@ -72,7 +75,6 @@ public:
 	EDayPreparationStatus GetDayPreparationStatus() const { return PreparationStatus__; }
 	const FString& GetDayPreparationError() const { return PreparationError__; }
 	float GetDayPreparationProgress() const;
-	TWeakObjectPtr<ASurvivalLoopActor> SurvivalLoop;
 
 	UFUNCTION(BlueprintCallable)
 	void	SpaceShipRotateDetect(const FRotator& InRotate);
@@ -85,6 +87,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	ASpaceShipActor*	GetSpaceShipActor() const { return (this->SpaceShipActor__); }
+	ASurvivalLoopActor*	GetSurvivalLoop() const { return (this->SurvivalLoop__); }
+	APlayerCharacter*	GetPlayerCharacter() const { return (this->PlayerCharacter__); }
 
 	float	GetItemSpawnDist() const { return (this->ItemSpawnDist__); }
 
@@ -127,11 +131,21 @@ private:
 
 	UItemDataAsset*	SelectSpawnItemData__();
 
+	void	CheckStartDay__();
+
 	UPROPERTY()
 	TObjectPtr<ASpaceRootActor>		SpaceRootActor__ = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<ASpaceShipActor>		SpaceShipActor__ = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<ASurvivalLoopActor>	SurvivalLoop__ = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<APlayerCharacter>	PlayerCharacter__ = nullptr;
+
+	bool bStartCheckScheduled__ = false;
 
 	//TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
 

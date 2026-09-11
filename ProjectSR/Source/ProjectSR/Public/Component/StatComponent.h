@@ -21,6 +21,7 @@ class PROJECTSR_API UStatComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UStatComponent();
+	virtual void InitializeComponent() override;
 
 protected:
 	// Called when the game starts
@@ -42,6 +43,9 @@ public:
 
 	// Called once by the survival loop after a day has elapsed.
 	void ApplyDailyRecovery(float OxygenFillRatio, float HealthRecoveryRatio);
+
+	// Applies validated checkpoint values without triggering a transient death event.
+	void RestoreCurrentStats(float Health, float Oxygen);
 
 	UFUNCTION(BlueprintPure, Category = "Stat")
 	float GetOxygenDrainRate() const { return OxygenDrainRate; }
@@ -74,6 +78,8 @@ public:
 	float GetOxygen() const { return CurrentOxygen; }
 	UFUNCTION(BlueprintPure, Category = "Stat")
 	float GetMaxOxygen() const { return MaxOxygen; }
+	UFUNCTION(BlueprintPure, Category = "Stat")
+	bool IsStatsInitialized() const { return bStatsInitialized; }
 
 	// --- Getter --- 이동속도
 	UFUNCTION(BlueprintPure, Category = "Stat|Movement") float GetMoveSpeed() const { return MoveSpeed; }
@@ -95,6 +101,8 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Stat|Events")
 	FOnPlayerDeathSignature OnPlayerDeath;
+
+	void	InitBroadCast() { this->OnHealthChanged.Broadcast(CurrentHealth, MaxHealth); this->OnOxygenChanged.Broadcast(CurrentOxygen, MaxOxygen); }
 
 protected:
 	// --- Base 최대 스탯값 --- 장비 영향 X
@@ -132,10 +140,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat|DrainRate", meta = (DeprecatedProperty, DeprecationMessage = "Cabin oxygen recovery is disabled. Use SurvivalLoopActor daily recovery settings.")) float OxygenRecoverRate = 0.0f;
 
 private:
+	void InitializeStats__();
+
 	// 현재 스탯 값
-	float CurrentHealth;
+	float CurrentHealth = 0.0f;
 	//float CurrentHunger;
-	float CurrentOxygen;
+	float CurrentOxygen = 0.0f;
+	bool bStatsInitialized = false;
 
 	// 사망 여부 플래그
 	bool bIsDead = false;

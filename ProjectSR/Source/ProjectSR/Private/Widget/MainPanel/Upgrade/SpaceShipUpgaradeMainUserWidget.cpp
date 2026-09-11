@@ -5,7 +5,7 @@
 #include "Widget/MainPanel/Upgrade/SpaceShipUpgradeSelectUserWidget.h"
 #include "Widget/MainPanel/Upgrade/SpaceShipUpgradeUserWidget.h"
 #include "Widget/MainPanel/Upgrade/LazerUpgradeUserWidget.h"
-#include "Widget/MainPanel/Upgrade/MachineArmUpgradeUserWidget.h"
+// #include "Widget/MainPanel/Upgrade/MachineArmUpgradeUserWidget.h" // MachineArm feature retired.
 
 #include "Components/WidgetSwitcher.h"
 
@@ -18,14 +18,14 @@ void USpaceShipUpgaradeMainUserWidget::BindToUpgradeComponent(USpaceShipUpgradeC
 {
 	if (SpaceShipUpgrade) SpaceShipUpgrade->BindToUpgradeComponent(InComponent);
 	if (LazerUpgrade) LazerUpgrade->BindToUpgradeComponent(InComponent);
-	if (MachineArmUpgrade) MachineArmUpgrade->BindToUpgradeComponent(InComponent);
+	// if (MachineArmUpgrade) MachineArmUpgrade->BindToUpgradeComponent(InComponent);
 }
 
 void USpaceShipUpgaradeMainUserWidget::RefreshUpgradePages()
 {
 	if (SpaceShipUpgrade) SpaceShipUpgrade->Refresh();
 	if (LazerUpgrade) LazerUpgrade->Refresh();
-	if (MachineArmUpgrade) MachineArmUpgrade->Refresh();
+	// if (MachineArmUpgrade) MachineArmUpgrade->Refresh();
 }
 
 //void USpaceShipUpgaradeMainUserWidget::BindToBackSpace()

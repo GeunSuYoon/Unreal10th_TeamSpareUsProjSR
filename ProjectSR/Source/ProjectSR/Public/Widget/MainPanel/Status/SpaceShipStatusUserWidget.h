@@ -51,6 +51,8 @@ private:
 	UFUNCTION()
 	void	UpdateStat__(const FSpaceShipStat& InSpaceShipStat);
 	UFUNCTION()
+	void	UpdateWarehouseSlot__(int32 InCurrentSize, int32 InMaxSize);
+	UFUNCTION()
 	void	UpdateDurability__(float InCurrentDurability, float InMaxDurability);
 	UFUNCTION()
 	void	UpdateEnergy__(float InCurrentEnergy, float InMaxEnergy);

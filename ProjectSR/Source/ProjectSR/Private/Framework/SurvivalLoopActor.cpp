@@ -10,6 +10,7 @@
 #include "Engine/World.h"
 #include "Data/SpaceMap/SpaceMapDataAsset.h"
 #include "GameFramework/PlayerController.h"
+#include "Save/SurvivalSaveSubsystem.h"
 
 ASurvivalLoopActor::ASurvivalLoopActor()
 {
@@ -23,48 +24,71 @@ ASurvivalLoopActor::ASurvivalLoopActor()
 void ASurvivalLoopActor::BeginPlay()
 {
 	Super::BeginPlay();
-	// All placed actors and the possessed pawn must finish BeginPlay first.
-	if (bAutoStart)
+	auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+	if (!Salvage)
 	{
-		GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]() { StartSurvival(); }));
+		UE_LOG(LogTemp, Error, TEXT("SurvivalLoop could not find SpaceSalvageWorldSubsystem."));
+		return;
 	}
+	// Register even when auto start is off so manual StartSurvival owns the same subsystem state.
+	Salvage->RegisterSurvivalLoopActor(this);
 }
 
 bool ASurvivalLoopActor::StartSurvival()
 {
 	if (State != ESurvivalState::Ready) { return false; }
 	auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+	// StartSurvival is also a public/manual entry point and can be called before
+	// this actor's BeginPlay in tests or by a spawner. Ensure subsystem ownership
+	// does not depend on the auto-start registration path.
+	if (Salvage && !Salvage->GetSurvivalLoop())
+	{
+		Salvage->RegisterSurvivalLoopActor(this);
+	}
 	if (!SpaceShip && Salvage) { SpaceShip = Salvage->GetSpaceShipActor(); }
 	if (!Player) { Player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0)); }
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (USurvivalSaveSubsystem* SaveSubsystem = GameInstance->GetSubsystem<USurvivalSaveSubsystem>();
+			SaveSubsystem && !SaveSubsystem->TryApplyRequestedLoad(this))
+		{
+			UE_LOG(LogTemp, Error, TEXT("Survival start aborted because the requested checkpoint could not be restored."));
+			return false;
+		}
+	}
 	bool bHasFirstDay = false;
 	TSet<int32> Days;
 	for (const auto& Entry : Maps)
 	{
-		if (!IsValid(Entry.MapData) || Entry.StartDay < 1 || Days.Contains(Entry.StartDay)) { return false; }
+		if (!IsValid(Entry.MapData) || Entry.StartDay < 1 || Days.Contains(Entry.StartDay))
+		{
+			UE_LOG(LogTemp, Error, TEXT("Survival setup invalid: every map must be valid and use a unique StartDay >= 1."));
+			return false;
+		}
 		Days.Add(Entry.StartDay);
 		bHasFirstDay |= Entry.StartDay == 1;
 	}
 	const auto* Stats = IsValid(Player) ? Player->FindComponentByClass<UStatComponent>() : nullptr;
-	if (!Salvage || !IsValid(SpaceShip) || !Stats || !bHasFirstDay
+	if (!Salvage || !IsValid(SpaceShip) || !Stats || !Stats->IsStatsInitialized() || !bHasFirstDay
 		|| !FMath::IsFinite(Stats->GetMaxOxygen()) || Stats->GetMaxOxygen() <= 0.0f
 		|| !FMath::IsFinite(Stats->GetOxygenDrainRate()) || Stats->GetOxygenDrainRate() <= 0.0f
 		|| !FMath::IsFinite(Stats->GetMaxOxygen() / Stats->GetOxygenDrainRate())
+		|| !FMath::IsFinite(DayDuration) || DayDuration <= 0.0f
 		|| !FMath::IsFinite(LowEnergyOxygenRatio) || !FMath::IsFinite(DailyHealthRecoveryRatio)
 		|| !FMath::IsFinite(DayPreparationTimeout) || DayPreparationTimeout <= 0.0f
 		|| !FMath::IsFinite(MinimumInitialSpawnRatio)
-		|| (Salvage->SurvivalLoop.IsValid() && Salvage->SurvivalLoop.Get() != this))
+		|| (Salvage->GetSurvivalLoop() && Salvage->GetSurvivalLoop() != this))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Survival setup invalid: assign ship, player, day-one map and positive finite oxygen capacity/drain; use one loop actor."));
+		UE_LOG(LogTemp, Error, TEXT("Survival setup invalid: player stats must be initialized; assign ship, player, day-one map and positive finite day duration and oxygen capacity/drain; use one loop actor."));
 		return false;
 	}
-	Salvage->SurvivalLoop = this;
 	SpaceShip->OnDurabilityChange.AddUniqueDynamic(this, &ASurvivalLoopActor::HandleDurability__);
 	Player->FindComponentByClass<UStatComponent>()->OnPlayerDeath.AddUniqueDynamic(this, &ASurvivalLoopActor::NotifyPlayerDeath);
 	AttachToActor(SpaceShip, FAttachmentTransformRules::KeepWorldTransform);
 	State = ESurvivalState::Playing;
 	if (Player->FindComponentByClass<UStatComponent>()->GetHealth() <= 0.0f) { NotifyPlayerDeath(); return true; }
 	if (SpaceShip->GetCurrentDurability() <= 0.0f) { EndGame__(ESurvivalEndReason::ShipDestroyed); return true; }
-	BeginDay__();
+	this->BeginDay__();
 	return true;
 }
 
@@ -82,7 +106,7 @@ void ASurvivalLoopActor::BeginDay__()
 	}
 	OnDayPreparationStarted.Broadcast(CurrentDay + 1, CurrentMap);
 	if (State != ESurvivalState::PreparingDay) return;
-	GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->PrepareDay(CurrentMap, DayPreparationTimeout, MinimumInitialSpawnRatio);
+	GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->PrepareDay (CurrentMap, DayPreparationTimeout, MinimumInitialSpawnRatio);
 }
 
 void ASurvivalLoopActor::CompleteDayPreparation__()
@@ -100,7 +124,6 @@ void ASurvivalLoopActor::CompleteDayPreparation__()
 	auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
 	if (!Salvage->ActivatePreparedDay()) { FailDayPreparation__(Salvage->GetDayPreparationError()); return; }
 	++CurrentDay;
-	DayDuration = Capacity / Drain;
 	if (CurrentDay > 1) { ApplyDailySettlement__(); }
 	if (State == ESurvivalState::GameOver) return;
 	State = ESurvivalState::Playing;
@@ -115,6 +138,7 @@ void ASurvivalLoopActor::CompleteDayPreparation__()
 	{
 		SetPreparationInputLocked__(false);
 		OnDayStarted.Broadcast(CurrentDay, CurrentMap);
+		if (FinalDay > 0 && CurrentDay >= FinalDay) { ClearGame__(); }
 	}
 }
 
@@ -181,7 +205,7 @@ void ASurvivalLoopActor::ApplyDailySettlement__()
 void ASurvivalLoopActor::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	if (State == ESurvivalState::Ready || State == ESurvivalState::GameOver) { return; }
+	if (State == ESurvivalState::Ready || State == ESurvivalState::GameOver || State == ESurvivalState::Cleared) { return; }
 	if (!IsValid(Player)) { NotifyPlayerDeath(); return; }
 	if (!IsValid(SpaceShip)) { EndGame__(ESurvivalEndReason::ShipDestroyed); return; }
 	if (State == ESurvivalState::PreparationFailed) return;
@@ -198,7 +222,17 @@ void ASurvivalLoopActor::Tick(float DeltaSeconds)
 		RemainingDayTime = FMath::Max(0.0f, RemainingDayTime - DeltaSeconds);
 		if (RemainingDayTime <= 0.0f) { FinishDay(); }
 	}
-	else if (State == ESurvivalState::WaitingForMeteor && !GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->HasPendingMeteor()) { BeginDay__(); }
+	else if (State == ESurvivalState::WaitingForMeteor && !GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->HasPendingMeteor())
+	{
+		if (UGameInstance* GameInstance = GetGameInstance())
+		{
+			if (USurvivalSaveSubsystem* SaveSubsystem = GameInstance->GetSubsystem<USurvivalSaveSubsystem>())
+			{
+				SaveSubsystem->SaveCompletedDay(this);
+			}
+		}
+		BeginDay__();
+	}
 }
 
 void ASurvivalLoopActor::FinishDay()
@@ -247,12 +281,23 @@ void ASurvivalLoopActor::HandleDurability__(float Current, float Maximum) { if (
 
 void ASurvivalLoopActor::EndGame__(ESurvivalEndReason Reason)
 {
-	if (State == ESurvivalState::Ready || State == ESurvivalState::GameOver) { return; }
+	if (State == ESurvivalState::Ready || State == ESurvivalState::GameOver || State == ESurvivalState::Cleared) { return; }
 	State = ESurvivalState::GameOver;
 	SetPreparationInputLocked__(false);
 	GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->StopSurvival();
 	if (IsValid(SpaceShip) && SpaceShip->GetMeteorAvoidance()) { SpaceShip->GetMeteorAvoidance()->ClearMeteor(); }
 	OnGameOver.Broadcast(Reason, CurrentDay);
+	UGameplayStatics::SetGamePaused(this, true);
+}
+
+void ASurvivalLoopActor::ClearGame__()
+{
+	if (State == ESurvivalState::Ready || State == ESurvivalState::GameOver || State == ESurvivalState::Cleared) { return; }
+	State = ESurvivalState::Cleared;
+	SetPreparationInputLocked__(false);
+	GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>()->StopSurvival();
+	if (IsValid(SpaceShip) && SpaceShip->GetMeteorAvoidance()) { SpaceShip->GetMeteorAvoidance()->ClearMeteor(); }
+	OnGameCleared.Broadcast(CurrentDay);
 	UGameplayStatics::SetGamePaused(this, true);
 }
 
@@ -266,7 +311,11 @@ void ASurvivalLoopActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 	if (auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>())
 	{
-		if (Salvage->SurvivalLoop.Get() == this) { Salvage->StopSurvival(); Salvage->SurvivalLoop.Reset(); }
+		if (Salvage->GetSurvivalLoop() == this)
+		{
+			Salvage->StopSurvival();
+			Salvage->UnregisterSurvivalLoopActor(this);
+		}
 	}
 	Super::EndPlay(EndPlayReason);
 }

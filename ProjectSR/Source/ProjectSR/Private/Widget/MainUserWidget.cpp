@@ -139,7 +139,9 @@ void UMainUserWidget::BindToPlayer(APlayerCharacter* InPlayerCharacter)
     }
     InPlayerCharacter->OnToggleInventory.BindUFunction(InventoryWidget, TEXT("ToggleInventoryWidget"));
     this->InventoryWidget->BindToInventoryComponent(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
+	this->InventoryAlarm->BindToInventory(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
 	this->PlayerStatWidget->BindToPlayer(InPlayerCharacter);
+	InPlayerCharacter->InitBroadCast();
 	this->bIsPlayerBind = true;
 	this->BindWidget__();
 }
@@ -162,7 +164,7 @@ void UMainUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShipActor)
 	this->SpaceShipAlarm->BindToSpaceShip(InSpaceShipActor);
 	this->SpaceShipStat->BindToSpaceShip(InSpaceShipActor);
 	this->CraftingManufacture->BindToCraftingComponent(InSpaceShipActor->GetCraftingComponent());
-	InSpaceShipActor->UpdateSpaceShipLevel();
+	InSpaceShipActor->InitBroadCast();
 	this->bIsSpaceShipBind = true;
 	this->BindWidget__();
 }

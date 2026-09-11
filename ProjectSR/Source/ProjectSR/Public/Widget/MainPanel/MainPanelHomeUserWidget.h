@@ -31,6 +31,8 @@ public:
 	void	UpgradeSelect();
 	UFUNCTION()
 	void	ItemCraftSelect();
+	UFUNCTION()
+	void	FinishDay();
 
 	FOnMainPanelHomeSelect	OnMainPanelHomeSelect;
 
@@ -51,6 +53,11 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UButton>	ItemCraftButton = nullptr;
+
+	// Optional so existing MainPanelHome Blueprints remain loadable until the
+	// playtest button named exactly "FinishDayButton" is added in the Designer.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UButton>	FinishDayButton = nullptr;
 
 private:
 	EMainPanelMenuPage	MyPage__ = EMainPanelMenuPage::Home;

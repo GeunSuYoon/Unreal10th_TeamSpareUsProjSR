@@ -9,6 +9,7 @@
 #include "Component/EquipComponent.h"
 #include "Component/InventoryComponent.h"
 #include "Component/InteractionComponent.h"
+#include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Data/Item/EquipmentDataAsset.h"
@@ -93,6 +94,12 @@ void APlayerCharacter::BeginPlay()
             HUD->RegisterPlayerCharacter(this);
         }
     }
+	auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+	
+	if (Salvage)
+	{
+		Salvage->RegisterPlayer(this);
+	}
 }
 
 // Called every frame
@@ -126,6 +133,12 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
         EnhancedInputComponent->BindAction(IA_Inventory, ETriggerEvent::Started, this, &APlayerCharacter::Player_Inventory);
 	}
+}
+
+void APlayerCharacter::InitBroadCast()
+{
+	this->StatComponent->InitBroadCast();
+	this->InventoryComponent->InitBroadCast();
 }
 
 UInSpaceMovementComponent* APlayerCharacter::GetInSpaceMovementComponent() const

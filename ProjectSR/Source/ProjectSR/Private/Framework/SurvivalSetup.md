@@ -4,7 +4,7 @@
 2. 해당 액터를 실제 선실 중심에 놓고 `InteriorBounds`의 Box Extent를 실내 공간에 맞춘다. 플레이어 액터 중심이 박스 안이면 내부다. 운석 충돌용 SafeArea 구체와는 별개다. 시작할 때 KeepWorldTransform으로 우주선에 붙으므로 처음 배치한 위치를 유지한다.
 3. `SpaceShip`과 `Player`를 지정한다. 비워두면 등록된 우주선과 Player 0의 APlayerCharacter를 찾는다. Pawn을 늦게 생성한다면 AutoStart를 끄고 생성 및 초기화 완료 후 StartSurvival을 호출한다.
 4. `Maps`에 StartDay/MapData를 등록한다. 1일 항목은 필수이고 날짜 중복은 금지다. 예: 1일 DA_A, 3일 DA_B, 7일 DA_C. 마지막 맵은 이후에도 유지된다. 순서는 상관없다.
-5. DayDuration은 이제 읽기 전용이다. 매일 시작 시 플레이어 최대 산소 / OxygenDrainRate로 계산한다. 기본 최대 산소 150, 소모 1이면 하루 150초다. 실내에서도 날짜 시간은 흐르며 산소통 사용이나 당일 우주복 변경으로 남은 시간이 바뀌지 않는다. 기존 BP의 Set DayDuration 노드는 제거한다. FirstSolarWindDamage/SolarWindDamageIncrease는 기존 기본값 10/5이며 3일 시작에 10, 6일에 15, 9일에 20의 피해를 준다. 내구도와 피해가 같아도 내구도가 0이 되어 사망한다.
+5. DayDuration은 산소와 무관한 날짜 진행 시간이다. SurvivalLoop BP에서 원하는 초 단위 값(기본 300초)을 설정한다. 최대 산소, OxygenDrainRate, 산소통, 우주복 변경은 외부 활동 가능 시간만 바꾸며 현재 날이나 다음 날의 길이를 바꾸지 않는다. FirstSolarWindDamage/SolarWindDamageIncrease는 기존 기본값 10/5이며 3일 시작에 10, 6일에 15, 9일에 20의 피해를 준다. 내구도와 피해가 같아도 내구도가 0이 되어 사망한다.
 6. 우주선의 초기 내구도가 양수여야 한다. 기존 UpgradeComponent 초기 데이터 설정을 먼저 완료한다.
 
 ## 하루 시작 전 초기 스폰 준비
@@ -54,7 +54,7 @@
 - StatModifiers.OxygenBonus를 0/30/60/90처럼 입력하면 기본 150 기준 최대 산소가 150/180/210/240이 된다. 누적 증가분이 아니라 기본값에 더할 최종 보너스다.
 - 아이템 사용 경로는 기존 EquipItemAction의 EquipmentData에 해당 단계 데이터를 지정한다. 기존 액터 클래스/메시 장착 설정은 유지한다. OxygenDrainMultiplier는 현행 RecalculateMaxStats에서 사용하지 않으므로 산소량 증가에는 OxygenBonus를 사용한다.
 - 메인 패널의 별도 강화 버튼을 사용한다면 재료 소비 성공 후 `Player → Get Component By Class(StatComponent) → Recalculate Max Stats`에 해당 우주복 데이터의 **전체 StatModifiers**를 전달한다. 이동 보너스도 변경했다면 Player의 RefreshMovementSpeed도 호출한다. 기존 아이템 액션 경로를 호출했다면 이 과정을 다시 실행하지 않는다.
-- 최대치만 증가하며 현재 산소는 자동 충전되지 않는다. 다음 날 정산부터 새 용량과 하루 길이를 사용한다. 새 제작법/재료 비용/강화 버튼 에셋은 이 변경에서 만들지 않았다.
+- 최대치만 증가하며 현재 산소는 자동 충전되지 않는다. 다음 날 정산부터 새 용량을 사용하지만 DayDuration은 변하지 않는다. 새 제작법/재료 비용/강화 버튼 에셋은 이 변경에서 만들지 않았다.
 - 시작 우주복을 BP로 적용한다면 플레이어 BeginPlay 초기화 후, StartSurvival 전에 적용한다. 이 경우 AutoStart를 끄고 초기화 완료 시 한 번 StartSurvival을 호출하면 순서가 명확하다.
 
 ## 운석과 아이템

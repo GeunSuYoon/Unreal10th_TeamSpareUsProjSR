@@ -22,6 +22,7 @@ class PROJECTSR_API UInventoryAlarmUserWidget : public UUserWidget
 public:
 	void	BindToInventory(UInventoryComponent* InInventory);
 
+	UFUNCTION()
 	void	InventorySlotChange(int32 InCurrentSize, int32 InMaxSize);
 
 	void	InitVisibility();

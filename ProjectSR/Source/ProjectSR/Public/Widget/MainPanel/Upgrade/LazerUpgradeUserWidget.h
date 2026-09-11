@@ -42,4 +42,5 @@ protected:
 	TObjectPtr<UTextBlock>	CurrentOperationalEnergy = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	NextOperationalEnergy = nullptr;
+
 };

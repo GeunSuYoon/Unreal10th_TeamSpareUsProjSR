@@ -11,6 +11,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Camera/CameraShakeBase.h"
+#include "Engine/StaticMesh.h"
 #include "ProjectSR.h"
 #include "Framework/SurvivalLoopActor.h"
 #include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
@@ -38,6 +39,11 @@ void AMeteorItemActor::InitMeteor(const FMeteor& InMeteor, const FVector& ShipCe
 	this->Damage__ = InMeteor.MeteorDamage;
 	this->SphereCollision_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	this->SetActorScale3D(FVector::OneVector);
+	if (UStaticMesh* MeteorVisual = MeteorVisualMesh__.LoadSynchronous())
+	{
+		Mesh->SetStaticMesh(MeteorVisual);
+	}
+	Mesh->SetVisibility(true, true);
 	// MeteorSize는 지름이므로 반지름을 요구하는 API에서만 절반으로 변환한다.
 	const float MeteorRadius = InMeteor.MeteorSize * 0.5f;
 	this->SphereCollision_->SetSphereRadius(MeteorRadius, true);
@@ -133,7 +139,7 @@ void AMeteorItemActor::HandleImpact(ASpaceShipActor* InSpaceShipActor)
 	const float ImpactDamage = Damage__;
 	if (auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>())
 	{
-		if (Salvage->SurvivalLoop.IsValid()) { Salvage->SurvivalLoop->NotifyMeteorImpact(InSpaceShipActor); }
+		if (Salvage->GetSurvivalLoop()) { Salvage->GetSurvivalLoop()->NotifyMeteorImpact(InSpaceShipActor); }
 	}
 	// 우주선에 Damage__ 적용
 	UGameplayStatics::ApplyDamage(
