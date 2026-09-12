@@ -12,13 +12,11 @@
 #include "Data/SpaceMap/SpaceMapDataAsset.h"
 #include "GameFramework/PlayerController.h"
 #include "Save/SurvivalSaveSubsystem.h"
-#include "Blueprint/UserWidget.h"
-#include "Components/Button.h"
-#include "Components/TextBlock.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/PlayerCameraManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Widget/SRMainHUD.h"
+#include "Widget/GameResultUserWidget.h"
 
 ASurvivalLoopActor::ASurvivalLoopActor()
 {
@@ -30,7 +28,7 @@ ASurvivalLoopActor::ASurvivalLoopActor()
 	InteriorBounds->SetBoxExtent(FVector(600.0f, 1100.0f, 220.0f));
 	InteriorBounds->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	static ConstructorHelpers::FClassFinder<UUserWidget> GameOverClassFinder(
+	static ConstructorHelpers::FClassFinder<UGameResultUserWidget> GameOverClassFinder(
 		TEXT("/Game/Blueprint/GeunSuYoon/Widget/MainPanel/WBP_GameOver"));
 	if (GameOverClassFinder.Succeeded())
 	{
@@ -419,7 +417,7 @@ void ASurvivalLoopActor::ShowResultWidget__(bool bGameCleared, ESurvivalEndReaso
 	if (IsValid(GameOverWidgetInstance__)) return;
 
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-	TSubclassOf<UUserWidget> ResultWidgetClass = bGameCleared ? GameClearWidgetClass : GameOverWidgetClass;
+	TSubclassOf<UGameResultUserWidget> ResultWidgetClass = bGameCleared ? GameClearWidgetClass : GameOverWidgetClass;
 	if (!ResultWidgetClass)
 	{
 		ResultWidgetClass = GameOverWidgetClass;
@@ -431,18 +429,16 @@ void ASurvivalLoopActor::ShowResultWidget__(bool bGameCleared, ESurvivalEndReaso
 		return;
 	}
 
-	GameOverWidgetInstance__ = CreateWidget<UUserWidget>(PlayerController, ResultWidgetClass);
+	GameOverWidgetInstance__ = CreateWidget<UGameResultUserWidget>(PlayerController, ResultWidgetClass);
 	if (!IsValid(GameOverWidgetInstance__))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to create the game result widget."));
 		return;
 	}
 
-	FText ResultMessage;
 	FText DescriptionMessage;
 	if (bGameCleared)
 	{
-		ResultMessage = FText::FromString(TEXT("게임 클리어"));
 		DescriptionMessage = FText::Format(
 			FText::FromString(TEXT("{0}일 동안 생존했습니다. 모든 생존 목표를 달성했습니다.")),
 			FText::AsNumber(CurrentDay));
@@ -452,33 +448,27 @@ void ASurvivalLoopActor::ShowResultWidget__(bool bGameCleared, ESurvivalEndReaso
 		switch (Reason)
 		{
 		case ESurvivalEndReason::MeteorCollision:
-			ResultMessage = FText::FromString(TEXT("운석 충돌로 사망했습니다."));
 			DescriptionMessage = FText::FromString(
-				TEXT("운석이 감지되면 메인 패널에서 운석을 회피하거나 운석 충돌 전 우주선 문을 닫아야 합니다."));
+				TEXT("운석 충돌로 사망했습니다.\n운석이 감지되면 메인 패널에서 운석을 회피하거나 운석 충돌 전 우주선 문을 닫아야 합니다."));
 			break;
 		case ESurvivalEndReason::SolarWind:
-			ResultMessage = FText::FromString(TEXT("태양풍으로 우주선이 파괴되었습니다."));
 			DescriptionMessage = FText::FromString(
-				TEXT("태양풍이 발생하기 전에 우주선을 수리하여 예상 태양풍 피해보다 높은 내구도를 확보해야 합니다."));
+				TEXT("태양풍으로 우주선이 파괴되었습니다.\n태양풍이 발생하기 전에 우주선을 수리하여 예상 태양풍 피해보다 높은 내구도를 확보해야 합니다."));
 			break;
 		case ESurvivalEndReason::ShipDestroyed:
-			ResultMessage = FText::FromString(TEXT("우주선이 파괴되었습니다."));
 			DescriptionMessage = FText::FromString(
-				TEXT("우주선 내구도를 자주 확인하고 위험한 이벤트가 발생하기 전에 우주선을 수리해야 합니다."));
+				TEXT("우주선이 파괴되었습니다.\n우주선 내구도를 자주 확인하고 위험한 이벤트가 발생하기 전에 우주선을 수리해야 합니다."));
 			break;
 		case ESurvivalEndReason::PlayerDied:
 		default:
-			ResultMessage = FText::FromString(TEXT("생존에 실패했습니다."));
 			DescriptionMessage = FText::FromString(
-				TEXT("체력과 산소를 확인하고, 우주선 밖으로 나가기 전에 우주복과 산소를 충분히 준비해야 합니다."));
+				TEXT("생존에 실패했습니다.\n체력과 산소를 확인하고, 우주선 밖으로 나가기 전에 우주복과 산소를 충분히 준비해야 합니다."));
 			break;
 		}
 	}
 
-	CastChecked<UTextBlock>(GameOverWidgetInstance__->GetWidgetFromName(TEXT("ResultText")))->SetText(ResultMessage);
-	CastChecked<UTextBlock>(GameOverWidgetInstance__->GetWidgetFromName(TEXT("Description")))->SetText(DescriptionMessage);
-	UButton* MainMenuButton = CastChecked<UButton>(GameOverWidgetInstance__->GetWidgetFromName(TEXT("GoToMainButton")));
-	MainMenuButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleGoToMainMenu__);
+	GameOverWidgetInstance__->SetResult(bGameCleared, DescriptionMessage);
+	GameOverWidgetInstance__->OnGoToMainMenu.BindDynamic(this, &ThisClass::HandleGoToMainMenu__);
 
 	GameOverWidgetInstance__->AddToViewport(1000);
 	FInputModeUIOnly InputMode;

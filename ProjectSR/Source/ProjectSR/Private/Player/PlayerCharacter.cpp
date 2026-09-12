@@ -112,6 +112,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	FInputKeyBinding& PlayMenuBinding = PlayerInputComponent->BindKey(
+		EKeys::Escape, IE_Pressed, this, &APlayerCharacter::Player_PlayMenu);
+	PlayMenuBinding.bExecuteWhenPaused = true;
 
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
@@ -272,6 +275,11 @@ void APlayerCharacter::Player_Interact(const FInputActionValue& Value)
 void APlayerCharacter::Player_Inventory(const FInputActionValue& Value)
 {
     OnToggleInventory.ExecuteIfBound();
+}
+
+void APlayerCharacter::Player_PlayMenu()
+{
+	OnTogglePlayMenu.ExecuteIfBound();
 }
 
 void APlayerCharacter::Player_Move_Gravity(const FInputActionValue& Value)

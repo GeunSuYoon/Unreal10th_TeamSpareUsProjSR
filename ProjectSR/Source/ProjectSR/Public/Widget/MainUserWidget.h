@@ -21,6 +21,7 @@ class UPlayerStatUserWidget;
 class USpaceShipStatUserWidget;
 class ASurvivalLoopActor;
 class UDayCountUserWidget;
+class UPlayMenuUserWidget;
 
 /**
  *
@@ -62,6 +63,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UDayCountUserWidget>			DayCount = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UPlayMenuUserWidget>			PlayMenu = nullptr;
+
+	UFUNCTION()
+	void TogglePlayMenu();
 
     virtual bool	CloseTopWidget_Implementation() override;
     virtual void	ClearStackWidget_Implementation() override;
