@@ -9,7 +9,7 @@ class APlayerCharacter;
 class UBoxComponent;
 class USpaceMapDataAsset;
 class APlayerController;
-class UUserWidget;
+class UGameResultUserWidget;
 class USoundBase;
 class UCameraShakeBase;
 
@@ -121,9 +121,9 @@ public:
 	FSurvivalFadeEvent OnDayFadeIn;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Survival|GameOver")
-	TSubclassOf<UUserWidget> GameOverWidgetClass;
+	TSubclassOf<UGameResultUserWidget> GameOverWidgetClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Survival|GameClear")
-	TSubclassOf<UUserWidget> GameClearWidgetClass;
+	TSubclassOf<UGameResultUserWidget> GameClearWidgetClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Survival|GameOver")
 	FName MainMenuLevel = TEXT("/Game/FirstPerson/Lvl_FirstPerson");
@@ -156,7 +156,7 @@ private:
 	void HandleGoToMainMenu__();
 
 	UPROPERTY(Transient)
-	TObjectPtr<UUserWidget> GameOverWidgetInstance__;
+	TObjectPtr<UGameResultUserWidget> GameOverWidgetInstance__;
 	ESurvivalEndReason PendingPlayerDeathReason__ = ESurvivalEndReason::PlayerDied;
 	ESurvivalEndReason PendingShipDestructionReason__ = ESurvivalEndReason::ShipDestroyed;
 
