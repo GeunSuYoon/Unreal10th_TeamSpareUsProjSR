@@ -13,6 +13,7 @@
 #include "Widget/MainWidget/SpaceShipStatUserWidget.h"
 #include "Widget/ItemManagerWidget.h"
 #include "Widget/DayCountUserWidget.h"
+#include "Widget/PlayMenuUserWidget.h"
 #include "Framework/SurvivalLoopActor.h"
 
 #include "Interface/InventoryComponentInterface.h"
@@ -41,6 +42,8 @@ void UMainUserWidget::NativeOnInitialized()
 		InventoryWidget->OnWidgetOpen.BindDynamic(this, &UMainUserWidget::HandleMainPanelOpened__);
 		InventoryWidget->OnWidgetClose.BindDynamic(this, &UMainUserWidget::HandleMainPanelClosed__);
 	}
+	PlayMenu->OnWidgetOpen.BindDynamic(this, &UMainUserWidget::HandleMainPanelOpened__);
+	PlayMenu->OnWidgetClose.BindDynamic(this, &UMainUserWidget::HandleMainPanelClosed__);
 }
 
 void UMainUserWidget::HandleMainPanelOpened__(UUserWidget* InWidget)
@@ -112,12 +115,12 @@ void UMainUserWidget::UpdateInputMode__()
 
 FReply UMainUserWidget::NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-    if (InKeyEvent.GetKey() == EKeys::Escape && !OpenWidgetStack__.IsEmpty())
+    if (InKeyEvent.GetKey() == EKeys::Escape)
     {
         // Holding ESC must not close several stacked windows.
         if (!InKeyEvent.IsRepeat())
         {
-            IWidgetStackHostInterface::Execute_CloseTopWidget(this);
+			TogglePlayMenu();
         }
         return FReply::Handled();
     }
@@ -128,6 +131,17 @@ FReply UMainUserWidget::NativeOnPreviewKeyDown(const FGeometry& InGeometry, cons
         return FReply::Handled();
     }
     return Super::NativeOnPreviewKeyDown(InGeometry, InKeyEvent);
+}
+
+void UMainUserWidget::TogglePlayMenu()
+{
+	if (OpenWidgetStack__.IsEmpty())
+	{
+		IOpenableWidgetInterface::Execute_OpenSelfWidget(PlayMenu);
+		return;
+	}
+
+	IWidgetStackHostInterface::Execute_CloseTopWidget(this);
 }
 
 void UMainUserWidget::BindToPlayer(APlayerCharacter* InPlayerCharacter)
@@ -142,6 +156,7 @@ void UMainUserWidget::BindToPlayer(APlayerCharacter* InPlayerCharacter)
         return;
     }
     InPlayerCharacter->OnToggleInventory.BindUFunction(InventoryWidget, TEXT("ToggleInventoryWidget"));
+	InPlayerCharacter->OnTogglePlayMenu.BindUFunction(this, TEXT("TogglePlayMenu"));
     this->InventoryWidget->BindToInventoryComponent(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
 	this->InventoryAlarm->BindToInventory(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
 	this->PlayerStatWidget->BindToPlayer(InPlayerCharacter);

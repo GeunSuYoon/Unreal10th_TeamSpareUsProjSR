@@ -22,6 +22,7 @@ class UInputMappingContext;
 class UInputAction;
 
 DECLARE_DYNAMIC_DELEGATE(FOnToggleInventory);
+DECLARE_DYNAMIC_DELEGATE(FOnTogglePlayMenu);
 
 UCLASS()
 class PROJECTSR_API APlayerCharacter : public ACharacter,
@@ -72,6 +73,7 @@ protected:
 	void Player_BoostStop(const FInputActionValue& Value);
 	void Player_Interact(const FInputActionValue& Value);
     void Player_Inventory(const FInputActionValue& Value);
+	void Player_PlayMenu();
 
 	// 중력 상태에 따른 실제 이동 로직
 	void Player_Move_Gravity(const FInputActionValue& Value);
@@ -153,5 +155,5 @@ public:
 
 public:
     FOnToggleInventory OnToggleInventory;
+	FOnTogglePlayMenu OnTogglePlayMenu;
 };
- 
