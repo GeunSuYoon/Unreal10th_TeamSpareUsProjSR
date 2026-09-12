@@ -8,14 +8,18 @@
 
 void UMachineArmStatusUserWidget::BindToMachineArmComponent(UMachineArmComponent* InMachineArm)
 {
-	InMachineArm->OnMachineArmLevelChange.BindUFunction(this, TEXT("UpdateStat__"));
+	// MachineArm feature retired.
+	// InMachineArm->OnMachineArmLevelChange.BindUFunction(this, TEXT("UpdateStat__"));
 }
 
 void UMachineArmStatusUserWidget::UpdateStat__(const FMachineArmStat& InMachineArmStat)
 {
+	// MachineArm feature retired.
+	/*
 	this->LevelValue__ = InMachineArmStat.Level;
 	this->Level->SetText(FText::AsNumber(InMachineArmStat.Level));
 	this->ItemCollectTime->SetText(FText::AsNumber(InMachineArmStat.ItemCollectTime));
 	this->ItemCollectWeight->SetText(FText::AsNumber(InMachineArmStat.ItemCollectWeight));
 	this->OperationalEnergy->SetText(FText::AsNumber(InMachineArmStat.OperationalEnergy));
+	*/
 }

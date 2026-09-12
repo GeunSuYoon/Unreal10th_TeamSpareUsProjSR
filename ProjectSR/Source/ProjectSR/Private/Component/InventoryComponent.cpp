@@ -69,6 +69,28 @@ void UInventoryComponent::ShowInventory()
     }
 }
 
+bool UInventoryComponent::RestoreSlots(int32 SavedSize, const TArray<FInventorySlot>& SavedSlots)
+{
+	if (SavedSize < 0 || SavedSlots.Num() != SavedSize) return false;
+	for (const FInventorySlot& Slot : SavedSlots)
+	{
+		if ((!Slot.IsEmpty() && (Slot.GetCount() <= 0 || Slot.GetCount() > Slot.ItemData->MaxStackCount))
+			|| (Slot.IsEmpty() && Slot.GetCount() != 0))
+		{
+			return false;
+		}
+	}
+
+	InventorySize = SavedSize;
+	Slots_ = SavedSlots;
+	for (FInventorySlot& Slot : Slots_) Slot.bDragging = false;
+	Slots_.AddDefaulted(); // Runtime-only temporary drag slot.
+
+	for (int32 Index = 0; Index < InventorySize; ++Index) OnSlotChanged.Broadcast(Index);
+	OnSlotSize.Broadcast(GetUsingSlotCount(), InventorySize);
+	return true;
+}
+
 FInventorySlot* UInventoryComponent::GetSlot(int InSlotIndex)
 {
     if (!IsValidIndex(InSlotIndex)) return nullptr;
@@ -168,13 +190,20 @@ bool UInventoryComponent::HandleMoveCommand_(const FInventoryCommand& Command, F
 {
     OutResult.bSuccess = false;
 
-    if (!IsValidIndex(Command.SourceIndex) || !IsValidIndex(Command.TargetIndex))
+    if (!IsValid(Command.SourceInventoryComponent)
+        || !Command.SourceInventoryComponent->IsValidIndex(Command.SourceIndex)
+        || !IsValidIndex(Command.TargetIndex))
     {
         return OutResult.bSuccess;
     }
 
     FInventorySlot* SourceSlot = Command.SourceInventoryComponent->GetSlot(Command.SourceIndex);
     FInventorySlot* TargetSlot = GetSlot(Command.TargetIndex);
+
+    if (!SourceSlot || !TargetSlot)
+    {
+        return OutResult.bSuccess;
+    }
 
     // 소스가 비어있으면 실패(처리안함)
     if (SourceSlot->IsEmpty())
@@ -436,6 +465,11 @@ int32 UInventoryComponent::GetSpendableItemCount(const UItemDataAsset* ItemData)
     return static_cast<int32>(FMath::Min<int64>(Count, MAX_int32));
 }
 
+void	UInventoryComponent::InitBroadCast()
+{
+	this->GetUsingSlotCount();
+}
+
 bool UInventoryComponent::ProcessIngredients(const TArray<FIngredient>& Ingredients,
                                              const TArray<UInventoryComponent*>& Inventories, bool bConsume)
 {
@@ -648,7 +682,7 @@ int32 UInventoryComponent::GetUsingSlotCount() const
             Count++;
         }
     }
-
+	this->OnSlotSize.Broadcast(Count, InventorySize);
     return Count;
 }
 
@@ -657,13 +691,25 @@ bool UInventoryComponent::SetInventorySize(int InSizeDiff)
     // 크기가 늘어나면 그냥 늘리면 됨
     // 크기가 줄어들면 줄어드는 슬롯에 있던 아이템을 버리도록 구현
 
-    const int32 TargetInventorySize = InventorySize + InSizeDiff;
+    const int32 TargetInventorySize = InSizeDiff;
 
-    if (InSizeDiff < 0)
+    if (TargetInventorySize < 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UInventoryComponent::SetInventorySize()] : 인벤토리 크기는 0보다 작을 수 없습니다."));
+        return false;
+    }
+
+    if (TargetInventorySize < InventorySize)
     {
         const int32 LastInventorySlotIndex = InventorySize - 1;
         for (int32 i = LastInventorySlotIndex; i >= TargetInventorySize; --i)
         {
+            const FInventorySlot* SlotToRemove = GetSlot(i);
+            if (!SlotToRemove || SlotToRemove->IsEmpty())
+            {
+                continue;
+            }
+
             FInventoryCommandResult Result;
 
             ExecuteCommand(
@@ -677,6 +723,7 @@ bool UInventoryComponent::SetInventorySize(int InSizeDiff)
 
                 InventorySize = i + 1;
                 Slots_.SetNum(InventorySize + 1);
+                GetUsingSlotCount();
 
                 return false;
             }
@@ -685,7 +732,7 @@ bool UInventoryComponent::SetInventorySize(int InSizeDiff)
 
     InventorySize = TargetInventorySize;
     Slots_.SetNum(InventorySize + 1);
-
+	this->GetUsingSlotCount();
     return true;
 }
 

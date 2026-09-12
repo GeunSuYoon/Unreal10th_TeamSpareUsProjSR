@@ -3,47 +3,34 @@
 #include "Data/Item/ItemDataAsset.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
-#include "Components/PanelWidget.h"
 #include "Components/TextBlock.h"
-#include "Components/VerticalBox.h"
-#include "Components/VerticalBoxSlot.h"
+#include "Components/UniformGridPanel.h"
+#include "Components/UniformGridSlot.h"
 
-void UShipUpgradeDetailUserWidget::EnsureControls()
+void UShipUpgradeDetailUserWidget::ResolveIngredientWidgetClassFromDesigner()
 {
-    if (!WidgetTree || (UpgradeButton && IngredientList && UpgradeMessage)) return;
-    // Existing WBP assets work immediately; designers may supply the optional named controls.
-    UWidget* OriginalRoot = WidgetTree->RootWidget;
-    auto* Layout = WidgetTree->ConstructWidget<UVerticalBox>();
-    WidgetTree->RootWidget = Layout;
-    if (OriginalRoot)
+    if (IngredientWidgetClass || !IngredientItemGridPanel)
     {
-        auto* RootSlot = Layout->AddChildToVerticalBox(OriginalRoot);
-        RootSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        return;
     }
-    if (!IngredientList)
+
+    // Existing WBPs already contain an ingredient item as a designer template.
+    // Cache its class before Refresh() clears the grid.
+    for (int32 Index = 0; Index < IngredientItemGridPanel->GetChildrenCount(); ++Index)
     {
-        IngredientList = WidgetTree->ConstructWidget<UVerticalBox>();
-        Layout->AddChild(IngredientList);
-    }
-    if (!UpgradeMessage)
-    {
-        UpgradeMessage = WidgetTree->ConstructWidget<UTextBlock>();
-        Layout->AddChild(UpgradeMessage);
-    }
-    if (!UpgradeButton)
-    {
-        UpgradeButton = WidgetTree->ConstructWidget<UButton>();
-        auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
-        Label->SetText(FText::FromString(TEXT("업그레이드")));
-        UpgradeButton->AddChild(Label);
-        Layout->AddChild(UpgradeButton);
+        if (UManufactureIngredientItemWidget* Template =
+            Cast<UManufactureIngredientItemWidget>(IngredientItemGridPanel->GetChildAt(Index)))
+        {
+            IngredientWidgetClass = Template->GetClass();
+            return;
+        }
     }
 }
 
 void UShipUpgradeDetailUserWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
-    EnsureControls();
+    ResolveIngredientWidgetClassFromDesigner();
     if (UpgradeButton) UpgradeButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleUpgradeClicked);
 }
 void UShipUpgradeDetailUserWidget::Subscribe()
@@ -95,29 +82,43 @@ void UShipUpgradeDetailUserWidget::Refresh()
     RefreshStats(Preview);
     if (UpgradeButton) UpgradeButton->SetIsEnabled(Preview.Result == EUpgradeResult::Success);
     if (UpgradeMessage) UpgradeMessage->SetText(GetResultText(Preview.Result, Preview.NextLevel));
-    if (!IngredientList) return;
-    IngredientList->ClearChildren();
+    if (!IngredientItemGridPanel) return;
+    IngredientItemGridPanel->ClearChildren();
     if (!Preview.bHasNextLevel || Preview.Result == EUpgradeResult::InvalidData) return;
-    for (const FIngredient& Ingredient : Preview.Ingredients)
+
+    const int32 ColumnCount = FMath::Max(1, MaxIngredientColumnCount);
+    for (int32 Index = 0; Index < Preview.Ingredients.Num(); ++Index)
     {
+        const FIngredient& Ingredient = Preview.Ingredients[Index];
+        if (!IsValid(Ingredient.ItemData))
+        {
+            continue;
+        }
+
         const int32 Owned = UpgradeComponent->GetOwnedIngredientCount(Ingredient.ItemData);
         if (IngredientWidgetClass && GetOwningPlayer())
         {
             auto* Row = CreateWidget<UManufactureIngredientItemWidget>(GetOwningPlayer(), IngredientWidgetClass);
             if (Row)
             {
-                IngredientList->AddChild(Row);
+                UUniformGridSlot* GridSlot = IngredientItemGridPanel->AddChildToUniformGrid(
+                    Row, Index / ColumnCount, Index % ColumnCount);
+                if (GridSlot)
+                {
+                    GridSlot->SetHorizontalAlignment(HAlign_Fill);
+                    GridSlot->SetVerticalAlignment(VAlign_Fill);
+                }
                 Row->RefreshManufactureIngredientItemWidget(Ingredient, Owned);
             }
         }
-        else
+        else if (WidgetTree)
         {
             auto* Row = WidgetTree->ConstructWidget<UTextBlock>();
             Row->SetText(FText::Format(FText::FromString(TEXT("{0}: {1} / {2}")),
                 Ingredient.ItemData->DisplayName.IsEmpty() ? FText::FromName(Ingredient.ItemData->ItemId) : Ingredient.ItemData->DisplayName,
                 FText::AsNumber(Owned), FText::AsNumber(Ingredient.Quantity)));
             Row->SetColorAndOpacity(FSlateColor(Owned >= Ingredient.Quantity ? FLinearColor::White : FLinearColor(1.f, .25f, .25f)));
-            IngredientList->AddChild(Row);
+            IngredientItemGridPanel->AddChildToUniformGrid(Row, Index / ColumnCount, Index % ColumnCount);
         }
     }
 }

@@ -3,6 +3,9 @@
 
 #include "Component/StatComponent.h"
 #include "Player/PlayerCharacter.h"
+#include "Framework/SurvivalLoopActor.h"
+#include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
+#include "Engine/World.h"
 
 // Sets default values for this component's properties
 UStatComponent::UStatComponent()
@@ -10,8 +13,33 @@ UStatComponent::UStatComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+	bWantsInitializeComponent = true;
 
 	// ...
+}
+
+void UStatComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+	InitializeStats__();
+}
+
+void UStatComponent::InitializeStats__()
+{
+	if (bStatsInitialized) return;
+
+	OwnerCharacter = Cast<APlayerCharacter>(GetOwner());
+	FEquipmentStatModifier DefaultModifier;
+	DefaultModifier.HealthBonus = 0.0f;
+	DefaultModifier.OxygenBonus = 0.0f;
+	DefaultModifier.MoveSpeedMultiplier = 1.0f;
+	DefaultModifier.OxygenDrainMultiplier = 1.0f;
+	RecalculateMaxStats(DefaultModifier);
+
+	CurrentHealth = MaxHealth;
+	CurrentOxygen = MaxOxygen;
+	bIsDead = false;
+	bStatsInitialized = true;
 }
 
 
@@ -19,26 +47,13 @@ UStatComponent::UStatComponent()
 void UStatComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	// InitializeComponent normally ran before any actor BeginPlay. Keep this
+	// idempotent fallback for unusual manually-created component lifecycles.
+	InitializeStats__();
 
-	OwnerCharacter = Cast<APlayerCharacter>(GetOwner());
-
-	// 장착물이 없는 순수 맨몸 상태 초기화 (보너스 0, 배율 1.0)
-	FEquipmentStatModifier DefaultModifier;
-	DefaultModifier.HealthBonus = 0.0f;
-	DefaultModifier.OxygenBonus = 0.0f;
-	DefaultModifier.MoveSpeedMultiplier = 1.0f;
-	DefaultModifier.OxygenDrainMultiplier = 1.0f;
-	
-	// 스탯 Max값 초기화
-	RecalculateMaxStats(DefaultModifier);
-
-	CurrentHealth = MaxHealth;
-	//CurrentHunger = MaxHunger;
-	CurrentOxygen = MaxOxygen;
-
-	// Current 스탯 세팅 후 알림
+	// UI listeners are expected to bind around BeginPlay, so publish only after
+	// the final current values have been assigned.
 	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
-	//OnHungerChanged.Broadcast(CurrentHunger, MaxHunger);
 	OnOxygenChanged.Broadcast(CurrentOxygen, MaxOxygen);
 }
 
@@ -59,25 +74,45 @@ void UStatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	//}
 	//ExecuteStatCommand({ EPlayerStatType::Hunger, -ActualHungerDrain * DeltaTime, TEXT("HungerDrain") });
 
-	// --- Oxygen 소모 로직 --- 무중력 상태시
-	if (bIsOxygenConsume)
+	// In a survival level the actual cabin/door state wins over gravity callbacks.
+	bool bConsume = bIsOxygenConsume;
+	if (auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>())
 	{
-		ExecuteStatCommand({ EPlayerStatType::Oxygen, -OxygenDrainRate * DeltaTime, TEXT("ZeroGravityOxygenDrain") });
+		if (auto* Loop = Salvage->GetSurvivalLoop(); Loop && Loop->Player == OwnerCharacter)
+		{
+			if (Loop->State != ESurvivalState::Playing && Loop->State != ESurvivalState::WaitingForMeteor) return;
+			bConsume = !Loop->IsPlayerSafe();
+		}
 	}
-	else
-	{
-		ExecuteStatCommand({ EPlayerStatType::Oxygen, OxygenRecoverRate * DeltaTime, TEXT("OxygenRecover") });
-	}
+	if (!bConsume || DeltaTime <= 0.0f) return;
 
-	// --- 체력 패널티 --- 허기, 산소 고갈시
-	//if (CurrentHunger <= 0.0f)
-	//{
-	//	ExecuteStatCommand({ EPlayerStatType::Health, -StarvationDamageRate * DeltaTime, TEXT("Starvation") });
-	//}
-	if (CurrentOxygen <= 0.0f)
+	const float Drain = FMath::Max(0.0f, OxygenDrainRate);
+	// Only the portion of this frame spent without oxygen causes HP damage.
+	const float OxygenTime = Drain > 0.0f ? CurrentOxygen / Drain : DeltaTime;
+	const float SuffocationTime = CurrentOxygen <= 0.0f
+		? DeltaTime : FMath::Max(0.0f, DeltaTime - OxygenTime);
+	ExecuteStatCommand({ EPlayerStatType::Oxygen, -Drain * DeltaTime, TEXT("OxygenDrain") });
+	if (SuffocationTime > 0.0f)
 	{
-		ExecuteStatCommand({ EPlayerStatType::Health, -NoOxygenDamageRate * DeltaTime, TEXT("Suffocation") });
+		ExecuteStatCommand({ EPlayerStatType::Health, -FMath::Max(0.0f, NoOxygenDamageRate) * SuffocationTime, TEXT("Suffocation") });
 	}
+}
+
+void UStatComponent::ApplyDailyRecovery(float OxygenFillRatio, float HealthRecoveryRatio)
+{
+	if (bIsDead || !FMath::IsFinite(OxygenFillRatio) || !FMath::IsFinite(HealthRecoveryRatio)) return;
+	const float TargetOxygen = MaxOxygen * FMath::Clamp(OxygenFillRatio, 0.0f, 1.0f);
+	ModifyOxygen(FMath::Max(0.0f, TargetOxygen - CurrentOxygen));
+	ModifyHealth(MaxHealth * FMath::Clamp(HealthRecoveryRatio, 0.0f, 1.0f));
+}
+
+void UStatComponent::RestoreCurrentStats(float Health, float Oxygen)
+{
+	CurrentHealth = FMath::Clamp(FMath::IsFinite(Health) ? Health : 0.0f, 0.0f, MaxHealth);
+	CurrentOxygen = FMath::Clamp(FMath::IsFinite(Oxygen) ? Oxygen : 0.0f, 0.0f, MaxOxygen);
+	bIsDead = CurrentHealth <= 0.0f;
+	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+	OnOxygenChanged.Broadcast(CurrentOxygen, MaxOxygen);
 }
 
 void UStatComponent::ModifyHealth(float Amount)
@@ -128,10 +163,10 @@ void UStatComponent::ExecuteStatCommand(const FStatChangeCommand& Command)
 		CommandHistory.RemoveAt(0);
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("[StatCommand] Source: %s | Type: %s | Amount: %.2f"),
-		*Command.Source,
-		*UEnum::GetValueAsString(Command.StatType),
-		Command.Amount);
+	//UE_LOG(LogTemp, Log, TEXT("[StatCommand] Source: %s | Type: %s | Amount: %.2f"),
+	//	*Command.Source,
+	//	*UEnum::GetValueAsString(Command.StatType),
+	//	Command.Amount);
 }
 
 // 장비 착용시 보너스 스탯값 더해서 UI 갱신
@@ -152,8 +187,12 @@ void UStatComponent::RecalculateMaxStats(const FEquipmentStatModifier& Modifiers
 	CurrentOxygen = FMath::Min(CurrentOxygen, MaxOxygen);
 	CurrentHealth = FMath::Min(CurrentHealth, MaxHealth);
 
-	// 4. UI 및 방송 알림
-	OnOxygenChanged.Broadcast(CurrentOxygen, MaxOxygen);
-	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+	// InitializeComponent runs before UI listeners are expected to bind. During
+	// that first calculation BeginPlay publishes the finalized current values.
+	if (bStatsInitialized)
+	{
+		OnOxygenChanged.Broadcast(CurrentOxygen, MaxOxygen);
+		OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+	}
 }
 

@@ -46,6 +46,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void	InitBroadCast();
+
 	// 커스텀 무브먼트컴포넌트 편의 캐스팅
 	UInSpaceMovementComponent* GetInSpaceMovementComponent() const;
 

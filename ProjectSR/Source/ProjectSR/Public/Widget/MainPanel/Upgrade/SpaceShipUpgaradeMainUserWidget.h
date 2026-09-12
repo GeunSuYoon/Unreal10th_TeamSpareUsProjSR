@@ -52,9 +52,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<ULazerUpgradeUserWidget>				LazerUpgrade = nullptr;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UMachineArmUpgradeUserWidget>		MachineArmUpgrade = nullptr;
-
 private:
 	TArray<TObjectPtr<UWidget>>	OpenWidgetStack__;
 	int32						StackSize__ = 0;

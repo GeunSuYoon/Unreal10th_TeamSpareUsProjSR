@@ -8,6 +8,7 @@
 
 class UHorizontalBox;
 class UTextBlock;
+class USoundBase;
 
 class UInventoryComponent;
 
@@ -22,6 +23,7 @@ class PROJECTSR_API UInventoryAlarmUserWidget : public UUserWidget
 public:
 	void	BindToInventory(UInventoryComponent* InInventory);
 
+	UFUNCTION()
 	void	InventorySlotChange(int32 InCurrentSize, int32 InMaxSize);
 
 	void	InitVisibility();
@@ -40,6 +42,9 @@ protected:
 	TObjectPtr<UTextBlock>		CurrentWeight = nullptr;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>		MaxWeight = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm|Audio")
+	TObjectPtr<USoundBase> InventoryAlarmSFX = nullptr;
 
 
 private:

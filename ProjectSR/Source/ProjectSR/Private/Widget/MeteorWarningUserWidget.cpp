@@ -4,6 +4,7 @@
 #include "Widget/MeteorWarningUserWidget.h"
 #include "Components/TextBlock.h"
 #include "SpaceShip/MeteorAvoidanceComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 void UMeteorWarningUserWidget::BindToMeteorAvoidanceComponent(UMeteorAvoidanceComponent* InMeteorAvoidanceComponent)
 {
@@ -23,11 +24,16 @@ void UMeteorWarningUserWidget::BindToMeteorAvoidanceComponent(UMeteorAvoidanceCo
 
 void UMeteorWarningUserWidget::MeteorWarningStart__(const FMeteor& InMeteor)
 {
+	const bool bWasVisible = IsVisible();
 	PlayAnimation(this->MeteoWarningStartAnim);
 	this->MeteoSize->SetText(FText::AsNumber(InMeteor.MeteorSize));
 	this->MeteoDamage->SetText(FText::AsNumber(InMeteor.MeteorDamage));
 	this->RemainedSecond->SetText(FText::AsNumber(InMeteor.MeteorRemainTime));
 	SetVisibility(ESlateVisibility::Visible);
+	if (!bWasVisible && MeteorAlarmSFX)
+	{
+		UGameplayStatics::PlaySound2D(this, MeteorAlarmSFX);
+	}
 }
 
 void UMeteorWarningUserWidget::MeteorWarningTimer__(const FMeteor& InMeteor)

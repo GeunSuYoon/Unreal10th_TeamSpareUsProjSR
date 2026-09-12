@@ -16,6 +16,14 @@ void	UPlayerHPBarUserWidget::BindToPlayer(APlayerCharacter* InPlayer)
 	{
 		Stat->OnHealthChanged.AddDynamic(this, &UPlayerHPBarUserWidget::HPChange);
 	}
+	else
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("[UPlayerHPBarUserWidget::BindToPlayer] StatComponent가 nullptr입니다.")
+		);
+	}
 }
 
 void UPlayerHPBarUserWidget::HPChange(float InCurrentHP, float InMaxHP)

@@ -67,6 +67,7 @@ public:
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventorySlotChanged, int32, InSlotIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInventorySlotSize, int32, InCurrentSlotUseSize, int32, InMaxSlotSize);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECTSR_API UInventoryComponent : public UActorComponent
@@ -82,6 +83,8 @@ public:
     static bool ProcessIngredients(const TArray<FIngredient>& Ingredients,
         const TArray<UInventoryComponent*>& Inventories, bool bConsume);
     int32 GetSpendableItemCount(const UItemDataAsset* ItemData) const;
+
+	void	InitBroadCast();
 
     // 커맨드 실행용 함수
     UFUNCTION(BlueprintCallable, Category = "Inventory|Command")
@@ -132,6 +135,9 @@ public:
     inline TSubclassOf<UTemporarySlotWidget> GetTemporarySlotWidgetClass() const { return TemporarySlotWidgetClass; }
 
     inline TArray<FInventorySlot> GetCopiedSlots() const { return Slots_; }
+
+	// Replaces normal slots without dropping existing contents. Intended for validated save data.
+	bool RestoreSlots(int32 SavedSize, const TArray<FInventorySlot>& SavedSlots);
     // --------------------------------------------------------------------
 
 protected:
@@ -178,6 +184,8 @@ private:
 public:
     // 슬롯에 변화가 생겼을 때 발동할 델리게이트(싱글캐스트)
     FOnInventorySlotChanged OnSlotChanged;
+
+	FOnInventorySlotSize	OnSlotSize;
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Slot")

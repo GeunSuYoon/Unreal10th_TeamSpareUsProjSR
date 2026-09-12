@@ -21,9 +21,6 @@ class USpaceShipUpgaradeMainUserWidget;
 class URecipeListWidget;
 class ASpaceShipActor;
 
-//DECLARE_DYNAMIC_DELEGATE(FOnOpenMainPanel);
-//DECLARE_DYNAMIC_DELEGATE(FOnCloseMainPanel);
-
 /**
  * 
  */
@@ -61,6 +58,7 @@ public:
 	FOnWidgetClose	OnWidgetClose;
 
 	UItemManagerWidget*	GetWarehouseWidget() { return (this->Warehouse); }
+	URecipeListWidget*	GeCraftingRecipeListWidget() { return (this->CraftingRecipeList); }
 
 protected:
 	virtual void NativeOnInitialized() override;

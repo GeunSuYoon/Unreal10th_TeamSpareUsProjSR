@@ -15,9 +15,9 @@ class ASpaceRootActor;
 class UMeteorAvoidanceComponent;
 class UItemDataAsset;
 class USpaceMapDataAsset;
-class USphereComponent;
 class AMeteorItemActor;
 class ASurvivalLoopActor;
+class APlayerCharacter;
 //class AItemActor;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceMapUpdate, const float, InDist);
@@ -56,15 +56,18 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void	SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData);
+	void	StartDay(USpaceMapDataAsset* InSpaceMapData);
 
 	void	RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip);
-	void	RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent);
+	void	RegisterSurvivalLoopActor(ASurvivalLoopActor* InSurvivalLoop);
+	void	UnregisterSurvivalLoopActor(ASurvivalLoopActor* InSurvivalLoop);
+	void	RegisterPlayer(APlayerCharacter* InPlayer);
 	void	MeteorDetect();
 	void	EndOfDay();
+	// Cancels outstanding async work and returns every day-scoped item/meteor to its pool.
+	void ClearDayActors();
 	bool	HasPendingMeteor() const;
 	void	StopSurvival();
-	TWeakObjectPtr<ASurvivalLoopActor> SurvivalLoop;
-
 	UFUNCTION(BlueprintCallable)
 	void	SpaceShipRotateDetect(const FRotator& InRotate);
 
@@ -76,16 +79,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	ASpaceShipActor*	GetSpaceShipActor() const { return (this->SpaceShipActor__); }
+	ASurvivalLoopActor*	GetSurvivalLoop() const { return (this->SurvivalLoop__); }
+	APlayerCharacter*	GetPlayerCharacter() const { return (this->PlayerCharacter__); }
 
 	float	GetItemSpawnDist() const { return (this->ItemSpawnDist__); }
 
 	FOnSpaceMapUpdate	OnSpaceMapUpdate;
 	FOnMeteorSpawn		OnMeteorSpawn;
-
-protected:
-	// 테스트용 코드에용
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Area")
-	TObjectPtr<USphereComponent> SafeAreaVisualizer_;
 
 private:
 	UFUNCTION()
@@ -100,11 +100,21 @@ private:
 
 	UItemDataAsset*	SelectSpawnItemData__();
 
+	void	CheckStartDay__();
+
 	UPROPERTY()
 	TObjectPtr<ASpaceRootActor>		SpaceRootActor__ = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<ASpaceShipActor>		SpaceShipActor__ = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<ASurvivalLoopActor>	SurvivalLoop__ = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<APlayerCharacter>	PlayerCharacter__ = nullptr;
+
+	bool bStartCheckScheduled__ = false;
 
 	//TObjectPtr<UMeteorAvoidanceComponent>		MeteorAvoidanceComponent__ = nullptr;
 

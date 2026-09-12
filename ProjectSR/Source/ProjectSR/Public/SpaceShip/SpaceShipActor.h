@@ -16,7 +16,7 @@ class USpaceMapDataAsset;
 
 class ULazerComponent;
 class USpaceShipUpgradeComponent;
-class UMachineArmComponent;
+// class UMachineArmComponent; // MachineArm feature retired.
 class UInventoryComponent;
 class UCraftingComponent;
 class UMeteorAvoidanceComponent;
@@ -64,6 +64,8 @@ public:
 	bool IsDoorClosed() const;
 	const FSpaceShipStat& GetStat() const { return SpaceShipStat_; }
 	void ApplySpaceShipStat(const FSpaceShipStat& NewStat);
+	void RestoreRuntimeState(const FSpaceShipStat& SavedShipStat, const FLazerStat& SavedLazerStat,
+		float SavedDurability, float SavedEnergy);
 	UFUNCTION(BlueprintPure, Category = "Upgrade")
 	inline float	GetMaxDurability() const { return (this->SpaceShipStat_.MaxDurability);	}
 	inline float	GetCurrentDurability() const { return (this->CurrentDurability_); }
@@ -74,7 +76,7 @@ public:
 
 	inline USpaceShipUpgradeComponent*	GetUpgradeComponent() const { return (this->UpgradeComponent_); }
 	inline ULazerComponent*				GetLazerComponent() const { return (this->LazerComponent_); }
-	inline UMachineArmComponent*		GetMachineArmComponent() const { return (this->MachineArmComponent_); }
+	// inline UMachineArmComponent* GetMachineArmComponent() const { return (this->MachineArmComponent_); }
 	inline UMeteorAvoidanceComponent*	GetMeteorAvoidance() const { return (this->MeteorAvoidanceComponent_); }
 	inline UInventoryComponent*			GetWarehouse() const { return (this->WarehouseComponent_); }
 	inline UCraftingComponent*			GetCraftingComponent() const { return (this->CraftingComponent_); }
@@ -117,7 +119,7 @@ public:
 
 	void	SetSpaceShipData(USpaceShipDataAsset* InSpaceShipData);
 
-	void	UpdateSpaceShipLevel();
+	void	InitBroadCast();
 
 	FOnSpaceShipLevelChange	OnSpaceShipLevelChange;
 	FOnSpaceShipStatChange	OnDurabilityChange;
@@ -177,8 +179,9 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<ULazerComponent>				LazerComponent_ = nullptr;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Component")
-	TObjectPtr<UMachineArmComponent>		MachineArmComponent_ = nullptr;
+	// MachineArm feature retired.
+	// UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Component")
+	// TObjectPtr<UMachineArmComponent> MachineArmComponent_ = nullptr;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Component")
 	TObjectPtr<UInventoryComponent>			WarehouseComponent_ = nullptr;

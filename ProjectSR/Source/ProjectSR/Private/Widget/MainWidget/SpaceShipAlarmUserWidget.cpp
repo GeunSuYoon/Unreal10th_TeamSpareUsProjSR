@@ -6,17 +6,24 @@
 
 #include "Components/HorizontalBox.h"
 #include "Components/TextBlock.h"
+#include "Kismet/GameplayStatics.h"
 
 void	USpaceShipAlarmUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 {
-	// 바인드해야해용
+	this->BoundSpaceShip__ = InSpaceShip;
+	InitVisibility();
 	InSpaceShip->OnDurabilityChange.AddDynamic(this, &USpaceShipAlarmUserWidget::SpaceShipDurabilityChange);
 	InSpaceShip->OnEnergyChange.AddDynamic(this, &USpaceShipAlarmUserWidget::SpaceShipEnergyChange);
+	SpaceShipEnergyChange(InSpaceShip->GetCurrentEnergy(), InSpaceShip->GetMaxEnergy());
 }
 
-void USpaceShipAlarmUserWidget::SpaceShipEnergyChange(float InCurrentEnergy, float InOperationalEnergy)
+void USpaceShipAlarmUserWidget::SpaceShipEnergyChange(float InCurrentEnergy, float InMaxEnergy)
 {
-	if (InCurrentEnergy < InOperationalEnergy)
+	const float RequiredOperationalEnergy = this->BoundSpaceShip__->GetStat().OperationalEnergy;
+	const bool bWasVisible = EnergyAlarmHorizontalBox->IsVisible();
+	this->CurrentEnergy->SetText(FText::AsNumber(InCurrentEnergy));
+	this->OperationalEnergy->SetText(FText::AsNumber(RequiredOperationalEnergy));
+	if (InCurrentEnergy < RequiredOperationalEnergy)
 	{
 		this->EnergyAlarmHorizontalBox->SetVisibility(ESlateVisibility::Visible);
 		this->SetVisibility(ESlateVisibility::Visible);
@@ -26,6 +33,10 @@ void USpaceShipAlarmUserWidget::SpaceShipEnergyChange(float InCurrentEnergy, flo
 		this->EnergyAlarmHorizontalBox->SetVisibility(ESlateVisibility::Collapsed);
 	}
 	this->CheckChildVisibility();
+	if (!bWasVisible && EnergyAlarmHorizontalBox->IsVisible() && EnergyAlarmSFX)
+	{
+		UGameplayStatics::PlaySound2D(this, EnergyAlarmSFX);
+	}
 }
 
 void USpaceShipAlarmUserWidget::SpaceShipDurabilityChange(float InCurrentDurability, float InMaxDurability)
@@ -62,6 +73,7 @@ void USpaceShipAlarmUserWidget::CheckChildVisibility()
 
 void USpaceShipAlarmUserWidget::CheckDurability()
 {
+	const bool bWasVisible = DurabilityAlarmHorizontalBox->IsVisible();
 	if (this->CurrentDurability__ <= this->RequiredDurability__)
 	{
 		this->DurabilityAlarmHorizontalBox->SetVisibility(ESlateVisibility::Visible);
@@ -70,5 +82,9 @@ void USpaceShipAlarmUserWidget::CheckDurability()
 	else
 	{
 		this->DurabilityAlarmHorizontalBox->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	if (!bWasVisible && DurabilityAlarmHorizontalBox->IsVisible() && DurabilityAlarmSFX)
+	{
+		UGameplayStatics::PlaySound2D(this, DurabilityAlarmSFX);
 	}
 }
