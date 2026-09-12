@@ -2,8 +2,12 @@
 
 
 #include "SpaceShip/LazerComponent.h"
+#include "SpaceShip/SpaceShipActor.h"
 #include "Data/SpaceShip/LazerDataAsset.h"
 #include "Item/MeteorItemActor.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+#include "UObject/ConstructorHelpers.h"
 
 // Sets default values for this component's properties
 ULazerComponent::ULazerComponent()
@@ -12,9 +16,12 @@ ULazerComponent::ULazerComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
+	static ConstructorHelpers::FObjectFinder<USoundBase> DefaultLazerSFX(
+		TEXT("/Game/ExtraAsset/EnergyBeam/_GenericSource/SFX/sfx_AttackUp_Cue.sfx_AttackUp_Cue"));
+	LazerSFX = DefaultLazerSFX.Object;
+
 	// ...
 }
-
 
 // Called when the game starts
 void ULazerComponent::BeginPlay()
@@ -58,7 +65,26 @@ void ULazerComponent::SetLazerData(ULazerDataAsset* InLazerData)
 // this->LazerPower__ * (우주선에서 가져온 에너지) / this->ReactiveEnergy__;
 void ULazerComponent::AttackMeteo__(AMeteorItemActor* InMeteor)
 {
-	InMeteor->LazerDamage(this->LazerStat__.Damage);
-	// 운석에 데미지 주기 (운석 자체 데미지에서 Lazer의 Damage만큼 빼기)
+	if (this->LazerStat__.Damage <= 0.0f)
+	{
+		return;
+	}
+
+	checkf(this->LazerStat__.ReactiveEnergy > UE_SMALL_NUMBER,
+		TEXT("Lazer ReactiveEnergy must be greater than zero when Damage is configured."));
+
+	ASpaceShipActor* SpaceShip = CastChecked<ASpaceShipActor>(GetOwner());
+	const float RequestedEnergy = SpaceShip->RequestEnergy(this->LazerStat__.ReactiveEnergy);
+	const float LazerDamage = this->LazerStat__.Damage * RequestedEnergy / this->LazerStat__.ReactiveEnergy;
+
+	if (LazerDamage > 0.0f)
+	{
+		InMeteor->LazerDamage(LazerDamage);
+		if (LazerSFX)
+		{
+			UGameplayStatics::PlaySound2D(this, LazerSFX);
+		}
+	}
+
 }
 

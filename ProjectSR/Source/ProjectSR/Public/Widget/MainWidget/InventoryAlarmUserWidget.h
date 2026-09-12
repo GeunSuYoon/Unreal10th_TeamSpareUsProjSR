@@ -8,6 +8,7 @@
 
 class UHorizontalBox;
 class UTextBlock;
+class USoundBase;
 
 class UInventoryComponent;
 
@@ -41,6 +42,9 @@ protected:
 	TObjectPtr<UTextBlock>		CurrentWeight = nullptr;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>		MaxWeight = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm|Audio")
+	TObjectPtr<USoundBase> InventoryAlarmSFX = nullptr;
 
 
 private:

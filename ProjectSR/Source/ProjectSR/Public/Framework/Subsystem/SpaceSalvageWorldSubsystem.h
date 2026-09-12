@@ -23,8 +23,6 @@ class APlayerCharacter;
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnSpaceMapUpdate, const float, InDist);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnMeteorSpawn, AMeteorItemActor*, InMeteor);
 
-enum class EDayPreparationStatus : uint8 { Idle, Preparing, Ready, Failed };
-
 /**
  *
  */
@@ -58,6 +56,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void	SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData);
+	void	StartDay(USpaceMapDataAsset* InSpaceMapData);
 
 	void	RegisterSpaceShipActor(ASpaceShipActor* InSpaceShip);
 	void	RegisterSurvivalLoopActor(ASurvivalLoopActor* InSurvivalLoop);
@@ -69,14 +68,6 @@ public:
 	void ClearDayActors();
 	bool	HasPendingMeteor() const;
 	void	StopSurvival();
-	// Survival-only two-phase start. Actors stay inert until ActivatePreparedDay succeeds.
-	void PrepareDay(USpaceMapDataAsset* Map, float TimeoutSeconds, float MinimumSuccessRatio);
-	bool ActivatePreparedDay();
-	void CancelDayPreparation();
-	EDayPreparationStatus GetDayPreparationStatus() const { return PreparationStatus__; }
-	const FString& GetDayPreparationError() const { return PreparationError__; }
-	float GetDayPreparationProgress() const;
-
 	UFUNCTION(BlueprintCallable)
 	void	SpaceShipRotateDetect(const FRotator& InRotate);
 
@@ -97,24 +88,6 @@ public:
 	FOnMeteorSpawn		OnMeteorSpawn;
 
 private:
-	void FailDayPreparation__(const FString& Reason);
-	void ResolvePreparedItem__(bool bSuccess);
-	void SpawnPreparedItem__();
-	struct FPreparedItem
-	{
-		TWeakObjectPtr<AItemActor> Actor;
-		FVector Velocity = FVector::ZeroVector;
-		bool bTickEnabled = false;
-		bool bCollisionEnabled = false;
-	};
-	TArray<FPreparedItem> PreparedItems__;
-	EDayPreparationStatus PreparationStatus__ = EDayPreparationStatus::Idle;
-	FString PreparationError__;
-	int32 PendingInitialItems__ = 0;
-	int32 RequestedInitialItems__ = 0;
-	int32 RequiredInitialItems__ = 0;
-	int32 SuccessfulInitialItems__ = 0;
-	float PreparationTimeLeft__ = 0.0f;
 	UFUNCTION()
 	void	SpawnMeteor__(const FMeteor& InMeteor);
 

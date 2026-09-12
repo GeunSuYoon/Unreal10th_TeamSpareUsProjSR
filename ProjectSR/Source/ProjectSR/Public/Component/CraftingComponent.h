@@ -39,10 +39,10 @@ struct FManufactureWidgetDisplayData
     TMap<FName, int32> IngredientStatusMap;
 
     UPROPERTY(BlueprintReadOnly)
-    bool bHasEnoughIngredients;
+    bool bHasEnoughIngredients = false;
 
     UPROPERTY(BlueprintReadOnly)
-    bool bHasEnoughEmptySlots;
+    bool bHasEnoughEmptySlots = false;
 
 };
 

@@ -10,6 +10,7 @@
 
 class ULazerDataAsset;
 class AMeteorItemActor;
+class USoundBase;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnLazerLevelChange, const FLazerStat&, InLazerStat);
 
@@ -42,15 +43,16 @@ public:
 	inline float	GetLazerPower() const { return (this->LazerStat__.Damage); }
 	inline float	GetReactiveEnergy() const { return (this->LazerStat__.ReactiveEnergy); }
 	inline float	GetOperationalEnergy() const { return (this->LazerStat__.OperationalEnergy); }
+	void AttackMeteo__(AMeteorItemActor* InMeteor);
 
 	void	UpdateLazerLevel() { OnLazerLevelChange.ExecuteIfBound(this->LazerStat__); }
 
 	FOnLazerLevelChange	OnLazerLevelChange;
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lazer|Audio")
+	TObjectPtr<USoundBase> LazerSFX = nullptr;
 
 private:
-	void	AttackMeteo__(AMeteorItemActor* InMeteor);
-
 	FLazerStat	LazerStat__;
 };

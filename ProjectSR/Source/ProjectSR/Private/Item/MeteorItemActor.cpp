@@ -2,8 +2,10 @@
 
 
 #include "Item/MeteorItemActor.h"
+#include "Camera/ImpactCameraShake.h"
 #include "SpaceShip/SpaceShipActor.h"
 
+#include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
@@ -12,12 +14,27 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Camera/CameraShakeBase.h"
 #include "Engine/StaticMesh.h"
+#include "UObject/ConstructorHelpers.h"
 #include "ProjectSR.h"
 #include "Framework/SurvivalLoopActor.h"
 #include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
 
 AMeteorItemActor::AMeteorItemActor()
 {
+	ImpactCameraShake__ = UMeteorImpactCameraShake::StaticClass();
+
+	MoveAudioComponent__ = CreateDefaultSubobject<UAudioComponent>(TEXT("MoveAudioComponent"));
+	MoveAudioComponent__->SetupAttachment(GetRootComponent());
+	MoveAudioComponent__->SetAutoActivate(false);
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> DefaultMoveSFX(
+		TEXT("/Game/SFX/Asteroid/Loop/SFX_Asteroid_Loop01.SFX_Asteroid_Loop01")
+	);
+	if (DefaultMoveSFX.Succeeded())
+	{
+		MoveSFX__ = DefaultMoveSFX.Object;
+	}
+
 	this->SphereCollision_->SetCollisionObjectType(ECC_MeteorActor);
 	this->SphereCollision_->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	this->SphereCollision_->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -33,27 +50,27 @@ void AMeteorItemActor::InitMeteor(const FMeteor& InMeteor, const FVector& ShipCe
 {
 	//this->ClosestApproachWorldPos__ = ShipCenter + InMeteor.ClosestApproachPos;
 	this->MoveDir__ = InMeteor.MoveDir;
-	ExitCenter__ = ShipCenter;
-	bMeteorActive__ = true;
+	this->ExitCenter__ = ShipCenter;
+	this->bMeteorActive__ = true;
 	this->DespawnDist__ = InDespawnDist;
 	this->Damage__ = InMeteor.MeteorDamage;
 	this->SphereCollision_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	this->SetActorScale3D(FVector::OneVector);
 	if (UStaticMesh* MeteorVisual = MeteorVisualMesh__.LoadSynchronous())
 	{
-		Mesh->SetStaticMesh(MeteorVisual);
+		this->Mesh->SetStaticMesh(MeteorVisual);
 	}
-	Mesh->SetVisibility(true, true);
-	// MeteorSize는 지름이므로 반지름을 요구하는 API에서만 절반으로 변환한다.
-	const float MeteorRadius = InMeteor.MeteorSize * 0.5f;
+	this->Mesh->SetVisibility(true, true);
+	float MeteorRadius = InMeteor.MeteorSize * 0.5f;
+
 	this->SphereCollision_->SetSphereRadius(MeteorRadius, true);
 	if (this->Mesh && this->Mesh->GetStaticMesh())
 	{
-		const float	MeshBaseRadius = this->Mesh->GetStaticMesh()->GetBounds().SphereRadius;
+		float	MeshBaseRadius = this->Mesh->GetStaticMesh()->GetBounds().SphereRadius;
 
 		if (MeshBaseRadius > UE_SMALL_NUMBER)
 		{
-			const float MeshScale = MeteorRadius / MeshBaseRadius;
+			float MeshScale = MeteorRadius / MeshBaseRadius;
 
 			this->Mesh->SetRelativeScale3D(FVector(MeshScale));
 		}
@@ -63,8 +80,27 @@ void AMeteorItemActor::InitMeteor(const FMeteor& InMeteor, const FVector& ShipCe
 	this->SphereCollision_->SetCollisionResponseToChannel(ECC_SpaceShipActor, ECR_Overlap);
 	this->SphereCollision_->SetGenerateOverlapEvents(true);
 	this->SphereCollision_->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	SetActorEnableCollision(true);
+	this->SetActorEnableCollision(true);
 	this->SphereCollision_->UpdateOverlaps();
+	StartMoveSFX();
+}
+
+void AMeteorItemActor::StartMoveSFX()
+{
+	StopMoveSFX();
+	MoveAudioComponent__->SetSound(MoveSFX__);
+	if (MoveSFX__)
+	{
+		MoveAudioComponent__->Play();
+	}
+}
+
+void AMeteorItemActor::StopMoveSFX()
+{
+	if (MoveAudioComponent__->IsPlaying())
+	{
+		MoveAudioComponent__->Stop();
+	}
 }
 
 void AMeteorItemActor::LazerDamage(float InDamage)
@@ -102,12 +138,13 @@ void AMeteorItemActor::HandleImpact(ASpaceShipActor* InSpaceShipActor)
 		return;
 	}
 	this->bImpactResolved__ = true;
+	StopMoveSFX();
 	FVector ImpactLocation = GetActorLocation();
 
 	// 중복 충돌 방지
-	SetActorEnableCollision(false);
-	SetActorTickEnabled(false);
-	SetRelativeVelocity(FVector::ZeroVector);
+	this->SetActorEnableCollision(false);
+	this->SetActorTickEnabled(false);
+	this->SetRelativeVelocity(FVector::ZeroVector);
 
 	if (ImpactVFX__)
 	{
@@ -125,30 +162,33 @@ void AMeteorItemActor::HandleImpact(ASpaceShipActor* InSpaceShipActor)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSFX__, ImpactLocation);
 	}
-	if (ImpactCameraShake__)
+	TSubclassOf<UCameraShakeBase> CameraShakeClass = ImpactCameraShake__;
+	if (!CameraShakeClass)
 	{
-		if (APlayerController* PC =	UGameplayStatics::GetPlayerController(this, 0))
+		CameraShakeClass = UMeteorImpactCameraShake::StaticClass();
+	}
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+	{
+		if (PC->PlayerCameraManager)
 		{
-			if (PC->PlayerCameraManager)
-			{
-				PC->PlayerCameraManager->StartCameraShake(ImpactCameraShake__);
-			}
+			PC->PlayerCameraManager->StartCameraShake(CameraShakeClass);
 		}
 	}
 	// Actual impact, not the warning timeout. Capture damage before game-over cleanup returns this actor.
 	const float ImpactDamage = Damage__;
+	bool bDamageHandledBySurvivalLoop = false;
 	if (auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>())
 	{
-		if (Salvage->GetSurvivalLoop()) { Salvage->GetSurvivalLoop()->NotifyMeteorImpact(InSpaceShipActor); }
+		if (Salvage->GetSurvivalLoop())
+		{
+			Salvage->GetSurvivalLoop()->NotifyMeteorImpact(InSpaceShipActor, ImpactDamage);
+			bDamageHandledBySurvivalLoop = true;
+		}
 	}
-	// 우주선에 Damage__ 적용
-	UGameplayStatics::ApplyDamage(
-		InSpaceShipActor,
-		ImpactDamage,
-		nullptr,
-		this,
-		nullptr
-	);
+	if (!bDamageHandledBySurvivalLoop)
+	{
+		UGameplayStatics::ApplyDamage(InSpaceShipActor, ImpactDamage, nullptr, this, nullptr);
+	}
 	if (bMeteorActive__) { FinishUsingPoolable(); }
 }
 
@@ -173,6 +213,7 @@ void AMeteorItemActor::OnSpawnFromPool_Implementation()
 
 	this->bImpactResolved__ = false;
 	bMeteorActive__ = false;
+	StopMoveSFX();
 	SetActorEnableCollision(false);
 }
 
@@ -181,6 +222,7 @@ void AMeteorItemActor::OnReturnToPool_Implementation()
 	SetRelativeVelocity(FVector::ZeroVector);
 	//this->bImpactResolved__ = false;
 	bMeteorActive__ = false;
+	StopMoveSFX();
 
 	Super::OnReturnToPool_Implementation();
 }

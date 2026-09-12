@@ -110,12 +110,17 @@ bool USurvivalSaveSubsystem::TryApplyRequestedLoad(ASurvivalLoopActor* SurvivalL
 {
 	if (!bLoadRequested) return true;
 	if (!IsValid(SurvivalLoop) || !IsValid(SurvivalLoop->Player) || !IsValid(SurvivalLoop->SpaceShip)) return false;
+	auto StartFreshAfterInvalidCheckpoint = [this](const TCHAR* Reason)
+	{
+		UE_LOG(LogSurvivalSave, Error, TEXT("%s Starting a new run; the next successful auto-save will replace the unusable checkpoint."), Reason);
+		bLoadRequested = false;
+		return true;
+	};
 
 	USurvivalSaveGame* Save = Cast<USurvivalSaveGame>(UGameplayStatics::LoadGameFromSlot(SlotName, UserIndex));
 	if (!IsValid(Save) || Save->SaveVersion != USurvivalSaveGame::CurrentSaveVersion || Save->CompletedDay < 1)
 	{
-		UE_LOG(LogSurvivalSave, Error, TEXT("The survival save is missing, corrupt, or uses an unsupported version."));
-		return false;
+		return StartFreshAfterInvalidCheckpoint(TEXT("The survival save is missing, corrupt, or uses an unsupported version."));
 	}
 
 	UStatComponent* PlayerStats = SurvivalLoop->Player->FindComponentByClass<UStatComponent>();
@@ -134,8 +139,7 @@ bool USurvivalSaveSubsystem::TryApplyRequestedLoad(ASurvivalLoopActor* SurvivalL
 		|| Save->SpaceShipDurability <= 0.0f || !FMath::IsFinite(Save->SpaceShipEnergy)
 		|| Save->SpaceShipEnergy < 0.0f || Save->LazerStat.Level < 0)
 	{
-		UE_LOG(LogSurvivalSave, Error, TEXT("The survival save contains invalid stat values."));
-		return false;
+		return StartFreshAfterInvalidCheckpoint(TEXT("The survival save contains invalid stat values."));
 	}
 
 	// Validate and restore inventories before committing scalar state. A corrupt item reference
@@ -145,7 +149,7 @@ bool USurvivalSaveSubsystem::TryApplyRequestedLoad(ASurvivalLoopActor* SurvivalL
 	if (!ResolveInventory(Save->PlayerInventorySize, Save->PlayerInventory, ResolvedPlayerInventory)
 		|| !ResolveInventory(Save->WarehouseSize, Save->Warehouse, ResolvedWarehouse))
 	{
-		return false;
+		return StartFreshAfterInvalidCheckpoint(TEXT("The survival save contains invalid inventory data."));
 	}
 	if (!PlayerInventory->RestoreSlots(Save->PlayerInventorySize, ResolvedPlayerInventory)
 		|| !Ship->GetWarehouse()->RestoreSlots(Save->WarehouseSize, ResolvedWarehouse)) return false;

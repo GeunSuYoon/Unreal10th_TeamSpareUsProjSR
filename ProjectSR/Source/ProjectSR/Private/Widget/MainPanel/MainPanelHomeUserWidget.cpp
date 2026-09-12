@@ -58,8 +58,5 @@ void UMainPanelHomeUserWidget::NativeOnInitialized()
 	this->MeteorEventButton->OnClicked.AddDynamic(this, &UMainPanelHomeUserWidget::MeteorEventSelect);
 	this->UpgradeButton->OnClicked.AddDynamic(this, &UMainPanelHomeUserWidget::UpgradeSelect);
 	this->ItemCraftButton->OnClicked.AddDynamic(this, &UMainPanelHomeUserWidget::ItemCraftSelect);
-	if (this->FinishDayButton)
-	{
-		this->FinishDayButton->OnClicked.AddUniqueDynamic(this, &UMainPanelHomeUserWidget::FinishDay);
-	}
+	this->FinishDayButton->OnClicked.AddUniqueDynamic(this, &UMainPanelHomeUserWidget::FinishDay);
 }

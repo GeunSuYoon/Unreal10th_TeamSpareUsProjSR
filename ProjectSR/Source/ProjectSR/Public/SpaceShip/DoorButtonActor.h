@@ -9,6 +9,7 @@
 #include "DoorButtonActor.generated.h"
 
 class USphereComponent;
+class UWidgetComponent;
 
 DECLARE_DYNAMIC_DELEGATE(FOnDoorButtonClick);
 
@@ -30,11 +31,15 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void	Interact_Implementation(AActor* InTarget) override;
+	virtual void	OnFocused_Implementation(AActor* InTarget) override;
+	virtual void	OnUnfocused_Implementation(AActor* InTarget) override;
 
 	FOnDoorButtonClick	OnDoorButtonClick;
 
 protected:
 	//void	UpdateDoorRotation();
+
+	void	UpdateInteractionWidgetFacing__();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<USphereComponent>	InteractSphere_ = nullptr;
@@ -44,5 +49,11 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UStaticMeshComponent>	ButtonMesh_ = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UWidgetComponent> InteractionWidgetComponent = nullptr;
+
+private:
+	float WidgetOffsetDistance__ = 150.0f;
 
 };

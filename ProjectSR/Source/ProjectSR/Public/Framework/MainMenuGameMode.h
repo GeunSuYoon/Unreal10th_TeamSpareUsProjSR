@@ -7,6 +7,7 @@
 #include "MainMenuGameMode.generated.h"
 
 class UUserWidget;
+class UWidget;
 
 /**
  * Game mode used only by the boot/main-menu map.
@@ -22,17 +23,15 @@ class PROJECTSR_API AMainMenuGameMode : public AGameModeBase
 public:
 	AMainMenuGameMode();
 
+	// Starts a new run, or requests the existing end-of-day checkpoint before travel.
+	UFUNCTION(BlueprintCallable, Category = "Main Menu")
+	void StartOrContinueGame();
+
 protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Main Menu")
 	TSubclassOf<UUserWidget> MainMenuWidgetClass;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Main Menu")
-	TSubclassOf<UUserWidget> InstructionsWidgetClass;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Main Menu")
-	TSubclassOf<UUserWidget> SettingsWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Main Menu")
 	FName GameplayLevel = TEXT("/Game/Blueprint/GeunSuYoon/TestGame/Lv04_TestFinal");
@@ -41,24 +40,10 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> MainMenuWidget;
 
-	UPROPERTY(Transient)
-	TObjectPtr<UUserWidget> OpenedSubMenuWidget;
-
 	UFUNCTION()
 	void HandleStartClicked();
 
 	UFUNCTION()
-	void HandleInstructionsClicked();
-
-	UFUNCTION()
-	void HandleSettingsClicked();
-
-	UFUNCTION()
 	void HandleExitClicked();
-
-	UFUNCTION()
-	void HandleBackClicked();
-
-	void OpenSubMenu(TSubclassOf<UUserWidget> WidgetClass, FName BackButtonName);
-	void ApplyMenuInputMode(UUserWidget* WidgetToFocus) const;
+	void ApplyMenuInputMode(UWidget* WidgetToFocus) const;
 };

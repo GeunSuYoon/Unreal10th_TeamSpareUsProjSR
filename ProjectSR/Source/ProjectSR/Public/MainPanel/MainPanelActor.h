@@ -16,6 +16,7 @@ class ASpaceShipActor;
 class UInventoryComponent;
 class UCraftComponent;
 class USphereComponent;
+class UWidgetComponent;
 
 UCLASS()
 class PROJECTSR_API AMainPanelActor : public AActor, public IInteractInterface
@@ -35,16 +36,23 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void	Interact_Implementation(AActor* InTarget) override;
+	virtual void	OnFocused_Implementation(AActor* InTarget) override;
+	virtual void	OnUnfocused_Implementation(AActor* InTarget) override;
 
 	FOnMainPanelActorInteract	OnMainPanelActorInteract;
 	FOnSpaceShipRotateInput		OnSpaceShipRotateInput;
 
 protected:
+	void	UpdateInteractionWidgetFacing__();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USphereComponent>		SphereCollision_ = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UStaticMeshComponent>	MainPanelMesh_ = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UWidgetComponent>		InteractionWidgetComponent = nullptr;
 
 private:
 	TWeakObjectPtr<ASpaceShipActor>	SpaceShip__ = nullptr;
@@ -52,4 +60,7 @@ private:
 	TObjectPtr<UCraftComponent>		Craft__ = nullptr;
 
 	EMainPanelType	MainPanelState = EMainPanelType::None;
+
+	float WidgetOffsetDistance__ = 100.0f;
+
 };

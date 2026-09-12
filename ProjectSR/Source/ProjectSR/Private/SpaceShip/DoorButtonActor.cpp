@@ -3,6 +3,10 @@
 
 #include "SpaceShip/DoorButtonActor.h"
 #include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+
 
 // Sets default values
 ADoorButtonActor::ADoorButtonActor()
@@ -16,6 +20,13 @@ ADoorButtonActor::ADoorButtonActor()
 
 	this->ButtonMesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ButtonMesh"));
 	this->ButtonMesh_->SetupAttachment(GetRootComponent());
+
+	InteractionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidget"));
+	InteractionWidgetComponent->SetupAttachment(GetRootComponent());
+	InteractionWidgetComponent->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.4f));
+	InteractionWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	InteractionWidgetComponent->SetVisibility(false);
+	InteractionWidgetComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 // Called when the game starts or when spawned
@@ -42,6 +53,29 @@ void ADoorButtonActor::Interact_Implementation(AActor* InTarget)
 	OnDoorButtonClick.ExecuteIfBound();
 }
 
+void ADoorButtonActor::OnFocused_Implementation(AActor* InTarget)
+{
+	if (!InteractionWidgetComponent)
+	{
+		return;
+	}
+
+	InteractionWidgetComponent->SetVisibility(true);
+	SetActorTickEnabled(true);
+	UpdateInteractionWidgetFacing__();
+}
+
+void ADoorButtonActor::OnUnfocused_Implementation(AActor* InTarget)
+{
+	if (!InteractionWidgetComponent)
+	{
+		return;
+	}
+
+	InteractionWidgetComponent->SetVisibility(false);
+	SetActorTickEnabled(false);
+}
+
 //void ADoorButtonActor::UpdateDoorRotation()
 //{
 //	FRotator	DoorRotation = this->DoorMesh_->GetRelativeRotation();
@@ -53,4 +87,28 @@ void ADoorButtonActor::Interact_Implementation(AActor* InTarget)
 //		GetWorldTimerManager().ClearTimer(this->DoorMoveTimerHandle_);
 //	}
 //}
+
+
+void ADoorButtonActor::UpdateInteractionWidgetFacing__()
+{
+	if (!InteractionWidgetComponent)
+	{
+		return;
+	}
+
+	APlayerCameraManager* CamManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
+	if (!CamManager)
+	{
+		return;
+	}
+
+	const FVector CameraLoc = CamManager->GetCameraLocation();
+	const FVector ObjectLoc = GetActorLocation();
+
+	const FVector Dir = (CameraLoc - ObjectLoc).GetSafeNormal();
+	const FVector NewWidgetLoc = ObjectLoc + Dir * WidgetOffsetDistance__;
+
+	InteractionWidgetComponent->SetWorldLocation(NewWidgetLoc);
+	InteractionWidgetComponent->SetWorldRotation(UKismetMathLibrary::FindLookAtRotation(NewWidgetLoc, CameraLoc));
+}
 

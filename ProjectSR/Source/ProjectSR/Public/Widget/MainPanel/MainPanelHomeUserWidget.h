@@ -54,9 +54,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UButton>	ItemCraftButton = nullptr;
 
-	// Optional so existing MainPanelHome Blueprints remain loadable until the
-	// playtest button named exactly "FinishDayButton" is added in the Designer.
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidgetOptional))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UButton>	FinishDayButton = nullptr;
 
 private:

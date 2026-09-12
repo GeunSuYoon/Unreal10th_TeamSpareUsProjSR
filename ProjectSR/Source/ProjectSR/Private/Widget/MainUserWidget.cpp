@@ -12,6 +12,8 @@
 #include "Widget/MainWidget/SpaceShipAlarmUserWidget.h"
 #include "Widget/MainWidget/SpaceShipStatUserWidget.h"
 #include "Widget/ItemManagerWidget.h"
+#include "Widget/DayCountUserWidget.h"
+#include "Framework/SurvivalLoopActor.h"
 
 #include "Interface/InventoryComponentInterface.h"
 #include "Interface/OpenableWidgetInterface.h"
@@ -20,11 +22,13 @@
 #include "Player/PlayerCharacter.h"
 
 #include "InputCoreTypes.h"
+#include "Blueprint/WidgetTree.h"
 #include "GameFramework/PlayerController.h"
 
 void UMainUserWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
+	//DayCount = CastChecked<UDayCountUserWidget>(WidgetTree->FindWidget(TEXT("DayCount")));
     SetIsFocusable(true);
 
     if (MainPanelWidget)
@@ -171,6 +175,29 @@ void UMainUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShipActor)
 
 void UMainUserWidget::BindToCharacter(ACharacter* InCharacter)
 {
+}
+
+void UMainUserWidget::BindToSurvivalLoop(ASurvivalLoopActor* InSurvivalLoop)
+{
+	this->DayCount->BindToSurvivalLoop(InSurvivalLoop);
+	InSurvivalLoop->OnRequiredDurabilityChanged.AddUniqueDynamic(
+		SpaceShipAlarm, &USpaceShipAlarmUserWidget::RequiredDurabilityChange);
+	InSurvivalLoop->OnDayFadeOut.AddUniqueDynamic(
+		this, &UMainUserWidget::HandleDayFadeOut__);
+	InSurvivalLoop->OnDayFadeIn.AddUniqueDynamic(
+		this, &UMainUserWidget::HandleDayFadeIn__);
+	InSurvivalLoop->InitDelegate();
+}
+
+void UMainUserWidget::HandleDayFadeOut__()
+{
+	IWidgetStackHostInterface::Execute_ClearStackWidget(this);
+	SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UMainUserWidget::HandleDayFadeIn__()
+{
+	SetVisibility(ESlateVisibility::Visible);
 }
 
 bool UMainUserWidget::CloseTopWidget_Implementation()

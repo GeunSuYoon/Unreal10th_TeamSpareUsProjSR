@@ -13,6 +13,7 @@
  */
 class ASpaceShipActor;
 
+class UAudioComponent;
 class UNiagaraComponent;
 class UNiagaraSystem;
 class USoundBase;
@@ -55,6 +56,9 @@ protected:
 	);
 
 private:
+	void StartMoveSFX();
+	void StopMoveSFX();
+
 	float	Damage__ = 0.0f;
 	float	DespawnDist__ = 0.0f;
 	//FVector	ClosestApproachWorldPos__ = FVector::Zero();
@@ -63,7 +67,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Meteor")
 	TObjectPtr<UNiagaraComponent>	MoveVFX__ = nullptr;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Meteor")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meteor|Audio", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAudioComponent>	MoveAudioComponent__ = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Meteor|Audio")
 	TObjectPtr<USoundBase>			MoveSFX__ = nullptr;
 
 	// Visual used by physical meteors. Kept separate from the legacy item-data

@@ -32,6 +32,7 @@ void ASRMainHUD::BeginPlay()
 	if (IsValid(SpaceSubsystem))
 	{
 		RegisterSpaceShip(SpaceSubsystem->GetSpaceShipActor());
+		RegisterSurvivalLoop(SpaceSubsystem->GetSurvivalLoop());
 	}
 }
 
@@ -64,4 +65,12 @@ void ASRMainHUD::RegisterPlayerCharacter(APlayerCharacter* InPlayerCharacter)
     }
 
     this->MainUserWidgetInstance_->BindToPlayer(InPlayerCharacter);
+}
+
+void ASRMainHUD::RegisterSurvivalLoop(ASurvivalLoopActor* InSurvivalLoop)
+{
+	if (this->MainUserWidgetInstance_)
+	{
+		MainUserWidgetInstance_->BindToSurvivalLoop(InSurvivalLoop);
+	}
 }

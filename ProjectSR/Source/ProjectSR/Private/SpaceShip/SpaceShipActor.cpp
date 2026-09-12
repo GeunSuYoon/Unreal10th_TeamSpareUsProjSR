@@ -182,9 +182,11 @@ UInventoryComponent* ASpaceShipActor::GetInventoryComponent_Implementation()
 
 float ASpaceShipActor::RequestEnergy(float InEnergy)
 {
-	float	RetEnergy = FMath::Min(this->CurrentEnergy_, InEnergy);
+	const float RequestedEnergy = FMath::Max(0.0f, InEnergy);
+	const float RetEnergy = FMath::Min(this->CurrentEnergy_, RequestedEnergy);
 
 	this->CurrentEnergy_ -= RetEnergy;
+	OnEnergyChange.Broadcast(this->CurrentEnergy_, this->SpaceShipStat_.MaxEnergy);
 	return (RetEnergy);
 }
 

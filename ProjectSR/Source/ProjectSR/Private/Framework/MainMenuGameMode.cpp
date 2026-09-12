@@ -24,19 +24,6 @@ AMainMenuGameMode::AMainMenuGameMode()
 		MainMenuWidgetClass = MainMenuClassFinder.Class;
 	}
 
-	static ConstructorHelpers::FClassFinder<UUserWidget> InstructionsClassFinder(
-		TEXT("/Game/Blueprint/GeunSuYoon/Widget/StartWidget/WBP_MainMenu_02Instructions"));
-	if (InstructionsClassFinder.Succeeded())
-	{
-		InstructionsWidgetClass = InstructionsClassFinder.Class;
-	}
-
-	static ConstructorHelpers::FClassFinder<UUserWidget> SettingsClassFinder(
-		TEXT("/Game/Blueprint/GeunSuYoon/Widget/StartWidget/WBP_MainMenu_03Settings"));
-	if (SettingsClassFinder.Succeeded())
-	{
-		SettingsWidgetClass = SettingsClassFinder.Class;
-	}
 }
 
 void AMainMenuGameMode::BeginPlay()
@@ -49,6 +36,12 @@ void AMainMenuGameMode::BeginPlay()
 		UE_LOG(LogMainMenu, Error, TEXT("Cannot open the main menu: PlayerController or MainMenuWidgetClass is invalid."));
 		return;
 	}
+
+	// A game-over screen leaves the local player in UI-only input. Clear any
+	// carried pause/input-ignore state before this menu takes ownership of input.
+	UGameplayStatics::SetGamePaused(this, false);
+	PlayerController->ResetIgnoreInputFlags();
+	PlayerController->FlushPressedKeys();
 
 	MainMenuWidget = CreateWidget<UUserWidget>(PlayerController, MainMenuWidgetClass);
 	if (!IsValid(MainMenuWidget))
@@ -69,27 +62,33 @@ void AMainMenuGameMode::BeginPlay()
 		return Button;
 	};
 
-	if (UButton* StartButton = FindButton(TEXT("Menu_01Start")))
+	UButton* StartButton = FindButton(TEXT("Menu_01Start"));
+	if (StartButton)
 	{
 		StartButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleStartClicked);
 	}
-	if (UButton* InstructionsButton = FindButton(TEXT("Menu_02Instructions")))
+	if (UWidget* InstructionsButton = MainMenuWidget->GetWidgetFromName(TEXT("Menu_02Instructions")))
 	{
-		InstructionsButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleInstructionsClicked);
+		InstructionsButton->SetVisibility(ESlateVisibility::Collapsed);
 	}
-	if (UButton* SettingsButton = FindButton(TEXT("Menu_03Settings")))
+	if (UWidget* SettingsButton = MainMenuWidget->GetWidgetFromName(TEXT("Menu_03Settings")))
 	{
-		SettingsButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleSettingsClicked);
+		SettingsButton->SetVisibility(ESlateVisibility::Collapsed);
 	}
 	if (UButton* ExitButton = FindButton(TEXT("Menu_04Exit")))
 	{
 		ExitButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleExitClicked);
 	}
 
-	ApplyMenuInputMode(MainMenuWidget);
+	ApplyMenuInputMode(StartButton);
 }
 
 void AMainMenuGameMode::HandleStartClicked()
+{
+	StartOrContinueGame();
+}
+
+void AMainMenuGameMode::StartOrContinueGame()
 {
 	if (GameplayLevel.IsNone())
 	{
@@ -108,16 +107,6 @@ void AMainMenuGameMode::HandleStartClicked()
 	UGameplayStatics::OpenLevel(this, GameplayLevel);
 }
 
-void AMainMenuGameMode::HandleInstructionsClicked()
-{
-	OpenSubMenu(InstructionsWidgetClass, TEXT("Menu_02_BackButton"));
-}
-
-void AMainMenuGameMode::HandleSettingsClicked()
-{
-	OpenSubMenu(SettingsWidgetClass, TEXT("Menu_03_BackButton"));
-}
-
 void AMainMenuGameMode::HandleExitClicked()
 {
 	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
@@ -126,56 +115,7 @@ void AMainMenuGameMode::HandleExitClicked()
 	}
 }
 
-void AMainMenuGameMode::HandleBackClicked()
-{
-	if (IsValid(OpenedSubMenuWidget))
-	{
-		OpenedSubMenuWidget->RemoveFromParent();
-		OpenedSubMenuWidget = nullptr;
-	}
-
-	if (IsValid(MainMenuWidget))
-	{
-		MainMenuWidget->SetVisibility(ESlateVisibility::Visible);
-		ApplyMenuInputMode(MainMenuWidget);
-	}
-}
-
-void AMainMenuGameMode::OpenSubMenu(TSubclassOf<UUserWidget> WidgetClass, FName BackButtonName)
-{
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-	if (!IsValid(PlayerController) || !WidgetClass || !IsValid(MainMenuWidget))
-	{
-		UE_LOG(LogMainMenu, Error, TEXT("Cannot open submenu '%s'."), *GetNameSafe(WidgetClass.Get()));
-		return;
-	}
-
-	if (IsValid(OpenedSubMenuWidget))
-	{
-		OpenedSubMenuWidget->RemoveFromParent();
-	}
-
-	OpenedSubMenuWidget = CreateWidget<UUserWidget>(PlayerController, WidgetClass);
-	if (!IsValid(OpenedSubMenuWidget))
-	{
-		return;
-	}
-
-	if (UButton* BackButton = Cast<UButton>(OpenedSubMenuWidget->GetWidgetFromName(BackButtonName)))
-	{
-		BackButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleBackClicked);
-	}
-	else
-	{
-		UE_LOG(LogMainMenu, Error, TEXT("Submenu requires a Button named '%s'."), *BackButtonName.ToString());
-	}
-
-	MainMenuWidget->SetVisibility(ESlateVisibility::Collapsed);
-	OpenedSubMenuWidget->AddToViewport(101);
-	ApplyMenuInputMode(OpenedSubMenuWidget);
-}
-
-void AMainMenuGameMode::ApplyMenuInputMode(UUserWidget* WidgetToFocus) const
+void AMainMenuGameMode::ApplyMenuInputMode(UWidget* WidgetToFocus) const
 {
 	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
 	{

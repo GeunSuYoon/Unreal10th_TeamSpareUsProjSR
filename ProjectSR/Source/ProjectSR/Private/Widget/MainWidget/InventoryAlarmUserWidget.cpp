@@ -6,6 +6,7 @@
 
 #include "Components/HorizontalBox.h"
 #include "Components/TextBlock.h"
+#include "Kismet/GameplayStatics.h"
 
 void UInventoryAlarmUserWidget::BindToInventory(UInventoryComponent* InInventory)
 {
@@ -16,6 +17,7 @@ void UInventoryAlarmUserWidget::BindToInventory(UInventoryComponent* InInventory
 
 void UInventoryAlarmUserWidget::InventorySlotChange(int32 InCurrentSize, int32 InMaxSize)
 {
+	const bool bWasVisible = InventorySlotHorizontalBox->IsVisible();
 	this->CurrentCount->SetText(FText::AsNumber(InCurrentSize));
 	this->MaxCount->SetText(FText::AsNumber(InMaxSize));
 	if (AlramRate <= static_cast<float>(InCurrentSize) / static_cast<float>(InMaxSize))
@@ -30,6 +32,10 @@ void UInventoryAlarmUserWidget::InventorySlotChange(int32 InCurrentSize, int32 I
 		{
 			this->SetVisibility(ESlateVisibility::Collapsed);
 		}
+	}
+	if (!bWasVisible && InventorySlotHorizontalBox->IsVisible() && InventoryAlarmSFX)
+	{
+		UGameplayStatics::PlaySound2D(this, InventoryAlarmSFX);
 	}
 }
 
