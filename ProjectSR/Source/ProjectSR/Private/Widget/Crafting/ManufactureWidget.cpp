@@ -16,7 +16,7 @@ void UManufactureWidget::BindToCraftingComponent(UCraftingComponent* InCraftingC
 {
     OnCraftRequested.BindUObject(InCraftingComponent, &UCraftingComponent::HandleCraftRequested);
     InCraftingComponent->OnManufactureWidgetOpened.AddDynamic(this, &UManufactureWidget::RefreshManufactureWidget);
-	this->CloseWidget();
+    this->CloseWidget();
 }
 
 void UManufactureWidget::RefreshManufactureWidget(const FManufactureWidgetDisplayData& InManufactureWidgetRefreshData)
@@ -66,7 +66,7 @@ void UManufactureWidget::RefreshManufactureWidget(const FManufactureWidgetDispla
     }
 
     // 제작 가능 여부로 제작 버튼 활성화or비활성화
-    CraftButton->SetIsEnabled(InManufactureWidgetRefreshData.bHasEnoughIngredients);
+    CraftButton->SetIsEnabled(InManufactureWidgetRefreshData.bHasEnoughIngredients && InManufactureWidgetRefreshData.bHasEnoughEmptySlots);
 
     SetVisibility(ESlateVisibility::Visible);
 }
