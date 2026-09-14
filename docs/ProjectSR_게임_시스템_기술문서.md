@@ -55,7 +55,7 @@ ProjectSR은 우주선을 거점으로 주변 우주 공간을 탐색하고, 회
 ### 1.3 한 번의 플레이 흐름
 
 ```mermaid
-flowchart LR
+graph LR
     Start["게임 시작"] --> Check["상태 확인"]
     Check --> Explore["탐색·수집"]
     Explore --> Return["귀환·정비"]
@@ -89,20 +89,17 @@ flowchart LR
 ### 2.2 시작 버튼에서 생존 시작까지
 
 ```mermaid
-sequenceDiagram
-    participant Menu as MainMenuGameMode
-    participant Save as SurvivalSaveSubsystem
-    participant Actors as Player / Ship / Loop
-    participant World as WorldSubsystem
-    participant Loop as SurvivalLoopActor
-    Menu->>Save: 저장 확인·필요 시 RequestLoad
-    Menu->>Menu: OpenLevel
-    Actors->>World: 각자의 초기화 완료 후 Register
-    World->>World: 필수 객체·자동 시작 조건 확인
-    World->>Loop: 다음 Tick에서 StartSurvival
-    Loop->>Save: TryApplyRequestedLoad
-    Save-->>Loop: 복원 처리 결과
-    Loop->>Loop: 시작 조건 검증·BeginDay
+graph TD
+    Menu["MainMenuGameMode: 저장 확인 및 RequestLoad"]
+    Level["MainMenuGameMode: OpenLevel"]
+    Register["Player / Ship / Loop: 초기화 후 Register"]
+    Ready["WorldSubsystem: 필수 객체와 자동 시작 조건 확인"]
+    Start["WorldSubsystem: 다음 Tick에 StartSurvival"]
+    Restore["SurvivalLoopActor: TryApplyRequestedLoad"]
+    Result["SurvivalSaveSubsystem: 복원 결과 반환"]
+    Begin["SurvivalLoopActor: 시작 조건 검증 및 BeginDay"]
+
+    Menu --> Level --> Register --> Ready --> Start --> Restore --> Result --> Begin
 ```
 
 `MainMenuGameMode`는 저장 유무를 확인하고 게임 레벨로 이동한다. 레벨에 준비된 플레이어, 우주선, 생존 루프는 각자의 초기화 후 월드 서브시스템에 자신을 등록한다. 서브시스템은 모두 준비되면 다음 Tick에서 생존 시작을 요청한다.
@@ -125,14 +122,14 @@ sequenceDiagram
 ### 2.4 외부 탐색과 아이템 획득
 
 ```mermaid
-flowchart TD
-    Input["플레이어 입력"] -->|"입력 액션 콜백"| Player["PlayerCharacter"]
-    Player -->|"이동 입력"| Move["InSpaceMovementComponent"]
-    Player -->|"PlayerInteract"| Interact["InteractionComponent"]
-    Interact -->|"LineTrace·Execute_Interact"| Item["ItemActor"]
-    Item -->|"인벤토리 조회·Add 명령"| Inventory["InventoryComponent"]
-    Inventory -.->|"OnSlotChanged"| UI["인벤토리 UI"]
-    Item -->|"획득 완료 후 반환"| Pool["ObjectPoolSubsystem"]
+graph TD
+    Input["플레이어 입력"] -->|입력 액션 콜백| Player["PlayerCharacter"]
+    Player -->|이동 입력| Move["InSpaceMovementComponent"]
+    Player -->|PlayerInteract| Interact["InteractionComponent"]
+    Interact -->|LineTrace·Execute_Interact| Item["ItemActor"]
+    Item -->|인벤토리 조회·Add 명령| Inventory["InventoryComponent"]
+    Inventory -.->|OnSlotChanged| UI["인벤토리 UI"]
+    Item -->|획득 완료 후 반환| Pool["ObjectPoolSubsystem"]
 ```
 
 이동 입력은 커스텀 이동 컴포넌트로 전달된다. 생존 루프는 플레이어 위치와 문 상태를 기준으로 안전 여부를 판단하고 중력 상태를 연결한다. 스탯 컴포넌트는 안전하지 않은 동안 산소를 소비하며 산소가 고갈되면 체력을 감소시킨다.
@@ -144,16 +141,16 @@ flowchart TD
 플레이어가 메인 패널과 상호작용하면 `MainPanelActor`의 델리게이트가 `MainPanelUserWidget`을 연다. 패널은 우주선 창고, 제작, 강화 등의 하위 화면을 연결한다.
 
 ```mermaid
-flowchart LR
-    Panel["MainPanelActor"] -.->|"상호작용 이벤트"| UI["MainPanelUserWidget"]
-    UI -->|"아이템 이동 명령"| Inventory["가방·창고"]
-    UI -->|"제작 요청"| Craft["CraftingComponent"]
-    UI -->|"TryUpgrade"| Upgrade["UpgradeComponent"]
-    Craft -->|"재료 차감·결과 추가"| Inventory
-    Upgrade -->|"재료 검사·소비"| Inventory
-    Upgrade -->|"스탯 적용"| Ship["우주선·레이저"]
-    Inventory -.->|"슬롯 변경"| UI
-    Upgrade -.->|"강화 상태 변경"| UI
+graph LR
+    Panel["MainPanelActor"] -.->|상호작용 이벤트| UI["MainPanelUserWidget"]
+    UI -->|아이템 이동 명령| Inventory["가방·창고"]
+    UI -->|제작 요청| Craft["CraftingComponent"]
+    UI -->|TryUpgrade| Upgrade["UpgradeComponent"]
+    Craft -->|재료 차감·결과 추가| Inventory
+    Upgrade -->|재료 검사·소비| Inventory
+    Upgrade -->|스탯 적용| Ship["우주선·레이저"]
+    Inventory -.->|슬롯 변경| UI
+    Upgrade -.->|강화 상태 변경| UI
 ```
 
 가방과 창고는 같은 인벤토리 컴포넌트를 사용하므로 이동·병합·사용 규칙을 공유한다. 제작은 양쪽 재료와 결과물 공간을 검사하며, 강화는 필요한 재료를 확인하고 우주선 또는 레이저 성능을 적용한다. 우주선 강화에 따라 레시피가 해금될 수도 있다.
@@ -163,17 +160,17 @@ flowchart LR
 월드 서브시스템이 운석 감지를 요청하면 우주선의 `MeteorAvoidanceComponent`가 경로와 경고 시간을 구성한다. 경고 위젯과 경로 위젯은 이벤트로 정보를 받고, 패널에서 들어온 이동 입력은 운석 경로를 조정하여 회피 가능 여부를 다시 검사한다.
 
 ```mermaid
-flowchart TD
-    World["WorldSubsystem"] -->|"우주선을 통한 감지 요청"| Avoid["MeteorAvoidanceComponent"]
-    Avoid -.->|"경고·경로 정보"| UI["운석 UI"]
-    UI -->|"우주선 이동 입력"| Avoid
-    Avoid -->|"회피 성공"| Clear["경고·운석 상태 해제"]
-    Avoid -.->|"회피 실패·생성 이벤트"| Spawn["월드·Factory의 물리 운석 생성"]
-    Spawn -->|"방어 요청"| Laser["LazerComponent"]
-    Laser -->|"에너지 비율에 따른 피해 감소"| Meteor["MeteorItemActor"]
-    Spawn -->|"초기화·이동"| Meteor
-    Meteor -->|"실제 충돌·NotifyMeteorImpact"| Loop["SurvivalLoopActor"]
-    Loop -->|"안전 여부·피해 적용"| State["플레이어·우주선 상태"]
+graph TD
+    World["WorldSubsystem"] -->|우주선을 통한 감지 요청| Avoid["MeteorAvoidanceComponent"]
+    Avoid -.->|경고·경로 정보| UI["운석 UI"]
+    UI -->|우주선 이동 입력| Avoid
+    Avoid -->|회피 성공| Clear["경고·운석 상태 해제"]
+    Avoid -.->|회피 실패·생성 이벤트| Spawn["월드·Factory의 물리 운석 생성"]
+    Spawn -->|방어 요청| Laser["LazerComponent"]
+    Laser -->|에너지 비율에 따른 피해 감소| Meteor["MeteorItemActor"]
+    Spawn -->|초기화·이동| Meteor
+    Meteor -->|실제 충돌·NotifyMeteorImpact| Loop["SurvivalLoopActor"]
+    Loop -->|안전 여부·피해 적용| State["플레이어·우주선 상태"]
 ```
 
 회피 실패로 물리 운석이 생성되면 레이저 방어를 요청한다. 레이저는 우주선에서 확보한 에너지에 비례해 운석의 남은 충돌 피해를 줄인다. 살아남은 운석이 우주선과 충돌하면 생존 루프가 플레이어의 안전 여부와 우주선 피해를 처리한다.
@@ -183,23 +180,21 @@ flowchart TD
 ### 2.7 하루 종료·다음 날·게임 종료
 
 ```mermaid
-sequenceDiagram
-    participant Loop as SurvivalLoopActor
-    participant UI as MainUserWidget
-    participant World as WorldSubsystem
-    participant Save as SurvivalSaveSubsystem
-    Loop->>Loop: FinishDay·입력 잠금
-    Loop->>World: EndOfDay로 생성 중단
-    Loop-->>UI: OnDayFadeOut·열린 창 정리
-    Loop->>Save: 페이드 완료 후 SaveCompletedDay
-    alt 저장 성공
-        Loop->>World: ClearDayActors
-        Loop->>Loop: 플레이어 복귀·BeginDay
-        Loop-->>UI: 페이드인·새 날짜 표시
-    else 저장 실패
-        Loop->>World: 현재 날짜 StartDay
-        Loop-->>UI: 화면·입력 복구
-    end
+graph TD
+    Finish["SurvivalLoopActor: FinishDay 및 입력 잠금"]
+    Stop["WorldSubsystem: EndOfDay로 생성 중단"]
+    Fade["MainUserWidget: 페이드아웃 및 열린 창 정리"]
+    Save["SurvivalSaveSubsystem: SaveCompletedDay"]
+    Saved{"저장에 성공했는가?"}
+    Clear["WorldSubsystem: ClearDayActors"]
+    Next["SurvivalLoopActor: 플레이어 복귀 및 BeginDay"]
+    FadeIn["MainUserWidget: 페이드인 및 새 날짜 표시"]
+    Restart["WorldSubsystem: 현재 날짜 StartDay"]
+    Recover["MainUserWidget: 화면·입력 복구"]
+
+    Finish --> Stop --> Fade --> Save --> Saved
+    Saved -->|예| Clear --> Next --> FadeIn
+    Saved -->|아니오| Restart --> Recover
 ```
 
 하루 종료 요청을 받으면 생존 루프가 입력을 잠그고 생성을 중단한다. UI는 열린 창을 정리하고, 페이드아웃 이후 완료 날짜를 저장한다. 저장 성공 후에만 이전 객체를 정리하고 플레이어를 복귀시켜 다음 날을 시작한다.
@@ -761,12 +756,12 @@ sequenceDiagram
 `UMainUserWidget`은 `OpenWidgetStack__`에 열린 창을 관리한다. 등록 대상은 `IOpenableWidgetInterface`를 구현해야 하며 중복 등록을 제한한다. 창이 있으면 UIOnly 입력 모드와 커서를 사용하고, 스택이 비면 GameOnly로 복귀한다.
 
 ```mermaid
-flowchart TD
+graph TD
     Esc["ESC 입력"] --> Repeat{"반복 키 입력인가?"}
-    Repeat -->|"예"| Ignore["추가 처리 생략"]
-    Repeat -->|"아니오"| Has{"열린 창이 있는가?"}
-    Has -->|"아니오"| Pause["플레이 메뉴 열기·일시정지"]
-    Has -->|"예"| Close["최상위 창 닫기"]
+    Repeat -->|예| Ignore["추가 처리 생략"]
+    Repeat -->|아니오| Has{"열린 창이 있는가?"}
+    Has -->|아니오| Pause["플레이 메뉴 열기·일시정지"]
+    Has -->|예| Close["최상위 창 닫기"]
     Close --> Update["스택 제거·입력 모드 갱신"]
 ```
 
