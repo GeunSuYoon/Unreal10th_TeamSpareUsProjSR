@@ -13,6 +13,9 @@ class UUniformGridPanel;
 
 DECLARE_DELEGATE_OneParam(FOnRecipeSelected, FName)
 
+DECLARE_DELEGATE(FOnCraftingOpen);
+DECLARE_DELEGATE(FOnCraftingClose);
+
 UCLASS()
 class PROJECTSR_API URecipeListWidget : public UUserWidget
 {
@@ -29,6 +32,9 @@ public:
     //void CloseRecipeListWidget();
 
     void OpenManufactureWidget(FName InRecipeId);
+
+	FOnCraftingOpen		OnCraftingOpen;
+	FOnCraftingClose	OnCraftingClose;
 
 protected:
     virtual void NativeConstruct() override;

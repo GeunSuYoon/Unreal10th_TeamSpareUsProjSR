@@ -21,7 +21,8 @@ void UMachineArmComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	OnMachineArmLevelChange.ExecuteIfBound(this->MachineArmStat__);
+	// MachineArm feature retired.
+	// OnMachineArmLevelChange.ExecuteIfBound(this->MachineArmStat__);
 }
 
 
@@ -35,21 +36,14 @@ void UMachineArmComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 void UMachineArmComponent::SetMachineArmData(UMachineArmDataAsset* InMachineArmData)
 {
+	// MachineArm feature retired. Keep this no-op function so legacy callers still link.
+	/*
 	this->MachineArmData__ = InMachineArmData;
 	if (InMachineArmData)
 	{
-		this->MachineArmStat__.Level = InMachineArmData->MachineArmStat.Level;
-		this->MachineArmStat__.ItemCollectTime = InMachineArmData->MachineArmStat.ItemCollectTime;
-		this->MachineArmStat__.ItemCollectWeight = InMachineArmData->MachineArmStat.ItemCollectWeight;
-		this->MachineArmStat__.OperationalEnergy = InMachineArmData->MachineArmStat.OperationalEnergy;
-	}
-	else
-	{
-		this->MachineArmStat__.Level = 0;
-		this->MachineArmStat__.ItemCollectTime = 0.0f;
-		this->MachineArmStat__.ItemCollectWeight = 0.0f;
-		this->MachineArmStat__.OperationalEnergy = 0.0f;
+		this->MachineArmStat__ = InMachineArmData->MachineArmStat;
 	}
 	OnMachineArmLevelChange.ExecuteIfBound(this->MachineArmStat__);
+	*/
 }
 

@@ -5,11 +5,11 @@
 #include "ShipUpgradeDetailUserWidget.generated.h"
 
 class UButton;
-class UPanelWidget;
 class UTextBlock;
+class UUniformGridPanel;
 class UManufactureIngredientItemWidget;
 
-// Shared request, material list and event lifecycle for the three existing pages.
+// Shared upgrade request, ingredient grid and event lifecycle.
 UCLASS(Abstract)
 class PROJECTSR_API UShipUpgradeDetailUserWidget : public UUserWidget
 {
@@ -28,15 +28,27 @@ protected:
     virtual EUpgradeTarget GetUpgradeTarget() const { return EUpgradeTarget::SpaceShip; }
     virtual void RefreshStats(const FShipUpgradePreview& Preview) {}
     static void SetNumber(UTextBlock* Text, float Value, bool bAvailable = true);
-    UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UButton> UpgradeButton;
-    UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UPanelWidget> IngredientList;
-    UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UTextBlock> UpgradeMessage;
+
+    // These names intentionally match UManufactureWidget and the existing upgrade WBPs.
+    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta=(BindWidgetOptional))
+    TObjectPtr<UUniformGridPanel> IngredientItemGridPanel;
+
+    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta=(BindWidgetOptional))
+    TObjectPtr<UButton> UpgradeButton;
+
+    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta=(BindWidgetOptional))
+    TObjectPtr<UTextBlock> UpgradeMessage;
+
     UPROPERTY(EditDefaultsOnly, Category="Upgrade")
     TSubclassOf<UManufactureIngredientItemWidget> IngredientWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly, Category="Upgrade", meta=(ClampMin="1"))
+    int32 MaxIngredientColumnCount = 5;
+
     UPROPERTY(Transient) TObjectPtr<USpaceShipUpgradeComponent> UpgradeComponent;
 private:
-    void EnsureControls();
     void Subscribe();
+    void ResolveIngredientWidgetClassFromDesigner();
     static FText GetResultText(EUpgradeResult Result, int32 NextLevel);
 };
 

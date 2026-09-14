@@ -16,24 +16,24 @@ struct FSpaceShipStat
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SpaceShip")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "SpaceShip")
 	int32	Level = 0;
 
 	// 우주선 내구도 관련 변수
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SpaceShip|Durability")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "SpaceShip|Durability")
 	float	MaxDurability = 0.0f;
 
 	// 우주선 내부 에너지 관련 변수
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SpaceShip|Energy")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "SpaceShip|Energy")
 	float	MaxEnergy = 0.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SpaceShip|Energy")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "SpaceShip|Energy")
 	float	OperationalEnergy = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SpaceShip|Warehouse")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "SpaceShip|Warehouse")
 	float	MaxCapacity = 0.0f;
 
 	// 가상의 우주선 이동 속도
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SpaceShip|MoveSpeed")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "SpaceShip|MoveSpeed")
 	float	MoveSpeed = 100.0f;
 
 };
@@ -62,17 +62,17 @@ struct FLazerStat
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lazer")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "Lazer")
 	int32	Level = 0;
 
 	// 운석에 줄 수 있는 데미지. 운석의 데미지에서 power를 뺀 값의 운석을 소환한다.
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lazer")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "Lazer")
 	float	Damage = 0.0f;
 	// 운석에 데미지를 줄 때 소모하는 에너지. 우주선에서 사용할 수 있는 에너지에 비례해 power를 조정한다.
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lazer|Energy")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "Lazer|Energy")
 	float	ReactiveEnergy = 0.0f;
 	// 하루마다 우주선 에너지 소모량. 따로 사용하지 않더라도 하루에 우주선이 소모하는 에너지에 이 값을 추가한다.
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lazer|Energy")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "Lazer|Energy")
 	float	OperationalEnergy = 0.0f;
 
 };

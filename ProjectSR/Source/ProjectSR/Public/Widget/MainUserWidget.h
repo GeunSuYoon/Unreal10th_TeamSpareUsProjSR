@@ -19,6 +19,9 @@ class USpaceShipAlarmUserWidget;
 class UInventoryAlarmUserWidget;
 class UPlayerStatUserWidget;
 class USpaceShipStatUserWidget;
+class ASurvivalLoopActor;
+class UDayCountUserWidget;
+class UPlayMenuUserWidget;
 
 /**
  *
@@ -32,6 +35,7 @@ public:
     void	BindToPlayer(APlayerCharacter* InPlayerCharacter);
     void	BindToSpaceShip(ASpaceShipActor* InSpaceShipActor);
     void	BindToCharacter(ACharacter* InCharacter);
+	void	BindToSurvivalLoop(ASurvivalLoopActor* InSurvivalLoop);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UInventoryWindowWidget>		InventoryWidget;
@@ -57,6 +61,15 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<USpaceShipStatUserWidget>	SpaceShipStat = nullptr;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UDayCountUserWidget>			DayCount = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UPlayMenuUserWidget>			PlayMenu = nullptr;
+
+	UFUNCTION()
+	void TogglePlayMenu();
+
     virtual bool	CloseTopWidget_Implementation() override;
     virtual void	ClearStackWidget_Implementation() override;
 
@@ -76,6 +89,12 @@ private:
 
     UFUNCTION()
     void HandleMainPanelClosed__(UUserWidget* InWidget);
+
+	UFUNCTION()
+	void HandleDayFadeOut__();
+
+	UFUNCTION()
+	void HandleDayFadeIn__();
 
     UPROPERTY(Transient)
     TArray<TObjectPtr<UUserWidget>> OpenWidgetStack__;

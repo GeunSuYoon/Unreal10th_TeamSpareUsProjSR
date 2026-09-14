@@ -9,6 +9,7 @@
 #include "Component/EquipComponent.h"
 #include "Component/InventoryComponent.h"
 #include "Component/InteractionComponent.h"
+#include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Data/Item/EquipmentDataAsset.h"
@@ -93,6 +94,12 @@ void APlayerCharacter::BeginPlay()
             HUD->RegisterPlayerCharacter(this);
         }
     }
+	auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
+	
+	if (Salvage)
+	{
+		Salvage->RegisterPlayer(this);
+	}
 }
 
 // Called every frame
@@ -105,6 +112,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	FInputKeyBinding& PlayMenuBinding = PlayerInputComponent->BindKey(
+		EKeys::Escape, IE_Pressed, this, &APlayerCharacter::Player_PlayMenu);
+	PlayMenuBinding.bExecuteWhenPaused = true;
 
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
@@ -126,6 +136,12 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
         EnhancedInputComponent->BindAction(IA_Inventory, ETriggerEvent::Started, this, &APlayerCharacter::Player_Inventory);
 	}
+}
+
+void APlayerCharacter::InitBroadCast()
+{
+	this->StatComponent->InitBroadCast();
+	this->InventoryComponent->InitBroadCast();
 }
 
 UInSpaceMovementComponent* APlayerCharacter::GetInSpaceMovementComponent() const
@@ -259,6 +275,11 @@ void APlayerCharacter::Player_Interact(const FInputActionValue& Value)
 void APlayerCharacter::Player_Inventory(const FInputActionValue& Value)
 {
     OnToggleInventory.ExecuteIfBound();
+}
+
+void APlayerCharacter::Player_PlayMenu()
+{
+	OnTogglePlayMenu.ExecuteIfBound();
 }
 
 void APlayerCharacter::Player_Move_Gravity(const FInputActionValue& Value)

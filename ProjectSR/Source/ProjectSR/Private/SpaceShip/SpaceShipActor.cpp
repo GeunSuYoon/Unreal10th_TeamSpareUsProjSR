@@ -5,7 +5,8 @@
 #include "SpaceShip/SpaceShipUpgradeComponent.h"
 #include "SpaceShip/SpaceShipVisualActor.h"
 #include "SpaceShip/LazerComponent.h"
-#include "SpaceShip/MachineArmComponent.h"
+// MachineArm feature retired. Keep the legacy class files for Blueprint asset compatibility.
+// #include "SpaceShip/MachineArmComponent.h"
 #include "SpaceShip/MeteorAvoidanceComponent.h"
 #include "SpaceShip/DoorButtonActor.h"
 #include "Component/InventoryComponent.h"
@@ -57,7 +58,8 @@ ASpaceShipActor::ASpaceShipActor()
 
 	this->LazerComponent_ = CreateDefaultSubobject<ULazerComponent>(TEXT("LazerComponent"));
 	this->UpgradeComponent_ = CreateDefaultSubobject<USpaceShipUpgradeComponent>(TEXT("UpgradeComponent"));
-	this->MachineArmComponent_ = CreateDefaultSubobject<UMachineArmComponent>(TEXT("MainArmComponent"));
+	// MachineArm feature retired.
+	// this->MachineArmComponent_ = CreateDefaultSubobject<UMachineArmComponent>(TEXT("MainArmComponent"));
 	this->WarehouseComponent_ = CreateDefaultSubobject<UInventoryComponent>(TEXT("WarehouseComponent"));
 	this->MeteorAvoidanceComponent_ = CreateDefaultSubobject<UMeteorAvoidanceComponent>(TEXT("MeteorAvoidanceComponent"));
 	this->CraftingComponent_ = CreateDefaultSubobject<UCraftingComponent>(TEXT("CraftingComponent"));
@@ -180,9 +182,11 @@ UInventoryComponent* ASpaceShipActor::GetInventoryComponent_Implementation()
 
 float ASpaceShipActor::RequestEnergy(float InEnergy)
 {
-	float	RetEnergy = FMath::Min(this->CurrentEnergy_, InEnergy);
+	const float RequestedEnergy = FMath::Max(0.0f, InEnergy);
+	const float RetEnergy = FMath::Min(this->CurrentEnergy_, RequestedEnergy);
 
 	this->CurrentEnergy_ -= RetEnergy;
+	OnEnergyChange.Broadcast(this->CurrentEnergy_, this->SpaceShipStat_.MaxEnergy);
 	return (RetEnergy);
 }
 
@@ -254,7 +258,9 @@ void ASpaceShipActor::SetSpaceShipData(USpaceShipDataAsset* InSpaceShipData)
 		this->SpaceShipStat_.MaxEnergy = InSpaceShipData->SpaceShipStat.MaxEnergy;
 		this->CurrentEnergy_ = InSpaceShipData->SpaceShipStat.MaxEnergy;
 		this->SpaceShipStat_.MoveSpeed = InSpaceShipData->SpaceShipStat.MoveSpeed;
+		this->SpaceShipStat_.MaxCapacity = InSpaceShipData->SpaceShipStat.MaxCapacity;
 		this->SpaceShipStat_.OperationalEnergy = InSpaceShipData->SpaceShipStat.OperationalEnergy;
+		this->WarehouseComponent_->SetInventorySize(InSpaceShipData->SpaceShipStat.MaxCapacity);
 	}
 	else
 	{
@@ -265,26 +271,43 @@ void ASpaceShipActor::SetSpaceShipData(USpaceShipDataAsset* InSpaceShipData)
 		this->CurrentEnergy_ = 0.0f;
 		this->SpaceShipStat_.MoveSpeed = 0.0f;
 		this->SpaceShipStat_.OperationalEnergy = 0.0f;
+		this->WarehouseComponent_->SetInventorySize(0);
 	}
 	OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
 }
 
 void ASpaceShipActor::ApplySpaceShipStat(const FSpaceShipStat& NewStat)
 {
-	SpaceShipStat_ = NewStat;
-	Level_ = NewStat.Level;
-	CurrentDurability_ = NewStat.MaxDurability;
-	CurrentEnergy_ = NewStat.MaxEnergy;
-	UpdateSpaceShipLevel();
+	this->SpaceShipStat_ = NewStat;
+	this->Level_ = NewStat.Level;
+	this->CurrentDurability_ = NewStat.MaxDurability;
+	this->CurrentEnergy_ = NewStat.MaxEnergy;
+	this->WarehouseComponent_->SetInventorySize(NewStat.MaxCapacity);
+	//InitBroadCast();
+	this->OnSpaceShipLevelChange.ExecuteIfBound(NewStat);
 }
 
-void ASpaceShipActor::UpdateSpaceShipLevel()
+void ASpaceShipActor::RestoreRuntimeState(const FSpaceShipStat& SavedShipStat, const FLazerStat& SavedLazerStat,
+	float SavedDurability, float SavedEnergy)
+{
+	SpaceShipStat_ = SavedShipStat;
+	Level_ = SavedShipStat.Level;
+	CurrentDurability_ = FMath::Clamp(FMath::IsFinite(SavedDurability) ? SavedDurability : 0.0f,
+		0.0f, FMath::Max(0.0f, SpaceShipStat_.MaxDurability));
+	CurrentEnergy_ = FMath::Clamp(FMath::IsFinite(SavedEnergy) ? SavedEnergy : 0.0f,
+		0.0f, FMath::Max(0.0f, SpaceShipStat_.MaxEnergy));
+	if (LazerComponent_) LazerComponent_->ApplyLazerStat(SavedLazerStat);
+}
+
+void ASpaceShipActor::InitBroadCast()
 {
 	this->OnSpaceShipLevelChange.ExecuteIfBound(this->SpaceShipStat_);
 	this->OnDurabilityChange.Broadcast(this->CurrentDurability_, this->SpaceShipStat_.MaxDurability);
 	this->OnEnergyChange.Broadcast(this->CurrentEnergy_, this->SpaceShipStat_.MaxEnergy);
 	this->LazerComponent_->UpdateLazerLevel();
-	this->MachineArmComponent_->UpdateMachineArmLevel();
+	// MachineArm feature retired.
+	// this->MachineArmComponent_->UpdateMachineArmLevel();
+	this->WarehouseComponent_->InitBroadCast();
 }
 
 void ASpaceShipActor::DetectDoorButtonClick_()
@@ -351,7 +374,7 @@ void	ASpaceShipActor::UpdateDoorRotation_()
 				else
 				{
 					auto* Salvage = GetWorld()->GetSubsystem<USpaceSalvageWorldSubsystem>();
-					if (Salvage && Salvage->SurvivalLoop.IsValid() && !Salvage->SurvivalLoop->IsPlayerInside()) { Movement->EnterZeroGravity(); }
+					if (Salvage && Salvage->GetSurvivalLoop() && !Salvage->GetSurvivalLoop()->IsPlayerInside()) { Movement->EnterZeroGravity(); }
 					else { Movement->ExitZeroGravity(); }
 				}
 			}

@@ -10,6 +10,7 @@ class ASpaceShipActor;
 
 class UHorizontalBox;
 class UTextBlock;
+class USoundBase;
 
 /**
  * 
@@ -23,7 +24,7 @@ public:
 	void	BindToSpaceShip(ASpaceShipActor* InSpaceShip);
 
 	UFUNCTION()
-	void	SpaceShipEnergyChange(float InCurrentEnergy, float InOperationalEnergy);
+	void	SpaceShipEnergyChange(float InCurrentEnergy, float InMaxEnergy);
 	UFUNCTION()
 	void	SpaceShipDurabilityChange(float InCurrentDurability, float InMaxDurability);
 	UFUNCTION()
@@ -48,8 +49,16 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>		RequiredDurability = nullptr;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm|Audio")
+	TObjectPtr<USoundBase> EnergyAlarmSFX = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm|Audio")
+	TObjectPtr<USoundBase> DurabilityAlarmSFX = nullptr;
+
 
 private:
+	UPROPERTY()
+	TObjectPtr<ASpaceShipActor> BoundSpaceShip__ = nullptr;
+
 	float	RequiredDurability__ = 0.0f;
 	float	CurrentDurability__ = 0.0f;
 

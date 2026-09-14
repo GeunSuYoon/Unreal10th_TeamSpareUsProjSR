@@ -12,6 +12,9 @@
 #include "Widget/MainWidget/SpaceShipAlarmUserWidget.h"
 #include "Widget/MainWidget/SpaceShipStatUserWidget.h"
 #include "Widget/ItemManagerWidget.h"
+#include "Widget/DayCountUserWidget.h"
+#include "Widget/PlayMenuUserWidget.h"
+#include "Framework/SurvivalLoopActor.h"
 
 #include "Interface/InventoryComponentInterface.h"
 #include "Interface/OpenableWidgetInterface.h"
@@ -20,11 +23,13 @@
 #include "Player/PlayerCharacter.h"
 
 #include "InputCoreTypes.h"
+#include "Blueprint/WidgetTree.h"
 #include "GameFramework/PlayerController.h"
 
 void UMainUserWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
+	//DayCount = CastChecked<UDayCountUserWidget>(WidgetTree->FindWidget(TEXT("DayCount")));
     SetIsFocusable(true);
 
     if (MainPanelWidget)
@@ -37,6 +42,8 @@ void UMainUserWidget::NativeOnInitialized()
 		InventoryWidget->OnWidgetOpen.BindDynamic(this, &UMainUserWidget::HandleMainPanelOpened__);
 		InventoryWidget->OnWidgetClose.BindDynamic(this, &UMainUserWidget::HandleMainPanelClosed__);
 	}
+	PlayMenu->OnWidgetOpen.BindDynamic(this, &UMainUserWidget::HandleMainPanelOpened__);
+	PlayMenu->OnWidgetClose.BindDynamic(this, &UMainUserWidget::HandleMainPanelClosed__);
 }
 
 void UMainUserWidget::HandleMainPanelOpened__(UUserWidget* InWidget)
@@ -57,6 +64,8 @@ void UMainUserWidget::BindWidget__()
 	}
 	this->MainPanelWidget->GetWarehouseWidget()->OnItemManagerOpen.BindUObject(this->InventoryWidget, &UInventoryWindowWidget::OpenWidget);
 	this->MainPanelWidget->GetWarehouseWidget()->OnItemManagerClose.BindUObject(this->InventoryWidget, &UInventoryWindowWidget::CloseWidget);
+	this->MainPanelWidget->GeCraftingRecipeListWidget()->OnCraftingOpen.BindUObject(this->CraftingManufacture, &UManufactureWidget::OpenWidget);
+	this->MainPanelWidget->GeCraftingRecipeListWidget()->OnCraftingClose.BindUObject(this->CraftingManufacture, &UManufactureWidget::CloseWidget);
 }
 
 void UMainUserWidget::RegisterOpenWidget__(UUserWidget* Widget)
@@ -106,12 +115,12 @@ void UMainUserWidget::UpdateInputMode__()
 
 FReply UMainUserWidget::NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-    if (InKeyEvent.GetKey() == EKeys::Escape && !OpenWidgetStack__.IsEmpty())
+    if (InKeyEvent.GetKey() == EKeys::Escape)
     {
         // Holding ESC must not close several stacked windows.
         if (!InKeyEvent.IsRepeat())
         {
-            IWidgetStackHostInterface::Execute_CloseTopWidget(this);
+			TogglePlayMenu();
         }
         return FReply::Handled();
     }
@@ -122,6 +131,17 @@ FReply UMainUserWidget::NativeOnPreviewKeyDown(const FGeometry& InGeometry, cons
         return FReply::Handled();
     }
     return Super::NativeOnPreviewKeyDown(InGeometry, InKeyEvent);
+}
+
+void UMainUserWidget::TogglePlayMenu()
+{
+	if (OpenWidgetStack__.IsEmpty())
+	{
+		IOpenableWidgetInterface::Execute_OpenSelfWidget(PlayMenu);
+		return;
+	}
+
+	IWidgetStackHostInterface::Execute_CloseTopWidget(this);
 }
 
 void UMainUserWidget::BindToPlayer(APlayerCharacter* InPlayerCharacter)
@@ -136,8 +156,11 @@ void UMainUserWidget::BindToPlayer(APlayerCharacter* InPlayerCharacter)
         return;
     }
     InPlayerCharacter->OnToggleInventory.BindUFunction(InventoryWidget, TEXT("ToggleInventoryWidget"));
+	InPlayerCharacter->OnTogglePlayMenu.BindUFunction(this, TEXT("TogglePlayMenu"));
     this->InventoryWidget->BindToInventoryComponent(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
+	this->InventoryAlarm->BindToInventory(IInventoryComponentInterface::Execute_GetInventoryComponent(InPlayerCharacter));
 	this->PlayerStatWidget->BindToPlayer(InPlayerCharacter);
+	InPlayerCharacter->InitBroadCast();
 	this->bIsPlayerBind = true;
 	this->BindWidget__();
 }
@@ -160,13 +183,36 @@ void UMainUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShipActor)
 	this->SpaceShipAlarm->BindToSpaceShip(InSpaceShipActor);
 	this->SpaceShipStat->BindToSpaceShip(InSpaceShipActor);
 	this->CraftingManufacture->BindToCraftingComponent(InSpaceShipActor->GetCraftingComponent());
-	InSpaceShipActor->UpdateSpaceShipLevel();
+	InSpaceShipActor->InitBroadCast();
 	this->bIsSpaceShipBind = true;
 	this->BindWidget__();
 }
 
 void UMainUserWidget::BindToCharacter(ACharacter* InCharacter)
 {
+}
+
+void UMainUserWidget::BindToSurvivalLoop(ASurvivalLoopActor* InSurvivalLoop)
+{
+	this->DayCount->BindToSurvivalLoop(InSurvivalLoop);
+	InSurvivalLoop->OnRequiredDurabilityChanged.AddUniqueDynamic(
+		SpaceShipAlarm, &USpaceShipAlarmUserWidget::RequiredDurabilityChange);
+	InSurvivalLoop->OnDayFadeOut.AddUniqueDynamic(
+		this, &UMainUserWidget::HandleDayFadeOut__);
+	InSurvivalLoop->OnDayFadeIn.AddUniqueDynamic(
+		this, &UMainUserWidget::HandleDayFadeIn__);
+	InSurvivalLoop->InitDelegate();
+}
+
+void UMainUserWidget::HandleDayFadeOut__()
+{
+	IWidgetStackHostInterface::Execute_ClearStackWidget(this);
+	SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UMainUserWidget::HandleDayFadeIn__()
+{
+	SetVisibility(ESlateVisibility::Visible);
 }
 
 bool UMainUserWidget::CloseTopWidget_Implementation()

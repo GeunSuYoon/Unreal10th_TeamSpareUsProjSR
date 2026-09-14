@@ -20,7 +20,9 @@ void	USpaceSuitOxygenUserWidget::BindToPlayer(APlayerCharacter* InPlayer)
 
 void	USpaceSuitOxygenUserWidget::OxygenChange(float InCurrentOxygen, float InMaxOxygen)
 {
-	this->CurrentOxygenText->SetText(FText::AsNumber(InCurrentOxygen));
+	int32	InCurrentOxygenInt = InCurrentOxygen;
+
+	this->CurrentOxygenText->SetText(FText::AsNumber(InCurrentOxygenInt));
 	this->MaxOxygenText->SetText(FText::AsNumber(InMaxOxygen));
 	this->OxygenProgressBar->SetPercent(InCurrentOxygen / InMaxOxygen);
 }

@@ -3,16 +3,18 @@
 
 #include "Framework/Subsystem/SpaceSalvageWorldSubsystem.h"
 #include "Framework/Subsystem/ItemActorFactorySubsystem.h"
+#include "Framework/SurvivalLoopActor.h"
 #include "RootActor/SpaceRootActor.h"
 #include "SpaceShip/SpaceShipActor.h"
 #include "SpaceShip/MeteorAvoidanceComponent.h"
 #include "Data/SpaceMap/SpaceMapDataAsset.h"
 #include "Interface/PoolableInterface.h"
-#include "Components/SphereComponent.h"
 #include "Item/ItemActor.h"
 #include "Item/MeteorItemActor.h"
 #include "Utility/UtilFunction.h"
 #include "SpaceShip/LazerComponent.h"
+#include "Player/PlayerCharacter.h"
+#include "TimerManager.h"
 
 bool USpaceSalvageWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
@@ -42,14 +44,18 @@ void USpaceSalvageWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 void USpaceSalvageWorldSubsystem::Deinitialize()
 {
-
+	++SpawnGeneration__;
+	bStartCheckScheduled__ = false;
+	SurvivalLoop__ = nullptr;
+	PlayerCharacter__ = nullptr;
+	SpaceShipActor__ = nullptr;
 	Super::Deinitialize();
 }
 
 void USpaceSalvageWorldSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	if (this->MeteorSpawnTime__ <= 0.0f)
 	{
 		return ;
@@ -70,10 +76,19 @@ void USpaceSalvageWorldSubsystem::SetSafeArea(float InArea)
 {
 	this->SafeArea__ = InArea;
 	this->SafeAreaSquared__ = FMath::Square(InArea);
-	this->SafeAreaVisualizer_->SetSphereRadius(InArea);
 }
 
 void USpaceSalvageWorldSubsystem::SetSpaceMapData(USpaceMapDataAsset* InSpaceMapData)
+{
+	if (SurvivalLoop__)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("The survival loop owns map changes. Remove the separate SetSpaceMapData call."));
+		return;
+	}
+	StartDay(InSpaceMapData);
+}
+
+void USpaceSalvageWorldSubsystem::StartDay(USpaceMapDataAsset* InSpaceMapData)
 {
 	if (!InSpaceMapData)
 	{
@@ -135,10 +150,33 @@ void USpaceSalvageWorldSubsystem::RegisterSpaceShipActor(ASpaceShipActor* InSpac
 	InSpaceShip->GetMeteorAvoidance()->OnMeteorCollision.AddUniqueDynamic(this, &USpaceSalvageWorldSubsystem::SpawnMeteor__);
 	this->SpaceShipActor__ = InSpaceShip;
 	this->TryStartItemSpawn__();
+	this->CheckStartDay__();
 }
 
-void USpaceSalvageWorldSubsystem::RegisterMeteorAvoidance(UMeteorAvoidanceComponent* InAvoidanceComponent)
+void USpaceSalvageWorldSubsystem::RegisterSurvivalLoopActor(ASurvivalLoopActor* InSurvivalLoop)
 {
+	if (!IsValid(InSurvivalLoop)) return;
+	if (IsValid(SurvivalLoop__) && SurvivalLoop__ != InSurvivalLoop)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Multiple SurvivalLoop actors tried to register. Keep only one in the level."));
+		return;
+	}
+	this->SurvivalLoop__ = InSurvivalLoop;
+	this->CheckStartDay__();
+}
+
+void USpaceSalvageWorldSubsystem::UnregisterSurvivalLoopActor(ASurvivalLoopActor* InSurvivalLoop)
+{
+	if (SurvivalLoop__ != InSurvivalLoop) return;
+	bStartCheckScheduled__ = false;
+	SurvivalLoop__ = nullptr;
+}
+
+void USpaceSalvageWorldSubsystem::RegisterPlayer(APlayerCharacter* InPlayer)
+{
+	if (!IsValid(InPlayer)) return;
+	this->PlayerCharacter__ = InPlayer;
+	this->CheckStartDay__();
 }
 
 void USpaceSalvageWorldSubsystem::MeteorDetect()
@@ -162,6 +200,31 @@ void USpaceSalvageWorldSubsystem::EndOfDay()
 	TimerManager.ClearTimer(this->ItemSpawnHandler__);
 	TimerManager.ClearTimer(this->MeteorSpawnHandler__);
 	bSpawningEnabled__ = false;
+}
+
+void USpaceSalvageWorldSubsystem::ClearDayActors()
+{
+	EndOfDay();
+	GetWorld()->GetTimerManager().ClearTimer(ItemDespawnHandler__);
+	++SpawnGeneration__; // Invalidates late asynchronous item callbacks from the previous day.
+	bMeteorLoading__ = false;
+
+	for (const TWeakObjectPtr<AItemActor>& Item : SpawnedItem__)
+	{
+		if (Item.IsValid() && !Item->IsHidden()) Item->FinishUsingPoolable();
+	}
+	SpawnedItem__.Reset();
+
+	if (ActiveMeteor__.IsValid() && ActiveMeteor__->IsMeteorActive())
+	{
+		ActiveMeteor__->FinishUsingPoolable();
+	}
+	ActiveMeteor__.Reset();
+
+	if (IsValid(SpaceShipActor__) && SpaceShipActor__->GetMeteorAvoidance())
+	{
+		SpaceShipActor__->GetMeteorAvoidance()->ClearMeteor();
+	}
 }
 
 void USpaceSalvageWorldSubsystem::SpaceShipRotateDetect(const FRotator& InRotate)
@@ -221,19 +284,7 @@ void USpaceSalvageWorldSubsystem::SpawnSpaceRoot__()
 		Log, 
 		TEXT("[USpaceSalvageWorldSubsystem::SpawnSpaceRoot__] SpaceRootActor %s가 할당됐습니다."),
 		*this->SpaceRootActor__.GetName());
-	this->SafeAreaVisualizer_ = NewObject<USphereComponent>(
-		this->SpaceRootActor__,
-		TEXT("SafeAreaVisualizer")
-	);
 	this->TryStartItemSpawn__();
-	// 테스트용 코드
-	this->SpaceRootActor__->AddInstanceComponent(this->SafeAreaVisualizer_);
-	this->SafeAreaVisualizer_->SetupAttachment(this->SpaceRootActor__->GetRootComponent());
-	this->SafeAreaVisualizer_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	this->SafeAreaVisualizer_->SetGenerateOverlapEvents(false);
-	this->SafeAreaVisualizer_->SetHiddenInGame(false);
-	this->SafeAreaVisualizer_->InitSphereRadius(this->SafeArea__);
-	this->SafeAreaVisualizer_->RegisterComponent();
 }
 
 void USpaceSalvageWorldSubsystem::SpawnItemLevelStart__(int32 InitItemCount)
@@ -387,7 +438,10 @@ void USpaceSalvageWorldSubsystem::SpawnItemActor__()
 					*ItemActor->GetName(),
 					*ItemActor->GetActorLocation().ToString()
 				);
-			})
+			}), [WeakThis = TWeakObjectPtr<USpaceSalvageWorldSubsystem>(this), Generation = SpawnGeneration__]()
+		{
+			return WeakThis.IsValid() && WeakThis->bSpawningEnabled__ && WeakThis->SpawnGeneration__ == Generation;
+		}
 	);
 }
 
@@ -499,7 +553,10 @@ void	USpaceSalvageWorldSubsystem::SpawnItemActor__(FVector InLocation)
 					*ItemActor->GetName(),
 					*ItemActor->GetActorLocation().ToString()
 				);
-			})
+			}), [WeakThis = TWeakObjectPtr<USpaceSalvageWorldSubsystem>(this), Generation = SpawnGeneration__]()
+		{
+			return WeakThis.IsValid() && WeakThis->bSpawningEnabled__ && WeakThis->SpawnGeneration__ == Generation;
+		}
 	);
 }
 
@@ -551,7 +608,9 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 	if (!Factory || !IsValid(SpaceMapData__) || !IsValid(SpaceShipActor__) || ItemSpawnDist__ <= 0.0f) { return; }
 	const FVector Center = SpaceShipActor__->GetActorLocation();
 	const float Distance = ItemSpawnDist__;
-	const FTransform Transform(InMeteor.MoveDir.Rotation(), Center + InMeteor.StartPos - InMeteor.MoveDir * Distance * 2.0f);
+	// MeteorAvoidance already stores StartPos relative to the ship. Applying an
+	// extra two spawn distances put the physical actor three times too far away.
+	const FTransform Transform(InMeteor.MoveDir.Rotation(), Center + InMeteor.StartPos);
 	bMeteorLoading__ = true;
 	Factory->SpawnItemActorAsync(SpaceMapData__->MeteorData, Transform, FOnPickupSpawned::CreateWeakLambda(this, [this, InMeteor, Center, Distance, Generation = SpawnGeneration__](AItemActor* Item)
 	{
@@ -560,12 +619,11 @@ void USpaceSalvageWorldSubsystem::SpawnMeteor__(const FMeteor& InMeteor)
 		auto* Meteor = Cast<AMeteorItemActor>(Item);
 		if (!Meteor || !IsValid(SpaceShipActor__)) { if (IsValid(Item)) { Item->FinishUsingPoolable(); } return; }
 		FMeteor Prepared = InMeteor;
-		const auto* Lazer = SpaceShipActor__->GetLazerComponent();
-		Prepared.MeteorDamage = FMath::Max(0.0f, Prepared.MeteorDamage - (Lazer ? FMath::Max(0.0f, Lazer->GetLazerPower()) : 0.0f));
 		if (Prepared.MeteorDamage <= 0.0f) { Meteor->FinishUsingPoolable(); return; }
 		ActiveMeteor__ = Meteor;
 		Meteor->SetRelativeVelocity(Prepared.MoveDir * Prepared.MeteorSpeed);
 		Meteor->InitMeteor(Prepared, Center, Distance);
+		SpaceShipActor__->GetLazerComponent()->AttackMeteo__(Meteor);
 		if (Meteor->IsMeteorActive()) { OnMeteorSpawn.ExecuteIfBound(Meteor); }
 	}));
 }
@@ -595,7 +653,7 @@ UItemDataAsset* USpaceSalvageWorldSubsystem::SelectSpawnItemData__()
 		);
 		return (nullptr);
 	}
-	int32	RandomWeight = FMath::RandRange(0, TotalWeight);
+	int32	RandomWeight = FMath::RandRange(1, TotalWeight);
 
 	for (auto& RateData : this->SpaceMapData__->ItemSpawnRate)
 	{
@@ -616,4 +674,34 @@ UItemDataAsset* USpaceSalvageWorldSubsystem::SelectSpawnItemData__()
 		TEXT("[USpaceSalvageWorldSubsystem::SelectSpawnItemData__] 아이템이 생성되지 않았습니다.")
 	);
 	return (nullptr);
+}
+
+void USpaceSalvageWorldSubsystem::CheckStartDay__()
+{
+	if (bStartCheckScheduled__ || !IsValid(SpaceShipActor__) || !IsValid(PlayerCharacter__)
+		|| !IsValid(SurvivalLoop__) || !SurvivalLoop__->bAutoStart
+		|| SurvivalLoop__->State != ESurvivalState::Ready)
+	{
+		return;
+	}
+
+	// Actor/component and Blueprint BeginPlay order is not guaranteed across actors.
+	// Defer once after all three participants have announced that their own setup is done.
+	bStartCheckScheduled__ = true;
+	GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		bStartCheckScheduled__ = false;
+		if (!IsValid(SpaceShipActor__) || !IsValid(PlayerCharacter__) || !IsValid(SurvivalLoop__)
+			|| !SurvivalLoop__->bAutoStart || SurvivalLoop__->State != ESurvivalState::Ready)
+		{
+			return;
+		}
+
+		if (!IsValid(SurvivalLoop__->SpaceShip)) SurvivalLoop__->SpaceShip = SpaceShipActor__;
+		if (!IsValid(SurvivalLoop__->Player)) SurvivalLoop__->Player = PlayerCharacter__;
+		if (!SurvivalLoop__->StartSurvival())
+		{
+			UE_LOG(LogTemp, Error, TEXT("Auto StartSurvival failed after player, ship, and loop initialization completed."));
+		}
+	}));
 }

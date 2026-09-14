@@ -3,6 +3,8 @@
 
 #include "Widget/MainPanel/Status/SpaceShipStatusUserWidget.h"
 #include "SpaceShip/SpaceShipActor.h"
+#include "Component/InventoryComponent.h"
+#include "Interface/InventoryComponentInterface.h"
 
 #include "Components/TextBlock.h"
 
@@ -11,6 +13,10 @@ void	USpaceShipStatusUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 	InSpaceShip->OnSpaceShipLevelChange.BindUFunction(this, TEXT("UpdateStat__"));
 	InSpaceShip->OnDurabilityChange.AddDynamic(this, &USpaceShipStatusUserWidget::UpdateDurability__);
 	InSpaceShip->OnEnergyChange.AddDynamic(this, &USpaceShipStatusUserWidget::UpdateEnergy__);
+	if (UInventoryComponent* Inventory = IInventoryComponentInterface::Execute_GetInventoryComponent(InSpaceShip))
+	{
+		Inventory->OnSlotSize.AddDynamic(this, &USpaceShipStatusUserWidget::UpdateWarehouseSlot__);
+	}
 }
 
 bool USpaceShipStatusUserWidget::bIsLevelup(int32 InLevel)
@@ -32,8 +38,13 @@ void USpaceShipStatusUserWidget::UpdateStat__(const FSpaceShipStat& InSpaceShipS
 	this->MaxEnergy->SetText(FText::AsNumber(InSpaceShipStat.MaxEnergy));
 	this->OperationalEnergy->SetText(FText::AsNumber(InSpaceShipStat.OperationalEnergy));
 	this->CurrentSpeed->SetText(FText::AsNumber(InSpaceShipStat.MoveSpeed));
-	//this->CurrentCapacity->SetText(FText::AsNumber(InSpaceShipStat.MaxCapacity));
 	this->MaxCapacity->SetText(FText::AsNumber(InSpaceShipStat.MaxCapacity));
+}
+
+void USpaceShipStatusUserWidget::UpdateWarehouseSlot__(int32 InCurrentSize, int32 InMaxSize)
+{
+	this->CurrentCapacity->SetText(FText::AsNumber(InCurrentSize));
+	this->MaxCapacity->SetText(FText::AsNumber(InMaxSize));
 }
 
 void USpaceShipStatusUserWidget::UpdateDurability__(float InCurrentDurability, float InMaxDurability)

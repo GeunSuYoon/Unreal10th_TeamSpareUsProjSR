@@ -13,7 +13,7 @@ void URecipeListElementWidget::RefreshRecipeListElementWidget(const FRecipeEntry
 {
     RecipeEntry__ = InRecipeEntry;
 
-    RecipeName->SetText(FText::FromName(RecipeEntry__.RecipeId));
+    RecipeName->SetText(FText::FromName(RecipeEntry__.RecipeName));
 
     // 결과물 아이템 UI 갱신
     ResultItemGridPanel->ClearChildren();

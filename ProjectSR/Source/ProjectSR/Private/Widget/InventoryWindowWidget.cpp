@@ -20,7 +20,6 @@ void UInventoryWindowWidget::BindToInventoryComponent(UInventoryComponent* InInv
     TargetInventory__ = InInventoryComponent;
     TargetInventory__->OnSlotChanged.AddDynamic(this, &UInventoryWindowWidget::RefreshCapacityText__);
     ItemManagerWidget->BindToInventoryComponent(TargetInventory__.Get());
-    ItemManagerWidget->InitializeInventoryWidget();
 }
 
 void UInventoryWindowWidget::OpenWidget()

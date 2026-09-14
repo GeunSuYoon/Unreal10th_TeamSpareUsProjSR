@@ -1,7 +1,7 @@
 #include "SpaceShip/SpaceShipUpgradeComponent.h"
 #include "SpaceShip/SpaceShipActor.h"
 #include "SpaceShip/LazerComponent.h"
-#include "SpaceShip/MachineArmComponent.h"
+// #include "SpaceShip/MachineArmComponent.h" // MachineArm feature retired.
 #include "Component/InventoryComponent.h"
 #include "Component/CraftingComponent.h"
 
@@ -189,7 +189,8 @@ FShipUpgradePreview USpaceShipUpgradeComponent::GetPreview(EUpgradeTarget Target
     if (!IsValid(Ship)) return Preview;
     Preview.CurrentShip = Ship->GetStat();
     if (Ship->GetLazerComponent()) Preview.CurrentLazer = Ship->GetLazerComponent()->GetStat();
-    if (Ship->GetMachineArmComponent()) Preview.CurrentArm = Ship->GetMachineArmComponent()->GetStat();
+	// MachineArm feature retired.
+	// if (Ship->GetMachineArmComponent()) Preview.CurrentArm = Ship->GetMachineArmComponent()->GetStat();
     switch (Target)
     {
     case EUpgradeTarget::SpaceShip:
@@ -222,20 +223,23 @@ FShipUpgradePreview USpaceShipUpgradeComponent::GetPreview(EUpgradeTarget Target
         }
         break;
     case EUpgradeTarget::MachineArm:
-        if (!Ship->GetMachineArmComponent()) return Preview;
-        Preview.CurrentLevel = Preview.CurrentArm.Level;
-        if (const auto* Row = FindNextRow<FMachineArmUpgrade>(MachineArmUpgradeTable, Preview.CurrentLevel, Preview.Result))
-        {
-            Preview.NextArm = Row->MachineArmStat;
-            Preview.NextArm.Level = Row->Level;
-            Preview.Ingredients = Row->Ingredients;
-            Preview.bHasNextLevel = true;
-            const auto& S = Preview.NextArm;
-            if (!NonNegative(S.ItemCollectTime) || S.ItemCollectTime == 0.f
-                || !NonNegative(S.ItemCollectWeight) || !NonNegative(S.OperationalEnergy))
-                Preview.Result = EUpgradeResult::InvalidData;
-        }
-        break;
+		// MachineArm feature retired. The enum value remains for serialized Blueprint compatibility.
+		/*
+		if (!Ship->GetMachineArmComponent()) return Preview;
+		Preview.CurrentLevel = Preview.CurrentArm.Level;
+		if (const auto* Row = FindNextRow<FMachineArmUpgrade>(MachineArmUpgradeTable, Preview.CurrentLevel, Preview.Result))
+		{
+			Preview.NextArm = Row->MachineArmStat;
+			Preview.NextArm.Level = Row->Level;
+			Preview.Ingredients = Row->Ingredients;
+			Preview.bHasNextLevel = true;
+			const auto& S = Preview.NextArm;
+			if (!NonNegative(S.ItemCollectTime) || S.ItemCollectTime == 0.f
+				|| !NonNegative(S.ItemCollectWeight) || !NonNegative(S.OperationalEnergy))
+				Preview.Result = EUpgradeResult::InvalidData;
+		}
+		*/
+		return Preview;
     default: return Preview;
     }
     Preview.NextLevel = Preview.CurrentLevel < MAX_int32 ? Preview.CurrentLevel + 1 : Preview.CurrentLevel;
@@ -288,7 +292,10 @@ EUpgradeResult USpaceShipUpgradeComponent::TryUpgrade(EUpgradeTarget Target)
             for (FName RecipeId : Preview.UnlockRecipeIds) CraftingComponent->Unlock(RecipeId);
             break;
         case EUpgradeTarget::Lazer: Ship->GetLazerComponent()->ApplyLazerStat(Preview.NextLazer); break;
-        case EUpgradeTarget::MachineArm: Ship->GetMachineArmComponent()->ApplyMachineArmStat(Preview.NextArm); break;
+        case EUpgradeTarget::MachineArm:
+			// MachineArm feature retired.
+			// Ship->GetMachineArmComponent()->ApplyMachineArmStat(Preview.NextArm);
+			return EUpgradeResult::InvalidData;
         default: return EUpgradeResult::InvalidData;
         }
     }

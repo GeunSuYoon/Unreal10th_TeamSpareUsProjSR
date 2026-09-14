@@ -59,8 +59,10 @@ AItemActor* UItemActorFactorySubsystem::SpawnItemActor(const UItemDataAsset* InI
     return SpawnProcess__(InItemData, InTransform);
 }
 
-void UItemActorFactorySubsystem::SpawnItemActorAsync(const UItemDataAsset* InItemData, const FTransform& InTransform, FOnPickupSpawned OnSpawned)
+void UItemActorFactorySubsystem::SpawnItemActorAsync(const UItemDataAsset* InItemData, const FTransform& InTransform, FOnPickupSpawned OnSpawned,
+    TFunction<bool()> CanSpawn)
 {
+    if (CanSpawn && !CanSpawn()) { OnSpawned.ExecuteIfBound(nullptr); return; }
     if (!InItemData)
     {
         UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnItemActorAsync()] : InItemData가 nullptr입니다."));
@@ -81,7 +83,14 @@ void UItemActorFactorySubsystem::SpawnItemActorAsync(const UItemDataAsset* InIte
     TSharedPtr<FStreamableHandle> Handle = InItemData->RequestDataLoad(
         FStreamableDelegate::CreateWeakLambda(
             this,
-            [this, WeakItemData, InTransform, OnSpawned]() {
+            [this, WeakItemData, InTransform, OnSpawned, CanSpawn = MoveTemp(CanSpawn)]() {
+                // A cancelled day must not allocate/recycle a pooled actor after loading finishes.
+                if (CanSpawn && !CanSpawn())
+                {
+                    OnSpawned.ExecuteIfBound(nullptr);
+                    CleanupCompletedHandles__();
+                    return;
+                }
                 if (!WeakItemData.IsValid())
                 {
                     UE_LOG(LogTemp, Warning, TEXT("[UItemActorFactorySubsystem::SpawnItemActorAsync()] : 비동기 로딩 요청 중 InItemData가 유효하지 않습니다."));
@@ -91,6 +100,12 @@ void UItemActorFactorySubsystem::SpawnItemActorAsync(const UItemDataAsset* InIte
                 }
 
                 const UItemDataAsset* LoadedItemData = WeakItemData.Get();
+                if (!LoadedItemData->IsLoaded())
+                {
+                    OnSpawned.ExecuteIfBound(nullptr);
+                    CleanupCompletedHandles__();
+                    return;
+                }
                 AItemActor* Spawned = SpawnProcess__(LoadedItemData, InTransform);
 
                 OnSpawned.ExecuteIfBound(Spawned);

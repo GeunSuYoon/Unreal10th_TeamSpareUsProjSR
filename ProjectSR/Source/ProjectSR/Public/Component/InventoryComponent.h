@@ -67,6 +67,7 @@ public:
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventorySlotChanged, int32, InSlotIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInventorySlotSize, int32, InCurrentSlotUseSize, int32, InMaxSlotSize);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECTSR_API UInventoryComponent : public UActorComponent
@@ -82,6 +83,8 @@ public:
     static bool ProcessIngredients(const TArray<FIngredient>& Ingredients,
         const TArray<UInventoryComponent*>& Inventories, bool bConsume);
     int32 GetSpendableItemCount(const UItemDataAsset* ItemData) const;
+
+	void	InitBroadCast();
 
     // 커맨드 실행용 함수
     UFUNCTION(BlueprintCallable, Category = "Inventory|Command")
@@ -110,6 +113,9 @@ public:
     // 현재 사용 중인 인벤토리 슬롯 개수를 반환하는 함수
     int32 GetUsingSlotCount() const;
 
+    // 인벤토리 사이즈를 변경하는 함수
+    bool SetInventorySize(int InSizeDiff);
+
     // Getter, Setter -----------------------------------------------------
     // 특정 슬롯을 리턴하는 함수
     FInventorySlot* GetSlot(int InSlotIndex);
@@ -129,6 +135,9 @@ public:
     inline TSubclassOf<UTemporarySlotWidget> GetTemporarySlotWidgetClass() const { return TemporarySlotWidgetClass; }
 
     inline TArray<FInventorySlot> GetCopiedSlots() const { return Slots_; }
+
+	// Replaces normal slots without dropping existing contents. Intended for validated save data.
+	bool RestoreSlots(int32 SavedSize, const TArray<FInventorySlot>& SavedSlots);
     // --------------------------------------------------------------------
 
 protected:
@@ -141,6 +150,7 @@ protected:
     bool HandleDropCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);
     bool HandleUseCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);
     bool HandleClearCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);
+    bool HandleModifySizeCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);
     bool HandleEquipCommand_(const FInventoryCommand& Command, FInventoryCommandResult& OutResult);
     // ------------------------------------------------------------------------------------------------------------
 
@@ -175,6 +185,8 @@ public:
     // 슬롯에 변화가 생겼을 때 발동할 델리게이트(싱글캐스트)
     FOnInventorySlotChanged OnSlotChanged;
 
+	FOnInventorySlotSize	OnSlotSize;
+
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Slot")
     TArray<FInventorySlot> Slots_;	// 크기는 InventorySize + 1(임시 슬롯)
@@ -183,13 +195,11 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Slot")
     TSubclassOf<UTemporarySlotWidget> TemporarySlotWidgetClass;
 
-private:
     // 인벤토리의 크기
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory|Slot")
     int32 InventorySize = 10;
 
-    // 임시 슬롯의 인덱스
-    //int32 TempSlotIndex = 10;
-
+private:
     // 인벤토리 컴포넌트 함수에서 각종 실패 표시용 정수
     static constexpr int32 InventoryFail = -1;
 

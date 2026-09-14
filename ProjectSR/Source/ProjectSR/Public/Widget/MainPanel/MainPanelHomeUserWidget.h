@@ -31,6 +31,8 @@ public:
 	void	UpgradeSelect();
 	UFUNCTION()
 	void	ItemCraftSelect();
+	UFUNCTION()
+	void	FinishDay();
 
 	FOnMainPanelHomeSelect	OnMainPanelHomeSelect;
 
@@ -51,6 +53,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UButton>	ItemCraftButton = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UButton>	FinishDayButton = nullptr;
 
 private:
 	EMainPanelMenuPage	MyPage__ = EMainPanelMenuPage::Home;

@@ -31,9 +31,6 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<ULazerStatusUserWidget>		LazerStatus = nullptr;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UMachineArmStatusUserWidget>	MachineArmStatus = nullptr;
-
 private:
 	//void	UpdateStat()
 };

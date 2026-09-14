@@ -10,6 +10,7 @@
 
 class UTextBlock;
 class UMeteorAvoidanceComponent;
+class USoundBase;
 /**
  * 
  */
@@ -33,6 +34,9 @@ public:
 
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 	TObjectPtr<UWidgetAnimation>	MeteoWarningStartAnim;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm|Audio")
+	TObjectPtr<USoundBase> MeteorAlarmSFX = nullptr;
 
 private:
 	UFUNCTION()

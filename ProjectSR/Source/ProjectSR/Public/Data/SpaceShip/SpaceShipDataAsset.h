@@ -16,7 +16,7 @@ struct FShipUpgradeRow : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceShipUpgrade")
-	int32	Level;
+	int32	Level = 0;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SpaceShipUpgrade")
 	TMap<TObjectPtr<UItemDataAsset>, int32>	NeedItem;

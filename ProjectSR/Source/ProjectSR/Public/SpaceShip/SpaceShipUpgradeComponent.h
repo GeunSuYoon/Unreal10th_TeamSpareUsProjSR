@@ -7,6 +7,7 @@
 class UInventoryComponent;
 class UCraftingComponent;
 UENUM(BlueprintType)
+// MachineArm is retained only so existing serialized Blueprint enum values remain loadable.
 enum class EUpgradeTarget : uint8 { SpaceShip, Lazer, MachineArm };
 UENUM(BlueprintType)
 enum class EUpgradeResult : uint8 { Success, MaxLevel, NotEnoughIngredients, RequiresHigherShipLevel, InvalidData, Busy };
@@ -26,6 +27,7 @@ struct FShipUpgradePreview
     UPROPERTY(BlueprintReadOnly)	FSpaceShipStat NextShip;
     UPROPERTY(BlueprintReadOnly)	FLazerStat CurrentLazer;
     UPROPERTY(BlueprintReadOnly)	FLazerStat NextLazer;
+	// Legacy serialized fields. MachineArm runtime support is retired.
     UPROPERTY(BlueprintReadOnly)	FMachineArmStat CurrentArm;
     UPROPERTY(BlueprintReadOnly)	FMachineArmStat NextArm;
     UPROPERTY(BlueprintReadOnly)	TArray<FName> UnlockRecipeIds;
@@ -65,7 +67,7 @@ public:
 
     bool SpaceShipUpgrade() { return TryUpgrade(EUpgradeTarget::SpaceShip) == EUpgradeResult::Success; }
     bool LazerUpgrade() { return TryUpgrade(EUpgradeTarget::Lazer) == EUpgradeResult::Success; }
-    bool MachineArmUpgrade() { return TryUpgrade(EUpgradeTarget::MachineArm) == EUpgradeResult::Success; }
+	// bool MachineArmUpgrade() { return TryUpgrade(EUpgradeTarget::MachineArm) == EUpgradeResult::Success; }
     bool HasEnoughIngredients(const TArray<FIngredient>& Ingredients, const TArray<UInventoryComponent*>& InInventories);
     bool TryConsumeIngredients(const TArray<FIngredient>& Ingredients, const TArray<UInventoryComponent*>& InInventories);
   
@@ -82,7 +84,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Upgrade")
 	TObjectPtr<UDataTable> LazerUpgradeTable;
  
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Upgrade")
+	// Legacy property retained so existing Blueprint assets can deserialize without losing data.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Upgrade", meta=(DeprecatedProperty, DeprecationMessage="MachineArm feature retired"))
 	TObjectPtr<UDataTable> MachineArmUpgradeTable;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Upgrade")

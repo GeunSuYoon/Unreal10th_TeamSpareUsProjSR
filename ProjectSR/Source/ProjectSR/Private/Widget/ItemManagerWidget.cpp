@@ -24,8 +24,28 @@ void UItemManagerWidget::BindToInventoryComponent(UInventoryComponent* InInvento
         return;
     }
 
+    if (TargetInventory__.IsValid())
+    {
+        TargetInventory__->OnSlotChanged.RemoveDynamic(this, &UItemManagerWidget::RefreshSlotWidget__);
+        TargetInventory__->OnSlotSize.RemoveDynamic(this, &UItemManagerWidget::HandleInventorySizeChanged__);
+    }
+
     TargetInventory__ = InInventoryComponent;
-    TargetInventory__->OnSlotChanged.AddDynamic(this, &UItemManagerWidget::RefreshSlotWidget__);
+    TargetInventory__->OnSlotChanged.AddUniqueDynamic(this, &UItemManagerWidget::RefreshSlotWidget__);
+    TargetInventory__->OnSlotSize.AddUniqueDynamic(this, &UItemManagerWidget::HandleInventorySizeChanged__);
+
+    InitializeInventoryWidget();
+}
+
+void UItemManagerWidget::NativeDestruct()
+{
+    if (TargetInventory__.IsValid())
+    {
+        TargetInventory__->OnSlotChanged.RemoveDynamic(this, &UItemManagerWidget::RefreshSlotWidget__);
+        TargetInventory__->OnSlotSize.RemoveDynamic(this, &UItemManagerWidget::HandleInventorySizeChanged__);
+    }
+
+    Super::NativeDestruct();
 }
 
 void UItemManagerWidget::InitializeInventoryWidget()
@@ -36,7 +56,7 @@ void UItemManagerWidget::InitializeInventoryWidget()
         return;
     }
 
-    Item_Use->OnClicked.AddDynamic(this, &UItemManagerWidget::OnItemUseButtonClicked__);
+    Item_Use->OnClicked.AddUniqueDynamic(this, &UItemManagerWidget::OnItemUseButtonClicked__);
 
     if (!Item_Drop)
     {
@@ -44,7 +64,7 @@ void UItemManagerWidget::InitializeInventoryWidget()
         return;
     }
 
-    Item_Drop->OnClicked.AddDynamic(this, &UItemManagerWidget::OnItemDropButtonClicked__);
+    Item_Drop->OnClicked.AddUniqueDynamic(this, &UItemManagerWidget::OnItemDropButtonClicked__);
 
     RefreshInventoryWidget();
 }
@@ -140,6 +160,18 @@ void UItemManagerWidget::RefreshSlotWidget__(int32 InSlotIndex) const
     RefreshItemDetailPanel__();
 }
 
+void UItemManagerWidget::HandleInventorySizeChanged__(int32 InCurrentSlotUseSize, int32 InMaxSlotSize)
+{
+    // OnSlotSize also broadcasts when only the used-slot count changes.
+    // Rebuild the grid only when SetInventorySize actually changed its capacity.
+    if (!TargetInventory__.IsValid() || InMaxSlotSize == Capacity__)
+    {
+        return;
+    }
+
+    RefreshInventoryWidget();
+}
+
 void UItemManagerWidget::RefreshItemDetailPanel__() const
 {
     ItemInfoPanel->SetVisibility(ESlateVisibility::Hidden);
@@ -169,7 +201,7 @@ void UItemManagerWidget::RefreshItemDetailPanel__() const
     {
         Iteminfo_Image->SetBrushFromTexture(TargetSlot->ItemData->Icon.Get());
         Iteminfo_Image->SetBrushTintColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
-        Iteminfo_Name->SetText(FText::FromName(TargetSlot->ItemData->ItemId));
+        Iteminfo_Name->SetText(TargetSlot->ItemData->DisplayName);
 
         FText CapacityText = FText::Format(
             NSLOCTEXT("Inventory", "SlotCountFormat", "수량 : {0} / {1} 개"),

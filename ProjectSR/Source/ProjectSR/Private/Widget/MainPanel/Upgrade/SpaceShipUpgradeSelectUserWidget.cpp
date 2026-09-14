@@ -10,7 +10,8 @@ void USpaceShipUpgradeSelectUserWidget::NativeOnInitialized()
 
 	this->SpaceShipButton->OnClicked.AddDynamic(this, &USpaceShipUpgradeSelectUserWidget::OnSpaceShipButtonClick);
 	this->LazerButton->OnClicked.AddDynamic(this, &USpaceShipUpgradeSelectUserWidget::OnLazerButtonClick);
-	this->MachineArmButton->OnClicked.AddDynamic(this, &USpaceShipUpgradeSelectUserWidget::OnMachineArmButtonClick);
+	// MachineArm feature retired.
+	// this->MachineArmButton->OnClicked.AddDynamic(this, &USpaceShipUpgradeSelectUserWidget::OnMachineArmButtonClick);
 }
 
 void USpaceShipUpgradeSelectUserWidget::OnSpaceShipButtonClick()
@@ -25,5 +26,6 @@ void USpaceShipUpgradeSelectUserWidget::OnLazerButtonClick()
 
 void USpaceShipUpgradeSelectUserWidget::OnMachineArmButtonClick()
 {
-	OnMainPanelUpgradeHomeSelect.ExecuteIfBound(EUpgradeMenuPage::MachineArm);
+	// MachineArm feature retired.
+	// OnMainPanelUpgradeHomeSelect.ExecuteIfBound(EUpgradeMenuPage::MachineArm);
 }

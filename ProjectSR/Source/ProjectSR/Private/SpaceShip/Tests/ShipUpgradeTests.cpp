@@ -7,7 +7,7 @@
 #include "SpaceShip/SpaceShipActor.h"
 #include "SpaceShip/SpaceShipUpgradeComponent.h"
 #include "SpaceShip/LazerComponent.h"
-#include "SpaceShip/MachineArmComponent.h"
+// #include "SpaceShip/MachineArmComponent.h" // MachineArm feature retired.
 
 namespace UpgradeTests
 {
@@ -136,16 +136,19 @@ bool FShipUpgradeFlowTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Duplicate target levels are invalid"), Upgrade->GetPreview(EUpgradeTarget::SpaceShip).Result,
         EUpgradeResult::InvalidData);
     ShipTable->RemoveRow(TEXT("DuplicateLevel"));
-    auto* ArmTable = NewObject<UDataTable>();
-    ArmTable->RowStruct = FMachineArmUpgrade::StaticStruct();
-    FMachineArmUpgrade ArmRow;
-    ArmRow.Level = 1;
-    ArmRow.MachineArmStat.ItemCollectTime = 2.f;
-    ArmRow.MachineArmStat.ItemCollectWeight = 10.f;
-    ArmTable->AddRow(TEXT("Arm"), ArmRow);
-    UpgradeTests::SetTable(Upgrade, TEXT("MachineArmUpgradeTable"), ArmTable);
-    TestEqual(TEXT("Machine arm upgrades independently"), Upgrade->TryUpgrade(EUpgradeTarget::MachineArm), EUpgradeResult::Success);
-    TestEqual(TEXT("Machine arm time applied"), Ship->GetMachineArmComponent()->GetItemCollectTime(), 2.f);
+	// MachineArm feature retired.
+	/*
+	auto* ArmTable = NewObject<UDataTable>();
+	ArmTable->RowStruct = FMachineArmUpgrade::StaticStruct();
+	FMachineArmUpgrade ArmRow;
+	ArmRow.Level = 1;
+	ArmRow.MachineArmStat.ItemCollectTime = 2.f;
+	ArmRow.MachineArmStat.ItemCollectWeight = 10.f;
+	ArmTable->AddRow(TEXT("Arm"), ArmRow);
+	UpgradeTests::SetTable(Upgrade, TEXT("MachineArmUpgradeTable"), ArmTable);
+	TestEqual(TEXT("Machine arm upgrades independently"), Upgrade->TryUpgrade(EUpgradeTarget::MachineArm), EUpgradeResult::Success);
+	TestEqual(TEXT("Machine arm time applied"), Ship->GetMachineArmComponent()->GetItemCollectTime(), 2.f);
+	*/
     TestTrue(TEXT("Restore is idempotent"), Upgrade->RestoreRecipeUnlocks());
     TestEqual(TEXT("Restore does not spend resources"), Inventory->GetTotalItemCount(Item), 5);
     World->DestroyWorld(false);

@@ -9,6 +9,8 @@
 #include "SpaceShipUpgradeUserWidget.generated.h"
 
 class UTextBlock;
+class UButton;
+class UUniformGridPanel;
 /**
  * 
  */
@@ -42,4 +44,5 @@ protected:
 	TObjectPtr<UTextBlock>	CurrentSize = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock>	NextSize = nullptr;
+
 };

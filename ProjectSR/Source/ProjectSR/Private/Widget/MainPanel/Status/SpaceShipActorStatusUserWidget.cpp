@@ -4,10 +4,10 @@
 #include "Widget/MainPanel/Status/SpaceShipActorStatusUserWidget.h"
 #include "Widget/MainPanel/Status/SpaceShipStatusUserWidget.h"
 #include "Widget/MainPanel/Status/LazerStatusUserWidget.h"
-#include "Widget/MainPanel/Status/MachineArmStatusUserWidget.h"
+// #include "Widget/MainPanel/Status/MachineArmStatusUserWidget.h" // MachineArm feature retired.
 #include "SpaceShip/SpaceShipActor.h"
 #include "SpaceShip/LazerComponent.h"
-#include "SpaceShip/MachineArmComponent.h"
+// #include "SpaceShip/MachineArmComponent.h" // MachineArm feature retired.
 
 void	USpaceShipActorStatusUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceShip)
 {
@@ -26,18 +26,13 @@ void	USpaceShipActorStatusUserWidget::BindToSpaceShip(ASpaceShipActor* InSpaceSh
 				TEXT("[USpaceShipActorStatusUserWidget::BindToSpaceShip] LazerComponent가 nullptr입니다.")
 			);
 		}
+		// MachineArm feature retired.
+		/*
 		if (UMachineArmComponent* MachineArmComponent = InSpaceShip->GetMachineArmComponent())
 		{
 			this->MachineArmStatus->BindToMachineArmComponent(MachineArmComponent);
 		}
-		else
-		{
-			UE_LOG(
-				LogTemp,
-				Error,
-				TEXT("[USpaceShipActorStatusUserWidget::BindToSpaceShip] MachineArmComponent가 nullptr입니다.")
-			);
-		}
+		*/
 	}
 	else
 	{

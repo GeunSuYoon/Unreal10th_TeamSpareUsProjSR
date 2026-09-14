@@ -341,6 +341,7 @@ TArray<FRecipeEntry> UCraftingComponent::GetUnlockedRecipeEntries() const
         {
             FRecipeEntry Entry;
             Entry.RecipeId = RowName;
+            Entry.RecipeName = Recipe->RecipeName;
             Entry.RecipeData = *Recipe;
             UnlockedRecipeEntries.Add(Entry);
         }
@@ -364,6 +365,7 @@ FManufactureWidgetDisplayData UCraftingComponent::BuildManufactureWidgetDisplayD
 	}
 
 	RecipeEntry.RecipeId = InRecipeId;
+    RecipeEntry.RecipeName = Recipe->RecipeName;
 	RecipeEntry.RecipeData = *Recipe;
 
 	Data.RecipeEntry = RecipeEntry;

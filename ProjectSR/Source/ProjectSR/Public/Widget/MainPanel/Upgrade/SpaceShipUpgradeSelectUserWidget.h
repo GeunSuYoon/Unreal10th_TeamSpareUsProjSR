@@ -40,9 +40,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UButton>	LazerButton = nullptr;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UButton>	MachineArmButton = nullptr;
-
 private:
 	EUpgradeMenuPage	MyPage__ = EUpgradeMenuPage::Home;
 };

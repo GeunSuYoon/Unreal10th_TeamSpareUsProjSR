@@ -27,6 +27,9 @@ public:
     UFUNCTION()
     void RefreshManufactureWidget(const FManufactureWidgetDisplayData& InManufactureWidgetRefreshData);
 
+	void	OpenWidget() { this->SetVisibility(ESlateVisibility::Visible); }
+	void	CloseWidget() { this->SetVisibility(ESlateVisibility::Collapsed); }
+
 protected:
     virtual void NativeConstruct() override;
 

@@ -9,6 +9,7 @@
 class APlayerCharacter;
 class UMainUserWidget;
 class ASpaceShipActor;
+class ASurvivalLoopActor;
 /**
  * 
  */
@@ -22,9 +23,10 @@ public:
 
 	void	RegisterSpaceShip(ASpaceShipActor* InSpaceShipActor);
     void	RegisterPlayerCharacter(APlayerCharacter* InPlayerCharacter);
+	void	RegisterSurvivalLoop(ASurvivalLoopActor* InSurvivalLoop);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<UUserWidget>	MainUserWidgetClass_ = nullptr;
+	TSubclassOf<UMainUserWidget>	MainUserWidgetClass_ = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UMainUserWidget>		MainUserWidgetInstance_ = nullptr;
